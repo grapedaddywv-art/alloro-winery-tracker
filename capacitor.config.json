@@ -1,0 +1,8 @@
+{
+  "appId": "com.allorovineyard.winerytracker",
+  "appName": "Alloro Winery Tracker",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
