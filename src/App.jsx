@@ -5041,7 +5041,78 @@ function BackupTab({ data, woCounter, mileageRate, onRestore, confirmAction, vin
   );
 }
 
+// Shared password gate — reads from a Vite environment variable when this is deployed
+// (VITE_APP_PASSWORD, set in Vercel), falling back to a default if it's not set. Wrapped in
+// try/catch since import.meta.env isn't guaranteed to exist in every environment this file runs in.
+let APP_PASSWORD = "AlloroCrew2026";
+try {
+  if (import.meta && import.meta.env && import.meta.env.VITE_APP_PASSWORD) {
+    APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD;
+  }
+} catch {
+  // import.meta not available here — stick with the default password
+}
+
+// Reads/writes the "stayed unlocked" flag. Wrapped in try/catch since localStorage isn't
+// available in every environment this file runs in (e.g. it's blocked inside Claude artifacts) —
+// falls back to a session-only unlock (React state) there instead of crashing.
+function readStoredUnlock() {
+  try {
+    return window.localStorage.getItem("winery_unlocked") === "true";
+  } catch {
+    return false;
+  }
+}
+function writeStoredUnlock(value) {
+  try {
+    window.localStorage.setItem("winery_unlocked", value ? "true" : "false");
+  } catch {
+    // no persistent storage available — the unlock will just last for this session
+  }
+}
+
+// ---------- Simple shared-password gate shown before the app loads ----------
+function PasswordGate({ onUnlock }) {
+  const [value, setValue] = useState("");
+  const [error, setError] = useState("");
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (value === APP_PASSWORD) {
+      setError("");
+      onUnlock();
+    } else {
+      setError("That's not the right password — try again.");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-emerald-950 flex items-center justify-center p-4">
+      <form onSubmit={submit} className="bg-white rounded-lg p-6 sm:p-8 max-w-sm w-full">
+        <h1 className="font-brand text-2xl text-emerald-950 mb-1">Alloro Vineyards</h1>
+        <p className="font-body text-sm text-stone-500 mb-5">Winery Tracker — enter the crew password to continue.</p>
+        <input
+          type="password"
+          autoFocus
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="Password"
+          className="font-body w-full border border-stone-300 rounded-md px-3 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-emerald-800"
+        />
+        {error && <p className="font-body text-sm text-red-700 mb-3">{error}</p>}
+        <button
+          type="submit"
+          className="font-body w-full bg-emerald-900 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2.5 rounded-md"
+        >
+          Unlock
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export default function WineryDataTracker() {
+  const [unlocked, setUnlocked] = useState(() => readStoredUnlock());
   const [activeKey, setActiveKey] = useState(ALL_TABS[0].key);
   const [data, setData] = useState(
     Object.fromEntries([["workorders", []], ...SIMPLE_SECTIONS.map((s) => [s.key, []]), ["ferment", []], ["barrels", []], ["templates", []], ["tastings", []], ["blends", []]])
@@ -6084,6 +6155,17 @@ export default function WineryDataTracker() {
   const sortedWorkOrdersForDisplay = sortRows(data.workorders, workOrderSort.field, workOrderSort.direction);
   const openOrders = sortedWorkOrdersForDisplay.filter((o) => o.status !== "Complete");
   const completedOrders = sortedWorkOrdersForDisplay.filter((o) => o.status === "Complete");
+
+  if (!unlocked) {
+    return (
+      <PasswordGate
+        onUnlock={() => {
+          setUnlocked(true);
+          writeStoredUnlock(true);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900">
