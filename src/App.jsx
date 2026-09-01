@@ -6,8 +6,6 @@ import Papa from "papaparse";
 import {
   ClipboardList,
   Grape,
-  Car,
-  Receipt,
   FlaskConical,
   Plus,
   Trash2,
@@ -54,6 +52,7 @@ import {
   Cylinder,
   Package2,
   Microscope,
+  CalendarPlus,
 } from "lucide-react";
 
 // McMinnville Municipal Airport (KMMV), Oregon — used for the homepage weather widget
@@ -135,44 +134,10 @@ const SIMPLE_SECTIONS = [
     ],
   },
   {
-    key: "mileage",
-    label: "Mileage",
-    icon: Car,
-    sheetName: "Mileage",
-    selectable: true,
-    fields: [
-      { name: "date", label: "Date", type: "date" },
-      { name: "driver", label: "Employee Name", type: "select", options: CREW_MEMBERS },
-      { name: "startLocation", label: "Starting Address", type: "text" },
-      { name: "endLocation", label: "Destination Address", type: "text" },
-      { name: "purpose", label: "Detailed Description", type: "text" },
-      { name: "odometerStart", label: "Odometer Start", type: "number" },
-      { name: "odometerEnd", label: "Odometer End", type: "number" },
-      { name: "miles", label: "Mileage", type: "number" },
-    ],
-  },
-  {
-    key: "expenses",
-    label: "Expense Reports",
-    icon: Receipt,
-    sheetName: "Expenses",
-    selectable: true,
-    fields: [
-      { name: "date", label: "Date", type: "date" },
-      { name: "submittedBy", label: "Employee Name", type: "select", options: CREW_MEMBERS },
-      { name: "expenseName", label: "Expense Name", type: "text" },
-      { name: "glCode", label: "GL Code", type: "text" },
-      { name: "category", label: "Category", type: "select", options: ["Fuel", "Supplies", "Equipment", "Meals", "Other"] },
-      { name: "amount", label: "Amount ($)", type: "number" },
-      { name: "description", label: "Detailed Description", type: "text" },
-      { name: "receipt", label: "Receipt Photo", type: "photo" },
-    ],
-  },
-  {
     key: "tanks",
-    label: "Tanks",
+    label: "Vessels",
     icon: Cylinder,
-    sheetName: "Tanks",
+    sheetName: "Vessels",
     fields: [
       { name: "date", label: "Date", type: "date" },
       { name: "tankName", label: "Tank", type: "text" },
@@ -257,10 +222,17 @@ const VESSEL_TYPES = [];
 const ML_STATUSES = ["Not Started", "Inoculated", "In Progress", "Complete"];
 
 // Fermentation lot static fields (asked once, when the ferment starts)
+// Vintage year options — a reasonable spread around the current year
+const VINTAGE_YEARS = Array.from({ length: 10 }, (_, i) => String(new Date().getFullYear() - 8 + i));
+// Wine styles across your portfolio (reds, whites, rosé, dessert, sparkling)
+const WINE_STYLES = ["Dry Red", "Dry White", "Rosé", "Dessert / Late Harvest", "Sparkling", "Other"];
+
 const FERMENT_LOT_FIELDS = [
   { name: "tankId", label: "Lot", type: "text" },
   { name: "vessel", label: "Vessel", type: "vessel-picker" },
   { name: "variety", label: "Variety", type: "select", options: GRAPE_VARIETIES },
+  { name: "vintage", label: "Vintage", type: "select", options: VINTAGE_YEARS },
+  { name: "wineStyle", label: "Wine Style", type: "select", options: WINE_STYLES },
   { name: "startDate", label: "Start Date", type: "date" },
   { name: "startingBrix", label: "Starting Brix", type: "number" },
   { name: "startingTemp", label: "Starting Temp (°F)", type: "number" },
@@ -682,17 +654,15 @@ const ALL_TABS = [
   SIMPLE_SECTIONS.find((s) => s.key === "tanks"),
   SIMPLE_SECTIONS.find((s) => s.key === "bottling"),
   SIMPLE_SECTIONS.find((s) => s.key === "labResults"),
-  SIMPLE_SECTIONS.find((s) => s.key === "mileage"),
-  SIMPLE_SECTIONS.find((s) => s.key === "expenses"),
   { key: "calendar", label: "Calendar", icon: Calendar },
   { key: "formulas", label: "Formulas", icon: Calculator },
   { key: "backup", label: "Backup", icon: HardDrive },
 ];
 
 // Top-level nav shows these directly, in this order
-const MAIN_NAV_KEYS = ["home", "workorders", "harvest", "ferment", "barrels"];
+const MAIN_NAV_KEYS = ["home", "workorders", "fruitAnalysis", "harvest", "ferment", "barrels"];
 // These live under the "Other" dropdown, at the far right of the nav bar
-const OTHER_NAV_KEYS = ["fruitAnalysis", "blending", "tanks", "bottling", "labResults", "mileage", "expenses", "calendar", "formulas", "backup"];
+const OTHER_NAV_KEYS = ["blending", "tanks", "bottling", "labResults", "calendar", "formulas", "backup"];
 
 // Flattens all app data into a common shape ({title, headers, rows}) shared by every export format
 function buildExportSections(data) {
@@ -800,6 +770,16 @@ const emptyForm = (fields) =>
     fields.map((f) => [f.name, ["checkbox-group", "lots-picker", "barrels-picker"].includes(f.type) ? [] : ""])
   );
 const todayISO = () => new Date().toISOString().split("T")[0];
+// Like todayISO, but resolves "today" in a specific IANA timezone instead of UTC — needed
+// wherever we're matching against Open-Meteo data (which is fetched with an explicit timezone),
+// since UTC has usually already rolled over to the next calendar day by Pacific-time evening.
+function todayInTimezone(tz) {
+  try {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  } catch {
+    return todayISO();
+  }
+}
 const genId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 const pad2 = (n) => String(n).padStart(2, "0");
 const isoFor = (y, m, d) => `${y}-${pad2(m + 1)}-${pad2(d)}`;
@@ -909,6 +889,7 @@ const CATEGORY_META = {
   "Lab Check": { word: "Lab Check", pill: "bg-cyan-50 text-cyan-700" },
   "Bottling": { word: "Bottled", pill: "bg-violet-50 text-violet-700" },
   "Tastings": { word: "Tasted", pill: "bg-pink-50 text-pink-700" },
+  "Weather": { word: "Weather", pill: "bg-blue-50 text-blue-700" },
 };
 
 // Flattens every section's dated activity into a single { isoDate: [events] } map
@@ -984,6 +965,17 @@ function buildCalendarEvents(data) {
   (data.tastings || []).forEach((t) => {
     const barrel = (data.barrels || []).find((b) => b.id === t.barrelId);
     add(t.date, "Tastings", `${barrel?.barrelNumber || "Barrel"} tasted`, t.notes || "");
+  });
+
+  (data.weatherLogs || []).forEach((w) => {
+    const high = w.high != null ? `${Math.round(w.high)}°` : "—";
+    const low = w.low != null ? `${Math.round(w.low)}°` : "—";
+    add(
+      w.date,
+      "Weather",
+      `${high} / ${low}${w.conditionLabel ? " — " + w.conditionLabel : ""}`,
+      `${w.humidity != null ? "Humidity " + w.humidity + "%" : ""}${w.windMph != null ? " · Wind " + Math.round(w.windMph) + " mph" : ""}${w.gddTotal != null ? " · GDD " + w.gddTotal : ""}`
+    );
   });
 
   return map;
@@ -1828,6 +1820,257 @@ function RipeningChart({ block, entries }) {
   );
 }
 
+// ---------- Generic paste-to-import panel: paste CSV/tab-separated text with a header row,
+// matches columns to a section's fields by name or label (case/spacing insensitive), and shows
+// a preview before actually adding anything. ----------
+// ---------- Harvest Tonnage batch entry: shared block/variety/date/clone/weigh master once,
+// then as many bin weights as needed — matches weighing multiple bins from the same pick. ----------
+function HarvestBatchEntryForm({ fields, onSubmit, saving, vineyardBlocks, onAddBlock }) {
+  const headerFieldNames = ["date", "block", "variety", "clone", "weighMaster", "notes"];
+  const headerFields = fields.filter((f) => headerFieldNames.includes(f.name));
+
+  const [header, setHeader] = useState(() => {
+    const initial = { date: todayISO() };
+    headerFields.forEach((f) => {
+      if (!(f.name in initial)) initial[f.name] = "";
+    });
+    return initial;
+  });
+  const emptyBin = () => ({ id: genId(), tons: "", lbs: "", tareWeight: "", netTons: "", netLbs: "" });
+  const [bins, setBins] = useState([emptyBin()]);
+  const [error, setError] = useState("");
+
+  const updateBin = (id, field, value) => {
+    setBins((prev) =>
+      prev.map((b) => {
+        if (b.id !== id) return b;
+        const next = { ...b, [field]: value };
+        if (field === "tons" || field === "lbs") {
+          if (value === "") {
+            next[field === "tons" ? "lbs" : "tons"] = "";
+          } else {
+            const num = parseFloat(value);
+            if (!isNaN(num)) {
+              if (field === "tons") next.lbs = String(Math.round(num * 2000 * 100) / 100);
+              else next.tons = String(Math.round((num / 2000) * 1000) / 1000);
+            }
+          }
+        }
+        const grossLbs = parseFloat(next.lbs);
+        const tare = parseFloat(next.tareWeight);
+        if (!isNaN(grossLbs) && !isNaN(tare) && grossLbs >= tare) {
+          const netLbsVal = grossLbs - tare;
+          next.netLbs = String(Math.round(netLbsVal * 100) / 100);
+          next.netTons = String(Math.round((netLbsVal / 2000) * 1000) / 1000);
+        } else {
+          next.netLbs = "";
+          next.netTons = "";
+        }
+        return next;
+      })
+    );
+  };
+  const addBinRow = () => setBins((prev) => [...prev, emptyBin()]);
+  const removeBinRow = (id) => setBins((prev) => (prev.length > 1 ? prev.filter((b) => b.id !== id) : prev));
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (!header.block) {
+      setError('Please fill in "Block / Vineyard"');
+      return;
+    }
+    const filledBins = bins.filter((b) => b.tons || b.lbs);
+    if (filledBins.length === 0) {
+      setError("Add at least one bin's weight");
+      return;
+    }
+    setError("");
+    onSubmit(header, filledBins);
+    setBins([emptyBin()]);
+  };
+
+  return (
+    <form onSubmit={submit} className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5 mb-6">
+      <h2 className="font-brand text-lg text-emerald-950 mb-1">New Harvest Tonnage Entry</h2>
+      <p className="font-body text-xs text-stone-500 mb-3">
+        Fill in the block/variety/date once, then log each bin's weight below — handy when several bins come off the same pick.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 pb-4 border-b border-stone-100">
+        {headerFields.map((f) => (
+          <Field key={f.name} f={f} value={header[f.name]} onChange={(v) => setHeader((p) => ({ ...p, [f.name]: v }))} blocksList={vineyardBlocks} onAddBlock={onAddBlock} />
+        ))}
+      </div>
+
+      <p className="font-body text-xs font-semibold text-stone-600 mb-2">Bin Weights</p>
+      <div className="space-y-2 mb-3">
+        {bins.map((bin, i) => (
+          <div key={bin.id} className="grid grid-cols-2 sm:grid-cols-5 gap-2 items-end bg-stone-50 border border-stone-200 rounded-md p-2">
+            <div>
+              <label className="font-body block text-xs font-medium text-stone-600 mb-1">Gross Tons</label>
+              <input
+                type="number"
+                value={bin.tons}
+                onChange={(e) => updateBin(bin.id, "tons", e.target.value)}
+                className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+              />
+            </div>
+            <div>
+              <label className="font-body block text-xs font-medium text-stone-600 mb-1">Gross Lbs</label>
+              <input
+                type="number"
+                value={bin.lbs}
+                onChange={(e) => updateBin(bin.id, "lbs", e.target.value)}
+                className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+              />
+            </div>
+            <div>
+              <label className="font-body block text-xs font-medium text-stone-600 mb-1">Tare (lbs)</label>
+              <input
+                type="number"
+                value={bin.tareWeight}
+                onChange={(e) => updateBin(bin.id, "tareWeight", e.target.value)}
+                className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+              />
+            </div>
+            <div>
+              <label className="font-body block text-xs font-medium text-stone-600 mb-1">Net Tons</label>
+              <input type="text" readOnly value={bin.netTons} className="font-body w-full border border-stone-200 bg-stone-100 rounded-md px-2 py-1.5 text-sm text-stone-600" />
+            </div>
+            <div className="flex items-end gap-1">
+              <div className="flex-1">
+                <label className="font-body block text-xs font-medium text-stone-600 mb-1">Net Lbs</label>
+                <input type="text" readOnly value={bin.netLbs} className="font-body w-full border border-stone-200 bg-stone-100 rounded-md px-2 py-1.5 text-sm text-stone-600" />
+              </div>
+              {bins.length > 1 && (
+                <button type="button" onClick={() => removeBinRow(bin.id)} className="text-stone-400 hover:text-red-700 pb-2" title="Remove bin">
+                  <Trash2 size={16} />
+                </button>
+              )}
+            </div>
+            <p className="font-body text-xs text-stone-400 col-span-2 sm:col-span-5 -mt-1">Bin {i + 1}</p>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={addBinRow}
+        className="font-body flex items-center gap-1 text-xs font-medium text-emerald-800 hover:text-emerald-900 mb-3"
+      >
+        <Plus size={13} /> Add Another Bin
+      </button>
+
+      {error && <p className="font-body text-sm text-red-700 mb-2">{error}</p>}
+      <button
+        type="submit"
+        disabled={saving}
+        className="font-body flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors"
+      >
+        {saving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+        Save {bins.length > 1 ? `${bins.length} Bins` : "Entry"}
+      </button>
+    </form>
+  );
+}
+
+function BulkImportPanel({ fields, onImport, onClose }) {
+  const [text, setText] = useState("");
+  const [error, setError] = useState("");
+  const [preview, setPreview] = useState(null);
+
+  const normalize = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const fieldLookup = {};
+  fields.forEach((f) => {
+    fieldLookup[normalize(f.name)] = f.name;
+    fieldLookup[normalize(f.label)] = f.name;
+  });
+
+  const parse = () => {
+    if (!text.trim()) {
+      setError("Paste some data first.");
+      return;
+    }
+    const result = Papa.parse(text.trim(), { header: true, skipEmptyLines: true });
+    if (result.errors && result.errors.length > 0 && result.data.length === 0) {
+      setError("Couldn't read that as a table — make sure it's copied from Excel/CSV with a header row.");
+      return;
+    }
+    const rows = result.data
+      .map((row) => {
+        const mapped = {};
+        Object.entries(row).forEach(([key, val]) => {
+          const fieldName = fieldLookup[normalize(key)];
+          if (fieldName && val !== "") mapped[fieldName] = val;
+        });
+        return mapped;
+      })
+      .filter((r) => Object.keys(r).length > 0);
+    if (rows.length === 0) {
+      setError("No recognizable columns found — check that your header row matches the field names shown below.");
+      return;
+    }
+    setError("");
+    setPreview(rows);
+  };
+
+  const confirmImport = () => {
+    onImport(preview);
+    setText("");
+    setPreview(null);
+    onClose();
+  };
+
+  return (
+    <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5 mb-6">
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="font-brand text-lg text-emerald-950">Import from Paste</h2>
+        <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
+          <X size={18} />
+        </button>
+      </div>
+      <p className="font-body text-xs text-stone-500 mb-2">
+        Copy rows from Excel or a CSV file — including the header row — and paste below. Recognized column headers
+        (any of these work, spacing/case doesn't matter): {fields.map((f) => f.label).join(", ")}.
+      </p>
+      <textarea
+        value={text}
+        onChange={(e) => {
+          setText(e.target.value);
+          setPreview(null);
+        }}
+        rows={6}
+        placeholder="Paste your data here, including the header row..."
+        className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm font-mono mb-2 focus:outline-none focus:ring-2 focus:ring-emerald-800"
+      />
+      {error && <p className="font-body text-xs text-red-700 mb-2">{error}</p>}
+      {!preview ? (
+        <button
+          onClick={parse}
+          className="font-body text-sm font-medium bg-emerald-900 hover:bg-emerald-800 text-white px-4 py-2 rounded-md"
+        >
+          Preview Import
+        </button>
+      ) : (
+        <div>
+          <p className="font-body text-xs text-stone-600 mb-2">
+            Found {preview.length} row{preview.length === 1 ? "" : "s"} ready to import.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={confirmImport}
+              className="font-body text-sm font-medium bg-emerald-900 hover:bg-emerald-800 text-white px-4 py-2 rounded-md"
+            >
+              Import {preview.length} Row{preview.length === 1 ? "" : "s"}
+            </button>
+            <button onClick={() => setPreview(null)} className="font-body text-sm text-stone-500 hover:text-stone-700">
+              Back
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ---------- Picker linking a fermentation lot back to the harvest pick(s) it came from ----------
 function HarvestRefsPicker({ value, onChange, harvestEntries }) {
   const [search, setSearch] = useState("");
@@ -1885,7 +2128,7 @@ function HarvestRefsPicker({ value, onChange, harvestEntries }) {
 }
 
 // ---------- Quick Log: fast, walk-down-the-list daily entry mirroring the paper log ----------
-function QuickFermentLog({ lots, allLots, onSaveRow, onEndDay }) {
+function QuickFermentLog({ lots, allLots, onSaveRow, onEndDay, onDeleteLot, onSwitchToDetailed, confirmAction }) {
   const [logDate, setLogDate] = useState(todayISO());
   const [session, setSession] = useState(guessSession());
   const [rowInputs, setRowInputs] = useState({});
@@ -1993,7 +2236,25 @@ function QuickFermentLog({ lots, allLots, onSaveRow, onEndDay }) {
                     {lot.vessel && <span className="font-body text-xs text-stone-400 ml-2">{lot.vessel}</span>}
                     {lot.variety && <span className="font-body text-xs text-stone-400 ml-2">· {lot.variety}</span>}
                   </div>
-                  {existing && <span className="font-body text-xs text-emerald-700">Already logged this round</span>}
+                  <div className="flex items-center gap-2">
+                    {existing && <span className="font-body text-xs text-emerald-700">Already logged this round</span>}
+                    <button
+                      onClick={() => onSwitchToDetailed(lot.id)}
+                      className="text-stone-400 hover:text-emerald-800"
+                      title="Edit lot details (opens Detailed View)"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      onClick={() =>
+                        confirmAction("Delete this fermentation lot and all its readings? This can't be undone.", () => onDeleteLot(lot.id))
+                      }
+                      className="text-stone-400 hover:text-red-700"
+                      title="Delete lot"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2 mb-2">
                   <input
@@ -2818,7 +3079,7 @@ function PrintHeader({ subtitle }) {
   return (
     <div style={{ borderBottom: "2px solid #022c22", paddingBottom: 12, marginBottom: 16 }}>
       <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 700, color: "#022c22", margin: 0 }}>
-        Alloro Vineyards Winery Tracker
+        Alloro Winery Tracker
       </h1>
       <p style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#555", margin: "4px 0 0" }}>{subtitle}</p>
     </div>
@@ -4048,7 +4309,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
   );
 }
 
-function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, editWorkOrderForm, editWorkOrderChange, startEditWorkOrder, saveEditWorkOrder, cancelEditWorkOrder, duplicateWorkOrder, saveAsTemplate, lotNames, onRegisterLotName }) {
+function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, editWorkOrderForm, editWorkOrderChange, startEditWorkOrder, saveEditWorkOrder, cancelEditWorkOrder, duplicateWorkOrder, saveAsTemplate, lotNames, onRegisterLotName, onLogWeather }) {
   const [weather, setWeather] = useState(null);
   const [gdd, setGdd] = useState(null);
   const [weatherError, setWeatherError] = useState("");
@@ -4082,23 +4343,58 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
         if (cancelled) return;
         setWeather(json);
 
-        // Growing Degree Days (base 50°F), summed from April 1 through today
+        // Growing Degree Days (base 50°F), summed from April 1 through today.
+        // The live forecast call above only reaches ~7 days into the past (Open-Meteo caps
+        // past_days well short of a full growing season), so on its own it silently under-counts
+        // by months once the season's underway. The dedicated Archive API accepts an arbitrary
+        // start_date/end_date and covers the rest of the season — it just runs a few days behind
+        // real-time, so we combine it with the recent-days data already fetched above to close
+        // that gap and get a complete, accurate, genuinely-updates-every-day total.
         const year = new Date().getFullYear();
         const seasonStart = `${year}-04-01`;
-        const todayStr = todayISO();
-        const dailyTimes = json.daily?.time || [];
-        const maxes = json.daily?.temperature_2m_max || [];
-        const mins = json.daily?.temperature_2m_min || [];
-        let total = 0;
-        let daysCounted = 0;
-        dailyTimes.forEach((d, i) => {
-          if (d >= seasonStart && d <= todayStr && maxes[i] != null && mins[i] != null) {
-            const avg = (maxes[i] + mins[i]) / 2;
-            total += Math.max(0, avg - 50);
-            daysCounted += 1;
+        const todayStr = todayInTimezone(tz);
+        const byDate = {};
+        const recentTimes = json.daily?.time || [];
+        const recentMaxes = json.daily?.temperature_2m_max || [];
+        const recentMins = json.daily?.temperature_2m_min || [];
+        recentTimes.forEach((d, i) => {
+          if (d >= seasonStart && d <= todayStr && recentMaxes[i] != null && recentMins[i] != null) {
+            byDate[d] = { max: recentMaxes[i], min: recentMins[i] };
           }
         });
-        // If past_days window doesn't reach back to April 1, note that it's partial
+
+        try {
+          const archiveEndDate = recentTimes.length > 0 ? recentTimes[0] : todayStr; // day before the live call's earliest day
+          if (seasonStart < archiveEndDate) {
+            const archiveUrl =
+              `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}` +
+              `&start_date=${seasonStart}&end_date=${archiveEndDate}` +
+              `&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=${encodeURIComponent(tz)}`;
+            const archiveRes = await fetch(archiveUrl);
+            if (archiveRes.ok) {
+              const archiveJson = await archiveRes.json();
+              const aTimes = archiveJson.daily?.time || [];
+              const aMaxes = archiveJson.daily?.temperature_2m_max || [];
+              const aMins = archiveJson.daily?.temperature_2m_min || [];
+              aTimes.forEach((d, i) => {
+                if (!byDate[d] && aMaxes[i] != null && aMins[i] != null) {
+                  byDate[d] = { max: aMaxes[i], min: aMins[i] };
+                }
+              });
+            }
+          }
+        } catch {
+          // Archive call failed — GDD will just be based on the recent-days data above instead
+          // of silently showing nothing.
+        }
+
+        let total = 0;
+        let daysCounted = 0;
+        Object.values(byDate).forEach(({ max, min }) => {
+          const avg = (max + min) / 2;
+          total += Math.max(0, avg - 50);
+          daysCounted += 1;
+        });
         setGdd({ total: Math.round(total), daysCounted, seasonStart });
       } catch (err) {
         if (!cancelled) {
@@ -4119,7 +4415,8 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
   const completedToday = data.workorders.filter((o) => o.dateCompleted === today);
 
   const current = weather?.current;
-  const dailyIdx = weather?.daily?.time?.indexOf(today) ?? -1;
+  const weatherToday = todayInTimezone(HOME_COORDS.tz);
+  const dailyIdx = weather?.daily?.time?.indexOf(weatherToday) ?? -1;
   const todayHigh = dailyIdx >= 0 ? weather.daily.temperature_2m_max[dailyIdx] : null;
   const todayLow = dailyIdx >= 0 ? weather.daily.temperature_2m_min[dailyIdx] : null;
   const sunrise = dailyIdx >= 0 ? weather.daily.sunrise[dailyIdx]?.slice(11) : null;
@@ -4138,6 +4435,22 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
         pop: weather.daily.precipitation_probability_max[idx],
       };
     }) : [];
+
+  const todaysWeatherLog = (data.weatherLogs || []).find((w) => w.date === weatherToday) || null;
+  const logToday = () => {
+    onLogWeather({
+      date: weatherToday,
+      high: todayHigh,
+      low: todayLow,
+      currentTemp: current?.temperature_2m ?? null,
+      conditionCode: current?.weather_code ?? null,
+      conditionLabel: weatherInfo(current?.weather_code).label,
+      humidity: current?.relative_humidity_2m ?? null,
+      windMph: current?.wind_speed_10m ?? null,
+      precipitationIn: current?.precipitation ?? null,
+      gddTotal: gdd?.total ?? null,
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -4207,6 +4520,22 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
                 ))}
               </div>
             )}
+
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-stone-100">
+              {todaysWeatherLog ? (
+                <p className="font-body text-xs text-emerald-700">
+                  ✓ Logged to Calendar for today ({todaysWeatherLog.high != null ? Math.round(todaysWeatherLog.high) : "—"}° / {todaysWeatherLog.low != null ? Math.round(todaysWeatherLog.low) : "—"}°)
+                </p>
+              ) : (
+                <span className="font-body text-xs text-stone-400">Not logged to Calendar yet today</span>
+              )}
+              <button
+                onClick={logToday}
+                className="font-body flex items-center gap-1.5 text-xs font-medium text-emerald-900 hover:text-emerald-700 border border-emerald-200 rounded-md px-3 py-1.5"
+              >
+                <CalendarPlus size={13} /> {todaysWeatherLog ? "Update Log" : "Log Today's Weather"}
+              </button>
+            </div>
           </>
         )}
       </div>
@@ -4350,6 +4679,10 @@ function TastingFormFields({ form, setForm, barrelsList }) {
         </div>
       ))}
       <div className="sm:col-span-2">
+        <label className="font-body block text-xs font-medium text-stone-600 mb-1">Overall Rating</label>
+        <StarRating value={form.overallRating || 0} onChange={(n) => setForm((p) => ({ ...p, overallRating: n }))} />
+      </div>
+      <div className="sm:col-span-2">
         <label className="font-body block text-xs font-medium text-stone-600 mb-1">Notes</label>
         <textarea
           value={form.notes}
@@ -4363,8 +4696,30 @@ function TastingFormFields({ form, setForm, barrelsList }) {
 }
 
 const emptyTastingForm = () => ({
-  barrelId: "", date: todayISO(), tannin: "", acid: "", body: "", aroma: "", flavorIntensity: "", balance: "", notes: "",
+  barrelId: "", date: todayISO(), tannin: "", acid: "", body: "", aroma: "", flavorIntensity: "", balance: "", overallRating: 0, notes: "",
 });
+
+// ---------- Clickable 1-5 star rating ----------
+function StarRating({ value, onChange, size = 20 }) {
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n === value ? 0 : n)}
+          onMouseEnter={() => setHover(n)}
+          onMouseLeave={() => setHover(0)}
+          className="text-amber-500 hover:scale-110 transition-transform"
+          title={`${n} star${n === 1 ? "" : "s"}`}
+        >
+          <Star size={size} fill={(hover || value) >= n ? "currentColor" : "none"} />
+        </button>
+      ))}
+    </div>
+  );
+}
 
 // ---------- Barrel Tastings sub-section ----------
 function TastingsSection({ data, onAdd, onUpdate, onDelete }) {
@@ -4447,7 +4802,11 @@ function TastingsSection({ data, onAdd, onUpdate, onDelete }) {
                 </li>
               ) : (
                 <li key={t.id} className="flex items-start gap-3 px-4 py-3 hover:bg-stone-50">
-                  <Star size={16} className="text-stone-300 mt-0.5 shrink-0" />
+                  <div className="flex text-amber-500 mt-0.5 shrink-0">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Star key={n} size={14} fill={(t.overallRating || 0) >= n ? "currentColor" : "none"} className={(t.overallRating || 0) >= n ? "" : "text-stone-300"} />
+                    ))}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-body text-sm text-stone-900">
                       {barrelLabel(t.barrelId)} <span className="text-stone-400 font-normal">· {t.date}</span>
@@ -4902,26 +5261,25 @@ function ManageListPanel({ title, description, items, onAdd, onRename, onDelete,
   );
 }
 
-function BackupTab({ data, woCounter, mileageRate, onRestore, confirmAction, vineyardBlocks, onAddBlock, onRenameBlock, onDeleteBlock, vesselTypes, onAddVesselType, onRenameVesselType, onDeleteVesselType, lotNames, onAddLotName, onRenameLotName, onDeleteLotName }) {
+function BackupTab({ data, woCounter, onRestore, confirmAction, vineyardBlocks, onAddBlock, onRenameBlock, onDeleteBlock, vesselTypes, onAddVesselType, onRenameVesselType, onDeleteVesselType, lotNames, onAddLotName, onRenameLotName, onDeleteLotName }) {
   const [restoreError, setRestoreError] = useState("");
 
   const downloadBackup = () => {
     const backup = {
-      app: "Alloro Vineyards Winery Tracker",
+      app: "Alloro Winery Tracker",
       backupVersion: 1,
       exportedAt: new Date().toISOString(),
       data: {
         workorders: data.workorders,
         harvest: data.harvest,
-        mileage: data.mileage,
-        expenses: data.expenses,
         ferment: data.ferment,
         barrels: data.barrels,
         templates: data.templates,
         tastings: data.tastings,
         blends: data.blends,
+        weatherLogs: data.weatherLogs,
       },
-      settings: { woCounter, mileageRate },
+      settings: { woCounter },
     };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
     downloadBlob(blob, `alloro-winery-backup-${todayISO()}.json`);
@@ -5089,8 +5447,8 @@ function PasswordGate({ onUnlock }) {
   return (
     <div className="min-h-screen bg-emerald-950 flex items-center justify-center p-4">
       <form onSubmit={submit} className="bg-white rounded-lg p-6 sm:p-8 max-w-sm w-full">
-        <h1 className="font-brand text-2xl text-emerald-950 mb-1">Alloro Vineyards</h1>
-        <p className="font-body text-sm text-stone-500 mb-5">Winery Tracker — enter the crew password to continue.</p>
+        <h1 className="font-brand text-2xl text-emerald-950 mb-1">Alloro Winery Tracker</h1>
+        <p className="font-body text-sm text-stone-500 mb-5">Enter the crew password to continue.</p>
         <input
           type="password"
           autoFocus
@@ -5115,11 +5473,12 @@ export default function WineryDataTracker() {
   const [unlocked, setUnlocked] = useState(() => readStoredUnlock());
   const [activeKey, setActiveKey] = useState(ALL_TABS[0].key);
   const [data, setData] = useState(
-    Object.fromEntries([["workorders", []], ...SIMPLE_SECTIONS.map((s) => [s.key, []]), ["ferment", []], ["barrels", []], ["templates", []], ["tastings", []], ["blends", []]])
+    Object.fromEntries([["workorders", []], ...SIMPLE_SECTIONS.map((s) => [s.key, []]), ["ferment", []], ["barrels", []], ["templates", []], ["tastings", []], ["blends", []], ["weatherLogs", []]])
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(() => ({ ...emptyForm(SIMPLE_SECTIONS[0].fields), date: todayISO() }));
+  const [showBulkImport, setShowBulkImport] = useState(false);
   const [newWorkOrderForm, setNewWorkOrderForm] = useState({ ...emptyForm(WORKORDER_FIELDS), date: todayISO(), dateAssigned: todayISO() });
   const [so2Calc, setSo2Calc] = useState({ volume: "", current: "", target: "" });
   const [newLotForm, setNewLotForm] = useState({ ...emptyForm(FERMENT_LOT_FIELDS), startDate: todayISO() });
@@ -5134,18 +5493,6 @@ export default function WineryDataTracker() {
   const [vineyardBlocks, setVineyardBlocks] = useState(VINEYARD_BLOCKS);
   const [vesselTypes, setVesselTypes] = useState(VESSEL_TYPES);
   const [lotNames, setLotNames] = useState([]);
-  const [mileageRate, setMileageRate] = useState(0.725);
-  const [selectedRows, setSelectedRows] = useState({}); // { [sectionKey]: Set of ids }
-
-  const toggleRowSelect = (key, id) => {
-    setSelectedRows((prev) => {
-      const current = new Set(prev[key] || []);
-      if (current.has(id)) current.delete(id);
-      else current.add(id);
-      return { ...prev, [key]: current };
-    });
-  };
-  const clearRowSelection = (key) => setSelectedRows((prev) => ({ ...prev, [key]: new Set() }));
   const [workOrderSort, setWorkOrderSort] = useState({ field: "", direction: "asc" });
   const [fermentSort, setFermentSort] = useState({ field: "", direction: "asc" });
   const [fermentViewMode, setFermentViewMode] = useState("quick");
@@ -5208,10 +5555,10 @@ export default function WineryDataTracker() {
       }
 
       try {
-        const res = await storage.get("mileage_rate", true);
-        if (res && !cancelled) setMileageRate(parseFloat(res.value) || 0.725);
+        const res = await storage.get("weatherLogs", true);
+        results.weatherLogs = res ? JSON.parse(res.value) : [];
       } catch {
-        // stays at default 0.725
+        results.weatherLogs = [];
       }
 
       try {
@@ -5339,16 +5686,15 @@ export default function WineryDataTracker() {
       ...data,
       workorders: Array.isArray(b.workorders) ? b.workorders : data.workorders,
       harvest: Array.isArray(b.harvest) ? b.harvest : data.harvest,
-      mileage: Array.isArray(b.mileage) ? b.mileage : data.mileage,
-      expenses: Array.isArray(b.expenses) ? b.expenses : data.expenses,
       ferment: Array.isArray(b.ferment) ? b.ferment : data.ferment,
       barrels: Array.isArray(b.barrels) ? b.barrels : data.barrels,
       templates: Array.isArray(b.templates) ? b.templates : data.templates,
       tastings: Array.isArray(b.tastings) ? b.tastings : data.tastings,
       blends: Array.isArray(b.blends) ? b.blends : data.blends,
+      weatherLogs: Array.isArray(b.weatherLogs) ? b.weatherLogs : data.weatherLogs,
     };
     setData(restored);
-    const restorableKeys = ["workorders", "harvest", "mileage", "expenses", "ferment", "barrels", "templates", "tastings", "blends"];
+    const restorableKeys = ["workorders", "harvest", "ferment", "barrels", "templates", "tastings", "blends", "weatherLogs"];
     for (const key of restorableKeys) {
       await persist(key, restored[key]);
     }
@@ -5357,22 +5703,16 @@ export default function WineryDataTracker() {
         setWoCounter(parsed.settings.woCounter);
         storage.set("wo_counter", String(parsed.settings.woCounter), true).catch(() => {});
       }
-      if (typeof parsed.settings.mileageRate === "number") {
-        setMileageRate(parsed.settings.mileageRate);
-        storage.set("mileage_rate", String(parsed.settings.mileageRate), true).catch(() => {});
-      }
     }
   };
 
-  // Returns a copy of `data` with Work Orders, Harvest/Mileage/Expenses, and Fermentation each
-  // sorted per their current sort controls — used both on screen and by every export/print path,
-  // so exports always reflect whatever sort order is currently chosen.
+  // Returns a copy of `data` with Work Orders, Harvest, and Fermentation each sorted per their
+  // current sort controls — used both on screen and by every export/print path, so exports
+  // always reflect whatever sort order is currently chosen.
   const getSortedData = () => ({
     ...data,
     workorders: sortRows(data.workorders, workOrderSort.field, workOrderSort.direction),
     harvest: tableSort.harvest ? sortRows(data.harvest, tableSort.harvest.field, tableSort.harvest.direction) : data.harvest,
-    mileage: tableSort.mileage ? sortRows(data.mileage, tableSort.mileage.field, tableSort.mileage.direction) : data.mileage,
-    expenses: tableSort.expenses ? sortRows(data.expenses, tableSort.expenses.field, tableSort.expenses.direction) : data.expenses,
     ferment: sortRows(data.ferment, fermentSort.field, fermentSort.direction),
   });
 
@@ -5412,13 +5752,6 @@ export default function WineryDataTracker() {
           next.netTons = "";
         }
       }
-      if (activeKey === "mileage" && (name === "odometerStart" || name === "odometerEnd")) {
-        const start = parseFloat(next.odometerStart);
-        const end = parseFloat(next.odometerEnd);
-        if (!isNaN(start) && !isNaN(end) && end >= start) {
-          next.miles = String(Math.round((end - start) * 10) / 10);
-        }
-      }
       return next;
     });
   };
@@ -5437,6 +5770,33 @@ export default function WineryDataTracker() {
     await persist(activeKey, updated);
     setData((prev) => ({ ...prev, [activeKey]: updated }));
     setForm({ ...emptyForm(activeSection.fields), date: todayISO() });
+    setSaving(false);
+  };
+
+  // Adds a batch of rows parsed from a pasted CSV/table into whichever section is active
+  const bulkImportRows = async (rows) => {
+    const entries = rows.map((r) => ({ id: genId(), ...emptyForm(activeSection.fields), ...r }));
+    const updated = [...entries, ...data[activeKey]];
+    setData((prev) => ({ ...prev, [activeKey]: updated }));
+    await persist(activeKey, updated);
+  };
+
+  // Builds one Harvest Tonnage record per bin, all sharing the same header (block, variety,
+  // date, clone, weigh master, notes) — matches weighing multiple bins from the same pick.
+  const submitHarvestBatch = async (header, bins) => {
+    const entries = bins.map((bin) => ({
+      id: genId(),
+      ...header,
+      tons: bin.tons,
+      lbs: bin.lbs,
+      tareWeight: bin.tareWeight,
+      netTons: bin.netTons,
+      netLbs: bin.netLbs,
+    }));
+    const updated = [...entries, ...data.harvest];
+    setSaving(true);
+    setData((prev) => ({ ...prev, harvest: updated }));
+    await persist("harvest", updated);
     setSaving(false);
   };
 
@@ -5478,13 +5838,6 @@ export default function WineryDataTracker() {
           next.netTons = "";
         }
       }
-      if (prev.key === "mileage" && (name === "odometerStart" || name === "odometerEnd")) {
-        const start = parseFloat(next.odometerStart);
-        const end = parseFloat(next.odometerEnd);
-        if (!isNaN(start) && !isNaN(end) && end >= start) {
-          next.miles = String(Math.round((end - start) * 10) / 10);
-        }
-      }
       return { ...prev, form: next };
     });
   };
@@ -5512,13 +5865,6 @@ export default function WineryDataTracker() {
     setWoCounter(newCounter);
     storage.set("wo_counter", String(newCounter), true).catch(() => {});
     return num;
-  };
-
-  const updateMileageRate = (value) => {
-    const rate = parseFloat(value);
-    if (isNaN(rate) || rate < 0) return;
-    setMileageRate(rate);
-    storage.set("mileage_rate", String(rate), true).catch(() => {});
   };
 
   // Adds a newly-typed block/vineyard to the shared list so it's available everywhere the
@@ -5833,6 +6179,26 @@ export default function WineryDataTracker() {
     await persist("tastings", updated);
   };
 
+  // Logs (or updates, if already logged) a snapshot of a given day's weather + GDD onto the
+  // calendar. Re-logging the same date overwrites that day's entry instead of duplicating it.
+  const logWeatherSnapshot = async (snapshot) => {
+    const existingIdx = data.weatherLogs.findIndex((w) => w.date === snapshot.date);
+    const updated =
+      existingIdx >= 0
+        ? data.weatherLogs.map((w, i) => (i === existingIdx ? { ...w, ...snapshot } : w))
+        : [{ id: genId(), ...snapshot }, ...data.weatherLogs];
+    setData((prev) => ({ ...prev, weatherLogs: updated }));
+    await persist("weatherLogs", updated);
+  };
+
+  const deleteWeatherLog = (id) => {
+    confirmAction("Delete this weather log entry? This can't be undone.", async () => {
+      const updated = data.weatherLogs.filter((w) => w.id !== id);
+      setData((prev) => ({ ...prev, weatherLogs: updated }));
+      await persist("weatherLogs", updated);
+    });
+  };
+
   const updateTasting = async (id, changes) => {
     const updated = data.tastings.map((t) => (t.id === id ? { ...t, ...changes } : t));
     setData((prev) => ({ ...prev, tastings: updated }));
@@ -6026,76 +6392,6 @@ export default function WineryDataTracker() {
     await persist("barrels", updated);
   };
 
-  // Builds a clean, accounting-ready Excel export for just the checked rows on the Mileage or
-  // Expenses tab, laid out like Alloro's actual company reimbursement forms.
-  const exportSelectedAccounting = (key) => {
-    const ids = selectedRows[key] || new Set();
-    const rows = data[key].filter((r) => ids.has(r.id));
-    if (rows.length === 0) return;
-
-    const sorted = [...rows].sort((a, b) => (a.date < b.date ? -1 : 1));
-    const dateRange = `${sorted[0].date || ""} – ${sorted[sorted.length - 1].date || ""}`;
-    const wb = XLSX.utils.book_new();
-    let aoa = [];
-    let sheetName = "";
-    let fileLabel = "";
-
-    if (key === "expenses") {
-      const total = rows.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
-      aoa = [
-        ["Alloro Vineyard, Inc."],
-        ["Expense Reimbursement"],
-        ["Date Range:", dateRange, "", "Exported:", todayISO()],
-        [],
-        ["Date", "Employee Name", "Expense Name", "GL Code", "Category", "Amount", "Detailed Description", "Receipt"],
-        ...sorted.map((r) => [
-          r.date, r.submittedBy, r.expenseName, r.glCode, r.category,
-          r.amount === "" || r.amount == null ? "" : Number(r.amount),
-          r.description, r.receipt ? "Yes" : "No",
-        ]),
-        [],
-        ["", "", "", "", "Total:", total],
-        [],
-        ["Approved By:", "________________________"],
-      ];
-      sheetName = "Expense Reimbursement";
-      fileLabel = "expenses";
-    } else if (key === "mileage") {
-      const totalMiles = rows.reduce((sum, r) => sum + (parseFloat(r.miles) || 0), 0);
-      const totalReimbursement = totalMiles * mileageRate;
-      aoa = [
-        ["Alloro Vineyard Mileage Log Form"],
-        ["Date Range:", dateRange, "", "Exported:", todayISO()],
-        [],
-        ["Date", "Employee Name", "Starting Address", "Destination Address", "Detailed Description", "Odometer Start", "Odometer End", "Mileage", "Reimbursement"],
-        ...sorted.map((r) => {
-          const miles = parseFloat(r.miles) || 0;
-          return [
-            r.date, r.driver, r.startLocation, r.endLocation, r.purpose,
-            r.odometerStart === "" || r.odometerStart == null ? "" : Number(r.odometerStart),
-            r.odometerEnd === "" || r.odometerEnd == null ? "" : Number(r.odometerEnd),
-            miles, Math.round(miles * mileageRate * 100) / 100,
-          ];
-        }),
-        [],
-        ["", "", "", "", "", "", "Totals:", totalMiles, Math.round(totalReimbursement * 100) / 100],
-        ["", "", "", "", "", "", "Rate:", `$${mileageRate}/mile`],
-        [],
-        ["Approved By:", "________________________"],
-      ];
-      sheetName = "Mileage Log";
-      fileLabel = "mileage";
-    } else {
-      return;
-    }
-
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws["!cols"] = aoa[key === "expenses" ? 4 : 3].map(() => ({ wch: 18 }));
-    XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31));
-    XLSX.writeFile(wb, `alloro-${fileLabel}-for-accounting-${todayISO()}.xlsx`);
-    clearRowSelection(key);
-  };
-
   const exportToExcel = useCallback(() => {
     const wb = XLSX.utils.book_new();
     buildExportSections(getSortedData()).forEach((section) => {
@@ -6123,7 +6419,7 @@ export default function WineryDataTracker() {
   }, [data, workOrderSort, tableSort, fermentSort]);
 
   const exportToWord = useCallback(() => {
-    let bodyHtml = `<h1 style="font-family:Georgia,serif;color:#022c22;">Alloro Vineyards Winery Tracker</h1><p style="font-family:Arial,sans-serif;color:#555;">Exported ${todayISO()}</p>`;
+    let bodyHtml = `<h1 style="font-family:Georgia,serif;color:#022c22;">Alloro Winery Tracker</h1><p style="font-family:Arial,sans-serif;color:#555;">Exported ${todayISO()}</p>`;
     buildExportSections(getSortedData()).forEach((section) => {
       bodyHtml += `<h2 style="font-family:Georgia,serif;color:#065f46;margin-top:24px;">${escapeHtml(section.title)}</h2>`;
       if (section.rows.length === 0) {
@@ -6193,7 +6489,7 @@ export default function WineryDataTracker() {
       <header className="bg-emerald-950 text-stone-50 px-4 py-4 sm:px-6">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h1 className="font-brand text-xl sm:text-2xl tracking-tight">Alloro Vineyards Winery Tracker</h1>
+            <h1 className="font-brand text-xl sm:text-2xl tracking-tight">Alloro Winery Tracker</h1>
             <p className="font-body text-emerald-200 text-xs sm:text-sm mt-0.5">
               Work Orders · Harvest · Fermentation · Mileage · Expenses
             </p>
@@ -6340,6 +6636,7 @@ export default function WineryDataTracker() {
             saveAsTemplate={saveAsTemplate}
             lotNames={lotNames}
             onRegisterLotName={addLotName}
+            onLogWeather={logWeatherSnapshot}
           />
         ) : activeKey === "workorders" ? (
           <>
@@ -6565,7 +6862,15 @@ export default function WineryDataTracker() {
             </div>
 
             {fermentViewMode === "quick" ? (
-              <QuickFermentLog lots={activeLots} allLots={data.ferment} onSaveRow={logQuickReading} onEndDay={(date) => setPrintJob({ type: "fermentDayLog", date })} />
+              <QuickFermentLog
+                lots={activeLots}
+                allLots={data.ferment}
+                onSaveRow={logQuickReading}
+                onEndDay={(date) => setPrintJob({ type: "fermentDayLog", date })}
+                onDeleteLot={deleteLot}
+                onSwitchToDetailed={() => setFermentViewMode("detailed")}
+                confirmAction={confirmAction}
+              />
             ) : (
               <>
             {data.ferment.length > 0 && (
@@ -6746,7 +7051,6 @@ export default function WineryDataTracker() {
           <BackupTab
             data={data}
             woCounter={woCounter}
-            mileageRate={mileageRate}
             onRestore={restoreBackup}
             confirmAction={confirmAction}
             vineyardBlocks={vineyardBlocks}
@@ -6764,23 +7068,48 @@ export default function WineryDataTracker() {
           />
         ) : (
           <>
-            <form onSubmit={handleSubmit} className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5 mb-6">
-              <h2 className="font-brand text-lg text-emerald-950 mb-3">New {activeSection.label} Entry</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {activeSection.fields.map((f) => (
-                  <Field key={f.name} f={f} value={form[f.name]} onChange={(v) => handleChange(f.name, v)} blocksList={vineyardBlocks} onAddBlock={addVineyardBlock} />
-                ))}
+            {activeKey === "labResults" && (
+              <div className="flex justify-end mb-3">
+                <button
+                  onClick={() => setShowBulkImport((v) => !v)}
+                  className="font-body flex items-center gap-1.5 text-sm font-medium text-emerald-900 hover:text-emerald-700 border border-emerald-200 rounded-md px-3 py-1.5"
+                >
+                  <UploadCloud size={15} /> Import
+                </button>
               </div>
-              {error && <p className="font-body text-sm text-red-700 mt-3">{error}</p>}
-              <button
-                type="submit"
-                disabled={saving}
-                className="font-body mt-4 flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors"
-              >
-                {saving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                Add Entry
-              </button>
-            </form>
+            )}
+
+            {activeKey === "labResults" && showBulkImport && (
+              <BulkImportPanel fields={activeSection.fields} onImport={bulkImportRows} onClose={() => setShowBulkImport(false)} />
+            )}
+
+            {activeKey === "harvest" ? (
+              <HarvestBatchEntryForm
+                fields={activeSection.fields}
+                onSubmit={submitHarvestBatch}
+                saving={saving}
+                vineyardBlocks={vineyardBlocks}
+                onAddBlock={addVineyardBlock}
+              />
+            ) : (
+              <form onSubmit={handleSubmit} className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5 mb-6">
+                <h2 className="font-brand text-lg text-emerald-950 mb-3">New {activeSection.label} Entry</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {activeSection.fields.map((f) => (
+                    <Field key={f.name} f={f} value={form[f.name]} onChange={(v) => handleChange(f.name, v)} blocksList={vineyardBlocks} onAddBlock={addVineyardBlock} />
+                  ))}
+                </div>
+                {error && <p className="font-body text-sm text-red-700 mt-3">{error}</p>}
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="font-body mt-4 flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors"
+                >
+                  {saving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                  Add Entry
+                </button>
+              </form>
+            )}
 
             {activeKey === "fruitAnalysis" &&
               (() => {
@@ -6800,38 +7129,6 @@ export default function WineryDataTracker() {
                   </div>
                 );
               })()}
-
-            {activeKey === "mileage" && (
-              <div className="bg-white border border-stone-200 rounded-lg p-3 sm:p-4 mb-4 flex items-center gap-2 flex-wrap">
-                <span className="font-body text-xs font-medium text-stone-600">Reimbursement Rate:</span>
-                <span className="font-body text-xs text-stone-400">$</span>
-                <input
-                  type="number"
-                  step="0.001"
-                  value={mileageRate}
-                  onChange={(e) => updateMileageRate(e.target.value)}
-                  className="font-body text-xs border border-stone-300 rounded px-2 py-1.5 w-20"
-                />
-                <span className="font-body text-xs text-stone-400">per mile — used to calculate reimbursement amounts below and in accounting exports</span>
-              </div>
-            )}
-
-            {activeSection.selectable && (selectedRows[activeKey]?.size || 0) > 0 && (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-4 flex items-center gap-3 flex-wrap">
-                <span className="font-body text-sm font-medium text-emerald-900">
-                  {selectedRows[activeKey].size} selected
-                </span>
-                <button
-                  onClick={() => exportSelectedAccounting(activeKey)}
-                  className="font-body flex items-center gap-1.5 text-sm font-medium bg-emerald-900 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-md"
-                >
-                  <Download size={14} /> Export Selected for Accounting
-                </button>
-                <button onClick={() => clearRowSelection(activeKey)} className="font-body text-xs text-stone-500 hover:text-stone-700 underline ml-auto">
-                  Clear selection
-                </button>
-              </div>
-            )}
 
             <div className="bg-white border border-stone-200 rounded-lg p-3 sm:p-4 mb-4 flex items-center gap-2 flex-wrap">
               <span className="font-body text-xs font-medium text-stone-600">Print:</span>
@@ -6873,21 +7170,6 @@ export default function WineryDataTracker() {
                   <table className="w-full text-sm font-body">
                     <thead>
                       <tr className="bg-stone-100 text-stone-600 text-left">
-                        {activeSection.selectable && (
-                          <th className="px-3 py-2 w-8">
-                            <input
-                              type="checkbox"
-                              checked={data[activeKey].length > 0 && (selectedRows[activeKey]?.size || 0) === data[activeKey].length}
-                              onChange={() =>
-                                setSelectedRows((prev) => {
-                                  const all = (prev[activeKey]?.size || 0) === data[activeKey].length;
-                                  return { ...prev, [activeKey]: all ? new Set() : new Set(data[activeKey].map((r) => r.id)) };
-                                })
-                              }
-                              className="rounded border-stone-300"
-                            />
-                          </th>
-                        )}
                         {activeSection.fields.map((f) => {
                           const isSorted = tableSort[activeKey]?.field === f.name;
                           const sortable = f.type !== "photo";
@@ -6910,7 +7192,6 @@ export default function WineryDataTracker() {
                             </th>
                           );
                         })}
-                        {activeKey === "mileage" && <th className="px-3 py-2 font-medium whitespace-nowrap">Reimbursement</th>}
                         <th className="px-3 py-2 w-16"></th>
                       </tr>
                     </thead>
@@ -6919,16 +7200,6 @@ export default function WineryDataTracker() {
                         const isEditing = editingRow && editingRow.key === activeKey && editingRow.id === row.id;
                         return (
                           <tr key={row.id} className={`border-t border-stone-100 ${isEditing ? "bg-emerald-50" : "hover:bg-stone-50"}`}>
-                            {activeSection.selectable && (
-                              <td className="px-3 py-2 align-top">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedRows[activeKey]?.has(row.id) || false}
-                                  onChange={() => toggleRowSelect(activeKey, row.id)}
-                                  className="rounded border-stone-300"
-                                />
-                              </td>
-                            )}
                             {activeSection.fields.map((f) => (
                               <td key={f.name} className="px-2 py-2 align-top" style={{ minWidth: isEditing ? 130 : undefined }}>
                                 {isEditing ? (
@@ -6946,11 +7217,6 @@ export default function WineryDataTracker() {
                                 )}
                               </td>
                             ))}
-                            {activeKey === "mileage" && (
-                              <td className="px-3 py-2 whitespace-nowrap text-stone-600">
-                                ${(Math.round((parseFloat(row.miles) || 0) * mileageRate * 100) / 100).toFixed(2)}
-                              </td>
-                            )}
                             <td className="px-3 py-2">
                               {isEditing ? (
                                 <div className="flex items-center gap-2">
