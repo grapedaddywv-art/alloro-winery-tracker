@@ -56,6 +56,10 @@ import {
   Sprout,
   Clock,
   DollarSign,
+  LogOut,
+  Eye,
+  Car,
+  Receipt,
 } from "lucide-react";
 
 // McMinnville Municipal Airport (KMMV), Oregon — used for the homepage weather widget
@@ -256,6 +260,38 @@ const SIMPLE_SECTIONS = [
     fields: [
       { name: "date", label: "Date", type: "date" },
       { name: "totalTips", label: "Total Pooled Tips ($)", type: "number" },
+    ],
+  },
+  {
+    key: "thoMileage",
+    label: "Mileage",
+    icon: Car,
+    sheetName: "Mileage",
+    fields: [
+      { name: "date", label: "Date", type: "date" },
+      { name: "employeeName", label: "Associate", type: "associate-picker" },
+      { name: "startLocation", label: "Starting Address", type: "text" },
+      { name: "endLocation", label: "Destination Address", type: "text" },
+      { name: "purpose", label: "Detailed Description", type: "text" },
+      { name: "odometerStart", label: "Odometer Start", type: "number" },
+      { name: "odometerEnd", label: "Odometer End", type: "number" },
+      { name: "miles", label: "Mileage", type: "number" },
+    ],
+  },
+  {
+    key: "thoExpenses",
+    label: "Expenses",
+    icon: Receipt,
+    sheetName: "Expenses",
+    fields: [
+      { name: "date", label: "Date", type: "date" },
+      { name: "employeeName", label: "Associate", type: "associate-picker" },
+      { name: "expenseName", label: "Expense Name", type: "text" },
+      { name: "glCode", label: "GL Code", type: "text" },
+      { name: "category", label: "Category", type: "select", options: ["Supplies", "Meals", "Equipment", "Other"] },
+      { name: "amount", label: "Amount ($)", type: "number" },
+      { name: "description", label: "Detailed Description", type: "text" },
+      { name: "receipt", label: "Receipt Photo", type: "photo" },
     ],
   },
 ];
@@ -731,9 +767,9 @@ const ALL_TABS = [
   SIMPLE_SECTIONS.find((s) => s.key === "bottling"),
   SIMPLE_SECTIONS.find((s) => s.key === "labResults"),
   { key: "techSheets", label: "Tech Sheets", icon: FileText },
-  { key: "thoPayout", label: "Payout Calculator", icon: Calculator },
-  SIMPLE_SECTIONS.find((s) => s.key === "thoTimesheets"),
-  SIMPLE_SECTIONS.find((s) => s.key === "thoTips"),
+  { key: "thoPayroll", label: "Payroll", icon: DollarSign },
+  SIMPLE_SECTIONS.find((s) => s.key === "thoMileage"),
+  SIMPLE_SECTIONS.find((s) => s.key === "thoExpenses"),
   { key: "calendar", label: "Calendar", icon: Calendar },
   { key: "formulas", label: "Formulas", icon: Calculator },
   { key: "backup", label: "Backup", icon: HardDrive },
@@ -750,7 +786,7 @@ const PERSISTENT_NAV_KEYS = ["home", "workorders"];
 const NAV_CATEGORIES = {
   vineyard: { label: "Vineyard", dotColor: "bg-lime-400", keys: ["fruitAnalysis", "harvest", "vineHealth"] },
   winery: { label: "Winery", dotColor: "bg-amber-400", keys: ["ferment", "barrels", "blending", "tanks", "bottling"] },
-  tho: { label: "THO", dotColor: "bg-rose-400", keys: ["thoPayout", "thoTimesheets", "thoTips"] },
+  tho: { label: "THO", dotColor: "bg-rose-400", keys: ["thoPayroll", "thoMileage", "thoExpenses"] },
   data: { label: "Data", dotColor: "bg-sky-300", keys: ["labResults", "techSheets", "calendar", "formulas", "backup"] },
 };
 
@@ -2888,6 +2924,186 @@ function computeTipPayout(timesheets, tips, startDate, endDate, method, halfShar
     .sort((a, b) => a.employeeName.localeCompare(b.employeeName));
 
   return { rows, warnings, dayBreakdown, totalTips: Object.values(tipsByDate).reduce((s, v) => s + v, 0) };
+}
+
+// ---------- Reusable add-form + editable table for one section, usable standalone on a page
+// that shows several sections at once (rather than the single-activeKey generic table) ----------
+function SimpleDataPanel({ title, fields, rows, onAdd, onUpdate, onDelete, confirmAction, associatesList, onAddAssociate, allowImport }) {
+  const [form, setForm] = useState(() => emptyForm(fields));
+  const [error, setError] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState(null);
+  const [showImport, setShowImport] = useState(false);
+
+  const submit = (e) => {
+    e.preventDefault();
+    const missing = fields.find((f) => f.type !== "textarea" && f.type !== "photo" && !f.optional && !String(form[f.name] ?? "").trim());
+    if (missing) {
+      setError(`Please fill in "${missing.label}"`);
+      return;
+    }
+    setError("");
+    onAdd({ id: genId(), ...form });
+    setForm(emptyForm(fields));
+  };
+
+  const startEdit = (row) => {
+    setEditingId(row.id);
+    setEditForm({ ...row });
+    setError("");
+  };
+  const saveEdit = () => {
+    const missing = fields.find((f) => f.type !== "textarea" && f.type !== "photo" && !f.optional && !String(editForm[f.name] ?? "").trim());
+    if (missing) {
+      setError(`Please fill in "${missing.label}"`);
+      return;
+    }
+    setError("");
+    onUpdate(editingId, editForm);
+    setEditingId(null);
+    setEditForm(null);
+  };
+
+  const handleDeleteRow = (id) => {
+    confirmAction("Delete this entry? This can't be undone.", () => onDelete(id));
+  };
+
+  return (
+    <div className="bg-white border border-stone-200 rounded-lg overflow-hidden mb-6">
+      <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
+        <h2 className="font-brand text-lg text-emerald-950">{title}</h2>
+        {allowImport && (
+          <button
+            onClick={() => setShowImport((v) => !v)}
+            className="font-body flex items-center gap-1.5 text-xs font-medium text-emerald-900 hover:text-emerald-700 border border-emerald-200 rounded-md px-2.5 py-1.5"
+          >
+            <UploadCloud size={13} /> Import
+          </button>
+        )}
+      </div>
+      <div className="p-4">
+        {showImport && (
+          <BulkImportPanel
+            fields={fields}
+            onImport={(importedRows) => {
+              importedRows.forEach((r) => onAdd({ id: genId(), ...emptyForm(fields), ...r }));
+              setShowImport(false);
+            }}
+            onClose={() => setShowImport(false)}
+          />
+        )}
+        <form onSubmit={submit} className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3 items-end">
+          {fields.map((f) => (
+            <div key={f.name}>
+              <Field f={f} value={form[f.name]} onChange={(v) => setForm((p) => ({ ...p, [f.name]: v }))} associatesList={associatesList} onAddAssociate={onAddAssociate} />
+            </div>
+          ))}
+          <button type="submit" className="font-body flex items-center gap-1.5 bg-emerald-900 hover:bg-emerald-800 text-white text-sm font-medium px-3 py-2 rounded-md h-fit">
+            <Plus size={15} /> Add
+          </button>
+        </form>
+        {error && <p className="font-body text-xs text-red-700 mb-2">{error}</p>}
+        {rows.length === 0 ? (
+          <p className="font-body text-sm text-stone-400 text-center py-4">No entries yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm font-body">
+              <thead>
+                <tr className="text-left text-stone-500 bg-stone-50">
+                  {fields.map((f) => (
+                    <th key={f.name} className="px-3 py-2 whitespace-nowrap">{f.label}</th>
+                  ))}
+                  <th className="px-3 py-2 w-16"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => {
+                  const isEditing = editingId === row.id;
+                  return (
+                    <tr key={row.id} className={`border-t border-stone-100 ${isEditing ? "bg-emerald-50" : ""}`}>
+                      {fields.map((f) => (
+                        <td key={f.name} className="px-2 py-2 align-top" style={{ minWidth: isEditing ? 120 : undefined }}>
+                          {isEditing ? (
+                            <Field f={f} value={editForm[f.name]} onChange={(v) => setEditForm((p) => ({ ...p, [f.name]: v }))} hideLabel associatesList={associatesList} onAddAssociate={onAddAssociate} />
+                          ) : f.type === "photo" ? (
+                            row[f.name] ? (
+                              <a href={row[f.name]} target="_blank" rel="noopener noreferrer">
+                                <img src={row[f.name]} alt="Receipt" className="w-9 h-9 object-cover rounded border border-stone-300" />
+                              </a>
+                            ) : (
+                              "—"
+                            )
+                          ) : (
+                            <span className="whitespace-nowrap">{row[f.name] || "—"}</span>
+                          )}
+                        </td>
+                      ))}
+                      <td className="px-2 py-2">
+                        {isEditing ? (
+                          <div className="flex items-center gap-2">
+                            <button onClick={saveEdit} className="text-emerald-700 hover:text-emerald-900" title="Save">
+                              <Check size={15} />
+                            </button>
+                            <button onClick={() => { setEditingId(null); setEditForm(null); setError(""); }} className="text-stone-400 hover:text-stone-600" title="Cancel">
+                              <X size={15} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => startEdit(row)} className="text-stone-400 hover:text-emerald-800" title="Edit">
+                              <Pencil size={14} />
+                            </button>
+                            <button onClick={() => handleDeleteRow(row.id)} className="text-stone-400 hover:text-red-700" title="Delete">
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------- Combined Payroll page: Timesheets, then Tips, then the Payout Calculator, all on
+// one page — so the whole payroll workflow reads top to bottom without switching tabs. ----------
+function THOPayrollPage({ data, onAddThoEntry, onUpdateThoEntry, onDeleteThoEntry, confirmAction, tastingAssociates, onAddAssociate }) {
+  const timesheetFields = SIMPLE_SECTIONS.find((s) => s.key === "thoTimesheets").fields;
+  const tipsFields = SIMPLE_SECTIONS.find((s) => s.key === "thoTips").fields;
+
+  return (
+    <div>
+      <SimpleDataPanel
+        title="Timesheets"
+        fields={timesheetFields}
+        rows={data.thoTimesheets}
+        onAdd={(entry) => onAddThoEntry("thoTimesheets", entry)}
+        onUpdate={(id, changes) => onUpdateThoEntry("thoTimesheets", id, changes)}
+        onDelete={(id) => onDeleteThoEntry("thoTimesheets", id)}
+        confirmAction={confirmAction}
+        associatesList={tastingAssociates}
+        onAddAssociate={onAddAssociate}
+        allowImport
+      />
+      <SimpleDataPanel
+        title="Tips"
+        fields={tipsFields}
+        rows={data.thoTips}
+        onAdd={(entry) => onAddThoEntry("thoTips", entry)}
+        onUpdate={(id, changes) => onUpdateThoEntry("thoTips", id, changes)}
+        onDelete={(id) => onDeleteThoEntry("thoTips", id)}
+        confirmAction={confirmAction}
+        allowImport
+      />
+      <THOPayoutCalculator data={data} />
+    </div>
+  );
 }
 
 function THOPayoutCalculator({ data }) {
@@ -6609,46 +6825,59 @@ function BackupTab({ data, woCounter, onRestore, confirmAction, vineyardBlocks, 
   );
 }
 
-// Shared password gate — reads from a Vite environment variable when this is deployed
-// (VITE_APP_PASSWORD, set in Vercel), falling back to a default if it's not set. Wrapped in
-// try/catch since import.meta.env isn't guaranteed to exist in every environment this file runs in.
-let APP_PASSWORD = "AlloroCrew2026";
+// Two passwords, each mapping to a role — reads from Vite environment variables when deployed
+// (VITE_ADMIN_PASSWORD / VITE_THO_PASSWORD, set in Vercel), falling back to defaults if not set.
+// Wrapped in try/catch since import.meta.env isn't guaranteed to exist everywhere this runs.
+let ADMIN_PASSWORD = "AlloroCrew2026";
+let THO_PASSWORD = "AlloroTHO2026";
 try {
-  if (import.meta && import.meta.env && import.meta.env.VITE_APP_PASSWORD) {
-    APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD;
+  if (import.meta && import.meta.env) {
+    if (import.meta.env.VITE_ADMIN_PASSWORD) ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
+    if (import.meta.env.VITE_THO_PASSWORD) THO_PASSWORD = import.meta.env.VITE_THO_PASSWORD;
   }
 } catch {
-  // import.meta not available here — stick with the default password
+  // import.meta not available here — stick with the defaults
 }
 
-// Reads/writes the "stayed unlocked" flag. Wrapped in try/catch since localStorage isn't
-// available in every environment this file runs in (e.g. it's blocked inside Claude artifacts) —
-// falls back to a session-only unlock (React state) there instead of crashing.
-function readStoredUnlock() {
+// Storage keys a "tho" role login is allowed to write. Deny-by-default: anything not in this
+// short, easy-to-audit list is refused by persist() below, regardless of what the UI shows —
+// this is the actual enforcement point, not a UI convenience.
+const THO_EDITABLE_STORAGE_KEYS = ["thoTimesheets", "thoTips", "thoMileage", "thoExpenses", "tasting_associates"];
+
+// Reads/writes which role is currently signed in ("admin" | "tho" | null). Wrapped in try/catch
+// since localStorage isn't available in every environment this file runs in (e.g. it's blocked
+// inside Claude artifacts) — falls back to a session-only login (React state) there instead of
+// crashing.
+function readStoredRole() {
   try {
-    return window.localStorage.getItem("winery_unlocked") === "true";
+    const v = window.localStorage.getItem("winery_role");
+    return v === "admin" || v === "tho" ? v : null;
   } catch {
-    return false;
+    return null;
   }
 }
-function writeStoredUnlock(value) {
+function writeStoredRole(role) {
   try {
-    window.localStorage.setItem("winery_unlocked", value ? "true" : "false");
+    if (role) window.localStorage.setItem("winery_role", role);
+    else window.localStorage.removeItem("winery_role");
   } catch {
-    // no persistent storage available — the unlock will just last for this session
+    // no persistent storage available — the login will just last for this session
   }
 }
 
-// ---------- Simple shared-password gate shown before the app loads ----------
+// ---------- Two-password login gate shown before the app loads ----------
 function PasswordGate({ onUnlock }) {
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
 
   const submit = (e) => {
     e.preventDefault();
-    if (value === APP_PASSWORD) {
+    if (value === ADMIN_PASSWORD) {
       setError("");
-      onUnlock();
+      onUnlock("admin");
+    } else if (value === THO_PASSWORD) {
+      setError("");
+      onUnlock("tho");
     } else {
       setError("That's not the right password — try again.");
     }
@@ -6658,7 +6887,7 @@ function PasswordGate({ onUnlock }) {
     <div className="min-h-screen bg-emerald-950 flex items-center justify-center p-4">
       <form onSubmit={submit} className="bg-white rounded-lg p-6 sm:p-8 max-w-sm w-full">
         <h1 className="font-brand text-2xl text-emerald-950 mb-1">Alloro Winery Tracker</h1>
-        <p className="font-body text-sm text-stone-500 mb-5">Enter the crew password to continue.</p>
+        <p className="font-body text-sm text-stone-500 mb-5">Enter your password to continue.</p>
         <input
           type="password"
           autoFocus
@@ -6680,8 +6909,13 @@ function PasswordGate({ onUnlock }) {
 }
 
 export default function WineryDataTracker() {
-  const [unlocked, setUnlocked] = useState(() => readStoredUnlock());
+  const [role, setRole] = useState(() => readStoredRole());
   const [activeKey, setActiveKey] = useState(ALL_TABS[0].key);
+  useEffect(() => {
+    if (role === "tho" && (activeKey === "workorders" || activeKey === "backup")) {
+      setActiveKey("home");
+    }
+  }, [role, activeKey]);
   const [data, setData] = useState(
     Object.fromEntries([["workorders", []], ...SIMPLE_SECTIONS.map((s) => [s.key, []]), ["ferment", []], ["barrels", []], ["templates", []], ["tastings", []], ["blends", []], ["weatherLogs", []], ["techSheets", []]])
   );
@@ -6931,7 +7165,22 @@ export default function WineryDataTracker() {
     setEditWorkOrderForm(null);
   }, [activeKey]);
 
+  // Every write in the app funnels through here (or through persist() below, which also uses
+  // it) — this is the actual enforcement point for the two-role login, not the UI. Deny by
+  // default: a "tho" role can only write the handful of keys explicitly listed as theirs.
+  const guardedStorageSet = (key, value, shared) => {
+    if (role === "tho" && !THO_EDITABLE_STORAGE_KEYS.includes(key)) {
+      setSaveError("You're signed in with view-only access for this section — that change wasn't saved.");
+      return Promise.resolve(null);
+    }
+    return storage.set(key, value, shared);
+  };
+
   const persist = async (key, updated) => {
+    if (role === "tho" && !THO_EDITABLE_STORAGE_KEYS.includes(key)) {
+      setSaveError("You're signed in with view-only access for this section — that change wasn't saved.");
+      return;
+    }
     try {
       const result = await storage.set(key, JSON.stringify(updated), true);
       if (!result) {
@@ -7017,6 +7266,13 @@ export default function WineryDataTracker() {
           next.netTons = "";
         }
       }
+      if (activeKey === "thoMileage" && (name === "odometerStart" || name === "odometerEnd")) {
+        const start = parseFloat(next.odometerStart);
+        const end = parseFloat(next.odometerEnd);
+        if (!isNaN(start) && !isNaN(end) && end >= start) {
+          next.miles = String(Math.round((end - start) * 10) / 10);
+        }
+      }
       return next;
     });
   };
@@ -7044,6 +7300,24 @@ export default function WineryDataTracker() {
     const updated = [...entries, ...data[activeKey]];
     setData((prev) => ({ ...prev, [activeKey]: updated }));
     await persist(activeKey, updated);
+  };
+
+  // Generic add/update/delete for the combined Payroll page, which shows Timesheets and Tips
+  // together on one page rather than through the single-activeKey generic table.
+  const addThoEntry = async (key, entry) => {
+    const updated = [entry, ...data[key]];
+    setData((prev) => ({ ...prev, [key]: updated }));
+    await persist(key, updated);
+  };
+  const updateThoEntry = async (key, id, changes) => {
+    const updated = data[key].map((r) => (r.id === id ? { ...r, ...changes } : r));
+    setData((prev) => ({ ...prev, [key]: updated }));
+    await persist(key, updated);
+  };
+  const deleteThoEntry = async (key, id) => {
+    const updated = data[key].filter((r) => r.id !== id);
+    setData((prev) => ({ ...prev, [key]: updated }));
+    await persist(key, updated);
   };
 
   // Builds one Harvest Tonnage record per bin, all sharing the same header (block, variety,
@@ -7103,6 +7377,13 @@ export default function WineryDataTracker() {
           next.netTons = "";
         }
       }
+      if (prev.key === "thoMileage" && (name === "odometerStart" || name === "odometerEnd")) {
+        const start = parseFloat(next.odometerStart);
+        const end = parseFloat(next.odometerEnd);
+        if (!isNaN(start) && !isNaN(end) && end >= start) {
+          next.miles = String(Math.round((end - start) * 10) / 10);
+        }
+      }
       return { ...prev, form: next };
     });
   };
@@ -7128,7 +7409,7 @@ export default function WineryDataTracker() {
     const num = woCounter;
     const newCounter = woCounter + 1;
     setWoCounter(newCounter);
-    storage.set("wo_counter", String(newCounter), true).catch(() => {});
+    guardedStorageSet("wo_counter", String(newCounter), true).catch(() => {});
     return num;
   };
 
@@ -7138,7 +7419,7 @@ export default function WineryDataTracker() {
     setVineyardBlocks((prev) => {
       if (prev.includes(name)) return prev;
       const updated = [...prev, name].sort((a, b) => a.localeCompare(b));
-      storage.set("vineyard_blocks", JSON.stringify(updated), true).catch(() => {
+      guardedStorageSet("vineyard_blocks", JSON.stringify(updated), true).catch(() => {
         setSaveError("Your last change didn't save — check your connection and try again.");
       });
       return updated;
@@ -7170,7 +7451,7 @@ export default function WineryDataTracker() {
     setClones((prev) => {
       if (prev.includes(name)) return prev;
       const updated = [...prev, name].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-      storage.set("clones", JSON.stringify(updated), true).catch(() => {
+      guardedStorageSet("clones", JSON.stringify(updated), true).catch(() => {
         setSaveError("Your last change didn't save — check your connection and try again.");
       });
       return updated;
@@ -7198,7 +7479,7 @@ export default function WineryDataTracker() {
     setSprayPrograms((prev) => {
       if (prev.includes(name)) return prev;
       const updated = [...prev, name].sort((a, b) => a.localeCompare(b));
-      storage.set("spray_programs", JSON.stringify(updated), true).catch(() => {
+      guardedStorageSet("spray_programs", JSON.stringify(updated), true).catch(() => {
         setSaveError("Your last change didn't save — check your connection and try again.");
       });
       return updated;
@@ -7226,7 +7507,7 @@ export default function WineryDataTracker() {
     setTastingAssociates((prev) => {
       if (prev.includes(name)) return prev;
       const updated = [...prev, name].sort((a, b) => a.localeCompare(b));
-      storage.set("tasting_associates", JSON.stringify(updated), true).catch(() => {
+      guardedStorageSet("tasting_associates", JSON.stringify(updated), true).catch(() => {
         setSaveError("Your last change didn't save — check your connection and try again.");
       });
       return updated;
@@ -7252,14 +7533,14 @@ export default function WineryDataTracker() {
 
   const updateDefaultTareWeight = (value) => {
     setDefaultTareWeight(value);
-    storage.set("default_tare_weight", value, true).catch(() => {});
+    guardedStorageSet("default_tare_weight", value, true).catch(() => {});
   };
 
   const addVesselType = (name) => {
     setVesselTypes((prev) => {
       if (prev.includes(name)) return prev;
       const updated = [...prev, name].sort((a, b) => a.localeCompare(b));
-      storage.set("vessel_types", JSON.stringify(updated), true).catch(() => {
+      guardedStorageSet("vessel_types", JSON.stringify(updated), true).catch(() => {
         setSaveError("Your last change didn't save — check your connection and try again.");
       });
       return updated;
@@ -7290,7 +7571,7 @@ export default function WineryDataTracker() {
     setLotNames((prev) => {
       if (prev.includes(name)) return prev;
       const updated = [...prev, name].sort((a, b) => a.localeCompare(b));
-      storage.set("lot_names", JSON.stringify(updated), true).catch(() => {
+      guardedStorageSet("lot_names", JSON.stringify(updated), true).catch(() => {
         setSaveError("Your last change didn't save — check your connection and try again.");
       });
       return updated;
@@ -7904,12 +8185,12 @@ export default function WineryDataTracker() {
   const categoryFilteredOpenOrders = openOrders.filter((o) => (o.category || "Winery") === workOrderFilterCategory);
   const categoryFilteredCompletedOrders = completedOrders.filter((o) => (o.category || "Winery") === workOrderFilterCategory);
 
-  if (!unlocked) {
+  if (!role) {
     return (
       <PasswordGate
-        onUnlock={() => {
-          setUnlocked(true);
-          writeStoredUnlock(true);
+        onUnlock={(newRole) => {
+          setRole(newRole);
+          writeStoredRole(newRole);
         }}
       />
     );
@@ -7996,7 +8277,7 @@ export default function WineryDataTracker() {
       <nav className="bg-emerald-900 px-2 sm:px-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-1 overflow-x-auto">
-            {PERSISTENT_NAV_KEYS.map((key) => {
+            {PERSISTENT_NAV_KEYS.filter((key) => role === "admin" || key !== "workorders").map((key) => {
               const s = ALL_TABS.find((t) => t.key === key);
               if (!s) return null;
               const Icon = s.icon;
@@ -8038,15 +8319,27 @@ export default function WineryDataTracker() {
                 </button>
               );
             })}
+
+            <button
+              onClick={() => {
+                setRole(null);
+                writeStoredRole(null);
+              }}
+              className="font-body flex items-center gap-1.5 whitespace-nowrap text-xs px-3 py-3 text-emerald-300 hover:text-white ml-auto"
+              title="Log out"
+            >
+              <LogOut size={14} />
+            </button>
           </div>
 
           {categoryOfKey(activeKey) &&
             (() => {
               const catKey = categoryOfKey(activeKey);
               const cat = NAV_CATEGORIES[catKey];
+              const visibleKeys = cat.keys.filter((key) => role === "admin" || key !== "backup");
               return (
                 <div className="flex items-center gap-1 overflow-x-auto border-t border-emerald-800 -mt-px">
-                  {cat.keys.map((key) => {
+                  {visibleKeys.map((key) => {
                     const s = ALL_TABS.find((t) => t.key === key);
                     if (!s) return null;
                     const Icon = s.icon;
@@ -8078,6 +8371,12 @@ export default function WineryDataTracker() {
       </nav>
 
       <main className="max-w-5xl mx-auto px-4 py-6 sm:px-6">
+        {role === "tho" && !NAV_CATEGORIES.tho.keys.includes(activeKey) && (
+          <div className="bg-rose-50 border border-rose-200 rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
+            <Eye size={15} className="text-rose-700 shrink-0" />
+            <p className="font-body text-sm text-rose-800">View only — you're signed in with tasting house access. Changes here won't save.</p>
+          </div>
+        )}
         {loading ? (
           <div className="flex items-center gap-2 text-stone-500 font-body text-sm py-12 justify-center">
             <Loader2 size={18} className="animate-spin" /> Loading shared data…
@@ -8616,8 +8915,16 @@ export default function WineryDataTracker() {
             onUpdateBlend={updateBlend}
             onDeleteBlend={deleteBlend}
           />
-        ) : activeKey === "thoPayout" ? (
-          <THOPayoutCalculator data={data} />
+        ) : activeKey === "thoPayroll" ? (
+          <THOPayrollPage
+            data={data}
+            onAddThoEntry={addThoEntry}
+            onUpdateThoEntry={updateThoEntry}
+            onDeleteThoEntry={deleteThoEntry}
+            confirmAction={confirmAction}
+            tastingAssociates={tastingAssociates}
+            onAddAssociate={addAssociate}
+          />
         ) : activeKey === "techSheets" ? (
           <>
             {techSheetMode.mode === "form" ? (
@@ -8715,7 +9022,7 @@ export default function WineryDataTracker() {
           />
         ) : (
           <>
-            {["labResults", "thoTimesheets", "thoTips"].includes(activeKey) && (
+            {["labResults"].includes(activeKey) && (
               <div className="flex justify-end mb-3">
                 <button
                   onClick={() => setShowBulkImport((v) => !v)}
@@ -8726,7 +9033,7 @@ export default function WineryDataTracker() {
               </div>
             )}
 
-            {["labResults", "thoTimesheets", "thoTips"].includes(activeKey) && showBulkImport && (
+            {["labResults"].includes(activeKey) && showBulkImport && (
               <BulkImportPanel fields={activeSection.fields} onImport={bulkImportRows} onClose={() => setShowBulkImport(false)} />
             )}
 
