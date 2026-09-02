@@ -53,6 +53,9 @@ import {
   Microscope,
   CalendarPlus,
   FileText,
+  Sprout,
+  Clock,
+  DollarSign,
 } from "lucide-react";
 
 // McMinnville Municipal Airport (KMMV), Oregon — used for the homepage weather widget
@@ -86,6 +89,9 @@ const weatherInfo = (code) => WEATHER_CODES[code] || { label: "—", icon: "🌡
 
 // Crew members available for assignment across all tabs
 const CREW_MEMBERS = ["Ryan Clifford", "Tom Fitzpatrick", "Daniel Lethin", "David Nemarnik"];
+// Tasting House associates — starts empty since this is a different roster than the winery crew;
+// build it via the "+ Add new" picker on Timesheets, or the Manage Lists panel under Backup.
+const TASTING_ASSOCIATES = [];
 
 // Cellar task categories for Work Orders
 const WINERY_TASK_TYPES = ["Transfer", "Top Off", "Additions", "Rack", "Cold Stabilize", "Clean", "Inoculate", "Fine and Filter", "Pump Over", "Punch Down", "Fermentation"];
@@ -118,6 +124,9 @@ const VARIETY_GDD_REFERENCE = {
 const VINEYARD_BLOCKS = ["Antonina Block", "Solar Block", "Church Block", "Tasting House Block", "Winery Block"];
 // Grape clones available for Harvest Tonnage
 const GRAPE_CLONES = ["114", "115", "777", "Pommard", "Wadenswil", "76", "96", "Other"];
+// Starter spray programs — rename, remove, or add more via the Vineyard work order picker or
+// the Manage Lists panel under Backup; this is just a reasonable starting point.
+const SPRAY_PROGRAMS = ["Powdery Mildew Program", "Botrytis Program", "Downy Mildew Program", "Organic IPM"];
 
 // ---------- Simple sections (single-form, single-log) ----------
 const SIMPLE_SECTIONS = [
@@ -147,9 +156,9 @@ const SIMPLE_SECTIONS = [
       { name: "clone", label: "Clone", type: "clone-picker" },
       { name: "tons", label: "Gross Tons", type: "number" },
       { name: "lbs", label: "Gross Lbs", type: "number" },
-      { name: "tareWeight", label: "Tare Weight (lbs)", type: "number" },
-      { name: "netTons", label: "Net Tons", type: "number" },
-      { name: "netLbs", label: "Net Lbs", type: "number" },
+      { name: "tareWeight", label: "Tare Weight (lbs)", type: "number", optional: true },
+      { name: "netTons", label: "Net Tons", type: "number", optional: true },
+      { name: "netLbs", label: "Net Lbs", type: "number", optional: true },
       { name: "weighMaster", label: "Weigh Master", type: "select", options: CREW_MEMBERS },
       { name: "notes", label: "Notes", type: "textarea" },
     ],
@@ -212,6 +221,43 @@ const SIMPLE_SECTIONS = [
       { name: "notes", label: "Notes", type: "textarea" },
     ],
   },
+  {
+    key: "vineHealth",
+    label: "Vine Health",
+    icon: Sprout,
+    sheetName: "Vine Health",
+    fields: [
+      { name: "date", label: "Date", type: "date" },
+      { name: "block", label: "Block / Vineyard", type: "block-picker" },
+      { name: "observationType", label: "Observation Type", type: "select", options: ["Phenology Stage", "Pest Pressure", "Disease Alert"] },
+      { name: "phenologyStage", label: "Phenology Stage (if Phenology)", type: "select", options: ["Bud Break", "Flowering", "Fruit Set", "Veraison"] },
+      { name: "pestType", label: "Pest (if Pest Pressure)", type: "text" },
+      { name: "diseaseType", label: "Disease (if Disease Alert)", type: "text" },
+      { name: "severity", label: "Severity (if Pest or Disease)", type: "select", options: ["Low", "Medium", "High"] },
+      { name: "notes", label: "Notes", type: "textarea" },
+    ],
+  },
+  {
+    key: "thoTimesheets",
+    label: "Timesheets",
+    icon: Clock,
+    sheetName: "Timesheets",
+    fields: [
+      { name: "date", label: "Date", type: "date" },
+      { name: "employeeName", label: "Associate", type: "associate-picker" },
+      { name: "hoursWorked", label: "Hours Worked", type: "number" },
+    ],
+  },
+  {
+    key: "thoTips",
+    label: "Tips",
+    icon: DollarSign,
+    sheetName: "Tips",
+    fields: [
+      { name: "date", label: "Date", type: "date" },
+      { name: "totalTips", label: "Total Pooled Tips ($)", type: "number" },
+    ],
+  },
 ];
 
 // Work order fields shown when adding a new to-do
@@ -224,6 +270,7 @@ const WORKORDER_FIELDS = [
   { name: "taskType", label: "Task Type", type: "select", options: TASK_TYPES },
   { name: "additionType", label: "Addition Type (if Additions)", type: "select", options: ADDITION_TYPES },
   { name: "fermentStage", label: "Fermentation Stage (if Fermentation)", type: "select", options: FERMENT_WORK_STAGES },
+  { name: "sprayProgram", label: "Spray Program (if Spray / Pest Management)", type: "spray-program-picker" },
   { name: "lots", label: "Lots", type: "lots-picker" },
   { name: "barrels", label: "Barrels", type: "barrels-picker" },
   { name: "calculations", label: "Calculations", type: "textarea" },
@@ -676,6 +723,7 @@ const ALL_TABS = [
   { key: "workorders", label: "Work Orders", icon: ClipboardList },
   SIMPLE_SECTIONS.find((s) => s.key === "fruitAnalysis"),
   SIMPLE_SECTIONS.find((s) => s.key === "harvest"),
+  SIMPLE_SECTIONS.find((s) => s.key === "vineHealth"),
   { key: "ferment", label: "Fermentation", icon: FlaskConical },
   { key: "barrels", label: "Barrels", icon: Package },
   { key: "blending", label: "Blending", icon: Wine },
@@ -683,6 +731,9 @@ const ALL_TABS = [
   SIMPLE_SECTIONS.find((s) => s.key === "bottling"),
   SIMPLE_SECTIONS.find((s) => s.key === "labResults"),
   { key: "techSheets", label: "Tech Sheets", icon: FileText },
+  { key: "thoPayout", label: "Payout Calculator", icon: Calculator },
+  SIMPLE_SECTIONS.find((s) => s.key === "thoTimesheets"),
+  SIMPLE_SECTIONS.find((s) => s.key === "thoTips"),
   { key: "calendar", label: "Calendar", icon: Calendar },
   { key: "formulas", label: "Formulas", icon: Calculator },
   { key: "backup", label: "Backup", icon: HardDrive },
@@ -697,8 +748,9 @@ const PERSISTENT_NAV_KEYS = ["home", "workorders"];
 // second row; clicking a tab within it is remembered, so returning to that category later goes
 // straight back to where you left off instead of resetting to the first tab every time.
 const NAV_CATEGORIES = {
-  vineyard: { label: "Vineyard", dotColor: "bg-lime-400", keys: ["fruitAnalysis", "harvest"] },
+  vineyard: { label: "Vineyard", dotColor: "bg-lime-400", keys: ["fruitAnalysis", "harvest", "vineHealth"] },
   winery: { label: "Winery", dotColor: "bg-amber-400", keys: ["ferment", "barrels", "blending", "tanks", "bottling"] },
+  tho: { label: "THO", dotColor: "bg-rose-400", keys: ["thoPayout", "thoTimesheets", "thoTips"] },
   data: { label: "Data", dotColor: "bg-sky-300", keys: ["labResults", "techSheets", "calendar", "formulas", "backup"] },
 };
 
@@ -935,6 +987,9 @@ const CATEGORY_META = {
   "Bottling": { word: "Bottled", pill: "bg-violet-50 text-violet-700" },
   "Tastings": { word: "Tasted", pill: "bg-pink-50 text-pink-700" },
   "Weather": { word: "Weather", pill: "bg-blue-50 text-blue-700" },
+  "Phenology": { word: "Phenology", pill: "bg-lime-50 text-lime-700" },
+  "Pest Alert": { word: "Pest Alert", pill: "bg-orange-50 text-orange-700" },
+  "Disease Alert": { word: "Disease Alert", pill: "bg-red-50 text-red-700" },
 };
 
 // Flattens every section's dated activity into a single { isoDate: [events] } map
@@ -1021,6 +1076,16 @@ function buildCalendarEvents(data) {
       `${high} / ${low}${w.conditionLabel ? " — " + w.conditionLabel : ""}`,
       `${w.humidity != null ? "Humidity " + w.humidity + "%" : ""}${w.windMph != null ? " · Wind " + Math.round(w.windMph) + " mph" : ""}${w.gddTotal != null ? " · GDD " + w.gddTotal : ""}`
     );
+  });
+
+  (data.vineHealth || []).forEach((v) => {
+    if (v.observationType === "Phenology Stage" && v.phenologyStage) {
+      add(v.date, "Phenology", `${v.phenologyStage}${v.block ? " — " + v.block : ""}`, v.notes || "");
+    } else if (v.observationType === "Pest Pressure") {
+      add(v.date, "Pest Alert", `${v.pestType || "Pest"}${v.block ? " — " + v.block : ""}${v.severity ? " (" + v.severity + ")" : ""}`, v.notes || "");
+    } else if (v.observationType === "Disease Alert") {
+      add(v.date, "Disease Alert", `${v.diseaseType || "Disease"}${v.block ? " — " + v.block : ""}${v.severity ? " (" + v.severity + ")" : ""}`, v.notes || "");
+    }
   });
 
   return map;
@@ -1245,7 +1310,7 @@ function AddableSelectField({ value, onChange, options, onAddOption, addLabel })
   );
 }
 
-function Field({ f, value, onChange, hideLabel, fermentLots, barrelsList, blocksList, onAddBlock, vesselTypesList, onAddVesselType, lotNamesList, onRegisterLotName, clonesList, onAddClone }) {
+function Field({ f, value, onChange, hideLabel, fermentLots, barrelsList, blocksList, onAddBlock, vesselTypesList, onAddVesselType, lotNamesList, onRegisterLotName, clonesList, onAddClone, sprayProgramsList, onAddSprayProgram, associatesList, onAddAssociate }) {
   return (
     <div className={f.type === "textarea" || f.type === "checkbox-group" || f.type === "lots-picker" || f.type === "barrels-picker" ? "sm:col-span-2" : ""}>
       {!hideLabel && <label className="font-body block text-xs font-medium text-stone-600 mb-1">{f.label}</label>}
@@ -1297,6 +1362,10 @@ function Field({ f, value, onChange, hideLabel, fermentLots, barrelsList, blocks
         <AddableSelectField value={value} onChange={onChange} options={vesselTypesList || []} onAddOption={onAddVesselType} addLabel="New vessel name" />
       ) : f.type === "clone-picker" ? (
         <AddableSelectField value={value} onChange={onChange} options={clonesList || []} onAddOption={onAddClone} addLabel="New clone" />
+      ) : f.type === "spray-program-picker" ? (
+        <AddableSelectField value={value} onChange={onChange} options={sprayProgramsList || []} onAddOption={onAddSprayProgram} addLabel="New spray program" />
+      ) : f.type === "associate-picker" ? (
+        <AddableSelectField value={value} onChange={onChange} options={associatesList || []} onAddOption={onAddAssociate} addLabel="New tasting associate" />
       ) : f.type === "photo" ? (
         <div>
           <input
@@ -1340,7 +1409,7 @@ function Field({ f, value, onChange, hideLabel, fermentLots, barrelsList, blocks
 }
 
 // ---------- Work order checklist row ----------
-function WorkOrderRow({ order, onToggle, onDelete, onDuplicate, onSaveAsTemplate, isEditing, editForm, onEditChange, onStartEdit, onSaveEdit, onCancelEdit, fermentLots, barrelsList, lotNamesList, onRegisterLotName }) {
+function WorkOrderRow({ order, onToggle, onDelete, onDuplicate, onSaveAsTemplate, isEditing, editForm, onEditChange, onStartEdit, onSaveEdit, onCancelEdit, fermentLots, barrelsList, lotNamesList, onRegisterLotName, sprayProgramsList, onAddSprayProgram }) {
   const isComplete = order.status === "Complete";
 
   if (isEditing) {
@@ -1352,7 +1421,18 @@ function WorkOrderRow({ order, onToggle, onDelete, onDuplicate, onSaveAsTemplate
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
           {visibleFields.map((f) => (
-            <Field key={f.name} f={f} value={editForm[f.name]} onChange={(v) => onEditChange(f.name, v)} fermentLots={fermentLots} barrelsList={barrelsList} lotNamesList={lotNamesList} onRegisterLotName={onRegisterLotName} />
+            <Field
+              key={f.name}
+              f={f}
+              value={editForm[f.name]}
+              onChange={(v) => onEditChange(f.name, v)}
+              fermentLots={fermentLots}
+              barrelsList={barrelsList}
+              lotNamesList={lotNamesList}
+              onRegisterLotName={onRegisterLotName}
+              sprayProgramsList={sprayProgramsList}
+              onAddSprayProgram={onAddSprayProgram}
+            />
           ))}
         </div>
         <div className="flex items-center gap-3">
@@ -1518,7 +1598,7 @@ function TemplateRow({ template, onUse, onDelete }) {
 }
 
 
-function ArchiveGroup({ label, orders, onToggle, onDelete, onDuplicate, onSaveAsTemplate, editingWorkOrderId, editWorkOrderForm, onEditChange, onStartEdit, onSaveEdit, onCancelEdit, fermentLots, barrelsList, lotNamesList, onRegisterLotName }) {
+function ArchiveGroup({ label, orders, onToggle, onDelete, onDuplicate, onSaveAsTemplate, editingWorkOrderId, editWorkOrderForm, onEditChange, onStartEdit, onSaveEdit, onCancelEdit, fermentLots, barrelsList, lotNamesList, onRegisterLotName, sprayProgramsList, onAddSprayProgram }) {
   const [expanded, setExpanded] = useState(false);
   return (
     <div className="border-b border-stone-100 last:border-b-0">
@@ -1549,6 +1629,8 @@ function ArchiveGroup({ label, orders, onToggle, onDelete, onDuplicate, onSaveAs
               barrelsList={barrelsList}
               lotNamesList={lotNamesList}
               onRegisterLotName={onRegisterLotName}
+              sprayProgramsList={sprayProgramsList}
+              onAddSprayProgram={onAddSprayProgram}
             />
           ))}
         </ul>
@@ -2738,6 +2820,225 @@ function TechSheetDocument({ sheet, harvestEntries, onPrint, onClose }) {
   );
 }
 
+// ---------- THO Payout Calculator: combines Timesheets + Tips into a per-associate payout,
+// using either exact hours worked or half-day/full-day shares — computed per day/shift, then
+// summed across the selected range, so a busy day's tips aren't blended evenly with a slow one. ----------
+function computeTipPayout(timesheets, tips, startDate, endDate, method, halfShareWeight, fullShareWeight) {
+  const inRange = (d) => (!startDate || d >= startDate) && (!endDate || d <= endDate);
+  const timesheetsByDate = {};
+  timesheets.filter((t) => inRange(t.date)).forEach((t) => {
+    if (!timesheetsByDate[t.date]) timesheetsByDate[t.date] = [];
+    timesheetsByDate[t.date].push(t);
+  });
+  const tipsByDate = {};
+  tips.filter((t) => inRange(t.date)).forEach((t) => {
+    tipsByDate[t.date] = (tipsByDate[t.date] || 0) + (parseFloat(t.totalTips) || 0);
+  });
+
+  const payoutByEmployee = {};
+  const warnings = [];
+  const dayBreakdown = [];
+  const allDates = [...new Set([...Object.keys(timesheetsByDate), ...Object.keys(tipsByDate)])].sort();
+
+  allDates.forEach((date) => {
+    const dayEntries = timesheetsByDate[date] || [];
+    const dayTips = tipsByDate[date] || 0;
+
+    if (dayEntries.length === 0 && dayTips > 0) {
+      warnings.push(`No timesheet data for ${date} — $${dayTips.toFixed(2)} in tips couldn't be distributed.`);
+      return;
+    }
+    if (dayEntries.length > 0 && dayTips === 0) {
+      warnings.push(`No tips recorded for ${date} — that day's hours won't generate a tip-out.`);
+    }
+    if (dayTips === 0 || dayEntries.length === 0) return;
+
+    const dayResult = [];
+    if (method === "shares") {
+      const totalShares = dayEntries.reduce((sum, t) => sum + ((parseFloat(t.hoursWorked) || 0) >= 4 ? fullShareWeight : halfShareWeight), 0);
+      if (totalShares > 0) {
+        dayEntries.forEach((t) => {
+          const hours = parseFloat(t.hoursWorked) || 0;
+          const shareWeight = hours >= 4 ? fullShareWeight : halfShareWeight;
+          const amount = (shareWeight / totalShares) * dayTips;
+          dayResult.push({ employeeName: t.employeeName, hours, amount });
+        });
+      }
+    } else {
+      const totalHours = dayEntries.reduce((sum, t) => sum + (parseFloat(t.hoursWorked) || 0), 0);
+      if (totalHours > 0) {
+        dayEntries.forEach((t) => {
+          const hours = parseFloat(t.hoursWorked) || 0;
+          const amount = (hours / totalHours) * dayTips;
+          dayResult.push({ employeeName: t.employeeName, hours, amount });
+        });
+      }
+    }
+
+    dayResult.forEach(({ employeeName, hours, amount }) => {
+      if (!payoutByEmployee[employeeName]) payoutByEmployee[employeeName] = { totalHours: 0, totalPayout: 0 };
+      payoutByEmployee[employeeName].totalHours += hours;
+      payoutByEmployee[employeeName].totalPayout += amount;
+    });
+    dayBreakdown.push({ date, tips: dayTips, entries: dayResult });
+  });
+
+  const rows = Object.entries(payoutByEmployee)
+    .map(([employeeName, v]) => ({ employeeName, totalHours: Math.round(v.totalHours * 100) / 100, totalPayout: Math.round(v.totalPayout * 100) / 100 }))
+    .sort((a, b) => a.employeeName.localeCompare(b.employeeName));
+
+  return { rows, warnings, dayBreakdown, totalTips: Object.values(tipsByDate).reduce((s, v) => s + v, 0) };
+}
+
+function THOPayoutCalculator({ data }) {
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [method, setMethod] = useState("hours");
+  const [halfShareWeight, setHalfShareWeight] = useState("0.5");
+  const [fullShareWeight, setFullShareWeight] = useState("1");
+
+  const result = computeTipPayout(
+    data.thoTimesheets,
+    data.thoTips,
+    startDate,
+    endDate,
+    method,
+    parseFloat(halfShareWeight) || 0,
+    parseFloat(fullShareWeight) || 0
+  );
+
+  const exportPayout = () => {
+    const wb = XLSX.utils.book_new();
+    const methodLabel = method === "shares" ? `Half/Full Day Shares (${halfShareWeight} / ${fullShareWeight})` : "By Hours Worked";
+    const summaryAoa = [
+      ["Alloro Winery Tracker — Tasting House Tip Payout"],
+      ["Period:", `${startDate || "all dates"} to ${endDate || "all dates"}`],
+      ["Method:", methodLabel],
+      ["Total Tips in Period:", `$${result.totalTips.toFixed(2)}`],
+      [],
+      ["Associate", "Total Hours", "Payout ($)"],
+      ...result.rows.map((r) => [r.employeeName, r.totalHours, r.totalPayout]),
+      [],
+      ["Total", result.rows.reduce((s, r) => s + r.totalHours, 0), result.rows.reduce((s, r) => s + r.totalPayout, 0)],
+    ];
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryAoa);
+    XLSX.utils.book_append_sheet(wb, summarySheet, "Payout Summary");
+
+    const timesheetSheet = XLSX.utils.aoa_to_sheet([
+      ["Date", "Associate", "Hours Worked"],
+      ...data.thoTimesheets.filter((t) => (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate)).map((t) => [t.date, t.employeeName, t.hoursWorked]),
+    ]);
+    XLSX.utils.book_append_sheet(wb, timesheetSheet, "Timesheets");
+
+    const tipsSheet = XLSX.utils.aoa_to_sheet([
+      ["Date", "Total Pooled Tips"],
+      ...data.thoTips.filter((t) => (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate)).map((t) => [t.date, t.totalTips]),
+    ]);
+    XLSX.utils.book_append_sheet(wb, tipsSheet, "Tips");
+
+    XLSX.writeFile(wb, `tho-tip-payout-${startDate || "all"}-to-${endDate || "all"}.xlsx`);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
+        <h2 className="font-brand text-lg text-emerald-950 mb-1">Payout Calculator</h2>
+        <p className="font-body text-xs text-stone-500 mb-4">
+          Combines Timesheets and Tips for the period below into a payout per associate, split per day so a busy shift's tips don't get evenly blended with a slow one.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          <div>
+            <label className="font-body block text-xs font-medium text-stone-600 mb-1">Start Date</label>
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800" />
+          </div>
+          <div>
+            <label className="font-body block text-xs font-medium text-stone-600 mb-1">End Date</label>
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800" />
+          </div>
+        </div>
+
+        <label className="font-body block text-xs font-medium text-stone-600 mb-1">Distribution Method</label>
+        <div className="flex gap-2 mb-3">
+          <button
+            onClick={() => setMethod("hours")}
+            className={`font-body text-sm font-medium px-3 py-2 rounded-md border ${method === "hours" ? "bg-emerald-900 text-white border-emerald-900" : "bg-white text-stone-600 border-stone-300"}`}
+          >
+            By Hours Worked
+          </button>
+          <button
+            onClick={() => setMethod("shares")}
+            className={`font-body text-sm font-medium px-3 py-2 rounded-md border ${method === "shares" ? "bg-emerald-900 text-white border-emerald-900" : "bg-white text-stone-600 border-stone-300"}`}
+          >
+            Half-Day / Full-Day Shares
+          </button>
+        </div>
+
+        {method === "shares" && (
+          <div className="bg-stone-50 border border-stone-200 rounded-md p-3 mb-3">
+            <p className="font-body text-xs text-stone-500 mb-2">Under 4 hours worked in a day = Half Day. 4+ hours = Full Day.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="font-body block text-xs font-medium text-stone-600 mb-1">Half Day Share</label>
+                <input type="number" step="0.1" value={halfShareWeight} onChange={(e) => setHalfShareWeight(e.target.value)} className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm" />
+              </div>
+              <div>
+                <label className="font-body block text-xs font-medium text-stone-600 mb-1">Full Day Share</label>
+                <input type="number" step="0.1" value={fullShareWeight} onChange={(e) => setFullShareWeight(e.target.value)} className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm" />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {result.warnings.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-3">
+            {result.warnings.map((w, i) => (
+              <p key={i} className="font-body text-xs text-amber-800">{w}</p>
+            ))}
+          </div>
+        )}
+
+        <button
+          onClick={exportPayout}
+          disabled={result.rows.length === 0}
+          className="font-body flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 disabled:opacity-40 text-white text-sm font-medium px-4 py-2 rounded-md"
+        >
+          <Download size={16} /> Export for Accounting
+        </button>
+      </div>
+
+      <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
+        <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
+          <h2 className="font-brand text-lg text-emerald-950">Payout Summary</h2>
+          <span className="font-body text-xs text-stone-500">Total tips: ${result.totalTips.toFixed(2)}</span>
+        </div>
+        {result.rows.length === 0 ? (
+          <p className="font-body text-sm text-stone-500 px-4 py-8 text-center">
+            No overlapping Timesheets and Tips data for this period yet.
+          </p>
+        ) : (
+          <table className="w-full text-sm font-body">
+            <thead>
+              <tr className="text-left text-stone-500 bg-stone-50">
+                <th className="px-4 py-2">Associate</th>
+                <th className="px-4 py-2">Total Hours</th>
+                <th className="px-4 py-2">Payout</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.rows.map((r) => (
+                <tr key={r.employeeName} className="border-t border-stone-100">
+                  <td className="px-4 py-2 text-stone-800">{r.employeeName}</td>
+                  <td className="px-4 py-2 text-stone-600">{r.totalHours}</td>
+                  <td className="px-4 py-2 text-stone-800 font-medium">${r.totalPayout.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const FERMENT_STAGES = ["Started", "Primary Complete", "ML In Progress", "ML Complete"];
 
@@ -5055,7 +5356,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
   );
 }
 
-function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, editWorkOrderForm, editWorkOrderChange, startEditWorkOrder, saveEditWorkOrder, cancelEditWorkOrder, duplicateWorkOrder, saveAsTemplate, lotNames, onRegisterLotName, onLogWeather }) {
+function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, editWorkOrderForm, editWorkOrderChange, startEditWorkOrder, saveEditWorkOrder, cancelEditWorkOrder, duplicateWorkOrder, saveAsTemplate, lotNames, onRegisterLotName, onLogWeather, sprayPrograms, onAddSprayProgram }) {
   const [weather, setWeather] = useState(null);
   const [gdd, setGdd] = useState(null);
   const [weatherError, setWeatherError] = useState("");
@@ -5072,7 +5373,8 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
         const { lat, lon, tz } = HOME_COORDS;
         const forecastUrl =
           `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-          `&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m` +
+          `&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,shortwave_radiation` +
+          `&hourly=soil_moisture_0_to_1cm,soil_moisture_9_to_27cm` +
           `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,sunrise,sunset` +
           `&past_days=7&forecast_days=6&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=${encodeURIComponent(tz)}`;
         const res = await fetch(forecastUrl);
@@ -5170,6 +5472,24 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
   const sunset = dailyIdx >= 0 ? weather.daily.sunset[dailyIdx]?.slice(11) : null;
   const frostRisk = todayLow != null && todayLow <= 34;
 
+  // Soil moisture is hourly data, not part of the "current" convenience block — find the hour
+  // matching (or just before) right now to use as a stand-in for "current" soil moisture.
+  const hourlyTime = weather?.hourly?.time || [];
+  let nowHourIdx = -1;
+  if (current?.time) {
+    nowHourIdx = hourlyTime.indexOf(current.time.slice(0, 13) + ":00");
+    if (nowHourIdx === -1) {
+      for (let i = hourlyTime.length - 1; i >= 0; i--) {
+        if (hourlyTime[i] <= current.time) {
+          nowHourIdx = i;
+          break;
+        }
+      }
+    }
+  }
+  const soilMoistureSurface = nowHourIdx >= 0 ? weather.hourly.soil_moisture_0_to_1cm?.[nowHourIdx] : null;
+  const soilMoistureRootZone = nowHourIdx >= 0 ? weather.hourly.soil_moisture_9_to_27cm?.[nowHourIdx] : null;
+
   // Next 5 days, starting from tomorrow
   const upcoming =
     dailyIdx >= 0 ? weather.daily.time.slice(dailyIdx + 1, dailyIdx + 6).map((d, i) => {
@@ -5246,6 +5566,7 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
                 <p className="flex items-center gap-1.5"><Sunrise size={14} className="text-stone-400" /> Sunrise {sunrise || "—"}</p>
                 <p className="flex items-center gap-1.5"><Sunset size={14} className="text-stone-400" /> Sunset {sunset || "—"}</p>
                 <p className="flex items-center gap-1.5"><CloudRain size={14} className="text-stone-400" /> Rain today {weather?.current?.precipitation != null ? `${weather.current.precipitation}"` : "—"}</p>
+                <p className="flex items-center gap-1.5"><Sun size={14} className="text-stone-400" /> Solar {current?.shortwave_radiation != null ? `${Math.round(current.shortwave_radiation)} W/m²` : "—"}</p>
               </div>
             </div>
 
@@ -5350,6 +5671,31 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
         </div>
       </div>
 
+      {/* Soil Moisture */}
+      <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
+        <h3 className="font-brand text-lg text-emerald-950 mb-1">Soil Moisture</h3>
+        <p className="font-body text-xs text-stone-500 mb-3">
+          Modeled from regional weather data — not a sensor in your actual vineyard. Useful for spotting broad trends, especially for dry-farming decisions, but treat as a rough regional estimate, not ground-truth for a specific block.
+        </p>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="font-body text-xs text-stone-500">Surface (0–1 cm)</p>
+            <p className="font-brand text-2xl text-emerald-950">
+              {soilMoistureSurface != null ? `${Math.round(soilMoistureSurface * 100)}%` : "—"}
+            </p>
+          </div>
+          <div>
+            <p className="font-body text-xs text-stone-500">Root Zone (9–27 cm)</p>
+            <p className="font-brand text-2xl text-emerald-950">
+              {soilMoistureRootZone != null ? `${Math.round(soilMoistureRootZone * 100)}%` : "—"}
+            </p>
+          </div>
+        </div>
+        <p className="font-body text-xs text-stone-400 mt-3">
+          Shown as approximate volumetric water content. If you ever install an actual soil moisture probe on-site, tell me — I can add that as a real data source instead of this regional estimate.
+        </p>
+      </div>
+
       {/* Active Fermentations */}
       <MultiLotFermentChart lots={data.ferment.filter((l) => l.status === "Active")} />
 
@@ -5386,6 +5732,8 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
                 barrelsList={data.barrels}
                 lotNamesList={lotNames}
                 onRegisterLotName={onRegisterLotName}
+                sprayProgramsList={sprayPrograms}
+                onAddSprayProgram={onAddSprayProgram}
               />
             ))}
           </ul>
@@ -5707,7 +6055,7 @@ function BlendComponentsPicker({ value, onChange, barrelsList }) {
 }
 
 // ---------- One saved blend trial, with its computed rating profile ----------
-function BlendCard({ blend, barrelsList, tastings, checked, onToggleCompare, onDelete }) {
+function BlendCard({ blend, barrelsList, tastings, checked, onToggleCompare, onDelete, onEdit }) {
   const [expanded, setExpanded] = useState(false);
   const result = computeBlendProfile(blend, tastings);
 
@@ -5757,9 +6105,14 @@ function BlendCard({ blend, barrelsList, tastings, checked, onToggleCompare, onD
             </div>
           )}
         </div>
-        <button onClick={() => onDelete(blend.id)} className="text-stone-300 hover:text-red-700 shrink-0" title="Delete blend">
-          <Trash2 size={15} />
-        </button>
+        <div className="flex flex-col gap-1.5 shrink-0">
+          <button onClick={() => onEdit(blend)} className="text-stone-300 hover:text-emerald-800" title="Edit blend">
+            <Pencil size={15} />
+          </button>
+          <button onClick={() => onDelete(blend.id)} className="text-stone-300 hover:text-red-700" title="Delete blend">
+            <Trash2 size={15} />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -5814,10 +6167,22 @@ function BlendComparisonTable({ blends, tastings }) {
 }
 
 // ---------- Blends sub-section: builder + list + comparison ----------
-function BlendsSection({ data, onAdd, onDelete }) {
+function BlendsSection({ data, onAdd, onUpdate, onDelete }) {
   const [form, setForm] = useState({ name: "", tier: "", notes: "", components: [] });
   const [error, setError] = useState("");
   const [compareIds, setCompareIds] = useState(new Set());
+  const [editingBlendId, setEditingBlendId] = useState(null);
+
+  const startEdit = (blend) => {
+    setEditingBlendId(blend.id);
+    setForm({ name: blend.name || "", tier: blend.tier || "", notes: blend.notes || "", components: blend.components || [] });
+    setError("");
+  };
+  const cancelEdit = () => {
+    setEditingBlendId(null);
+    setForm({ name: "", tier: "", notes: "", components: [] });
+    setError("");
+  };
 
   const submit = (e) => {
     e.preventDefault();
@@ -5830,7 +6195,12 @@ function BlendsSection({ data, onAdd, onDelete }) {
       return;
     }
     setError("");
-    onAdd(form);
+    if (editingBlendId) {
+      onUpdate(editingBlendId, form);
+      setEditingBlendId(null);
+    } else {
+      onAdd(form);
+    }
     setForm({ name: "", tier: "", notes: "", components: [] });
   };
 
@@ -5847,7 +6217,7 @@ function BlendsSection({ data, onAdd, onDelete }) {
   return (
     <div className="space-y-6">
       <form onSubmit={submit} className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-3">Create a Blend Trial</h2>
+        <h2 className="font-brand text-lg text-emerald-950 mb-3">{editingBlendId ? "Edit Blend Trial" : "Create a Blend Trial"}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
           <div>
             <label className="font-body block text-xs font-medium text-stone-600 mb-1">Blend Name</label>
@@ -5882,12 +6252,20 @@ function BlendsSection({ data, onAdd, onDelete }) {
           />
         </div>
         {error && <p className="font-body text-sm text-red-700 mt-3">{error}</p>}
-        <button
-          type="submit"
-          className="font-body mt-4 flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2 rounded-md"
-        >
-          <Plus size={16} /> Save Blend
-        </button>
+        <div className="flex items-center gap-3 mt-4">
+          <button
+            type="submit"
+            className="font-body flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2 rounded-md"
+          >
+            {editingBlendId ? <Check size={16} /> : <Plus size={16} />}
+            {editingBlendId ? "Update Blend" : "Save Blend"}
+          </button>
+          {editingBlendId && (
+            <button type="button" onClick={cancelEdit} className="font-body text-sm text-stone-500 hover:text-stone-700">
+              Cancel
+            </button>
+          )}
+        </div>
       </form>
 
       {compareBlends.length >= 2 && <BlendComparisonTable blends={compareBlends} tastings={data.tastings} />}
@@ -5910,6 +6288,7 @@ function BlendsSection({ data, onAdd, onDelete }) {
                 checked={compareIds.has(b.id)}
                 onToggleCompare={() => toggleCompare(b.id)}
                 onDelete={onDelete}
+                onEdit={startEdit}
               />
             ))}
           </div>
@@ -5920,7 +6299,7 @@ function BlendsSection({ data, onAdd, onDelete }) {
 }
 
 // ---------- Blending tab: barrel tastings + blend building + comparison ----------
-function BlendingTab({ data, onAddTasting, onUpdateTasting, onDeleteTasting, onAddBlend, onDeleteBlend }) {
+function BlendingTab({ data, onAddTasting, onUpdateTasting, onDeleteTasting, onAddBlend, onUpdateBlend, onDeleteBlend }) {
   const [subTab, setSubTab] = useState("tastings");
   return (
     <div className="space-y-6">
@@ -5945,7 +6324,7 @@ function BlendingTab({ data, onAddTasting, onUpdateTasting, onDeleteTasting, onA
       {subTab === "tastings" ? (
         <TastingsSection data={data} onAdd={onAddTasting} onUpdate={onUpdateTasting} onDelete={onDeleteTasting} />
       ) : (
-        <BlendsSection data={data} onAdd={onAddBlend} onDelete={onDeleteBlend} />
+        <BlendsSection data={data} onAdd={onAddBlend} onUpdate={onUpdateBlend} onDelete={onDeleteBlend} />
       )}
     </div>
   );
@@ -6058,7 +6437,7 @@ function ManageListPanel({ title, description, items, onAdd, onRename, onDelete,
   );
 }
 
-function BackupTab({ data, woCounter, onRestore, confirmAction, vineyardBlocks, onAddBlock, onRenameBlock, onDeleteBlock, vesselTypes, onAddVesselType, onRenameVesselType, onDeleteVesselType, lotNames, onAddLotName, onRenameLotName, onDeleteLotName, clones, onAddClone, onRenameClone, onDeleteClone }) {
+function BackupTab({ data, woCounter, onRestore, confirmAction, vineyardBlocks, onAddBlock, onRenameBlock, onDeleteBlock, vesselTypes, onAddVesselType, onRenameVesselType, onDeleteVesselType, lotNames, onAddLotName, onRenameLotName, onDeleteLotName, clones, onAddClone, onRenameClone, onDeleteClone, sprayPrograms, onAddSprayProgram, onRenameSprayProgram, onDeleteSprayProgram, tastingAssociates, onAddAssociate, onRenameAssociate, onDeleteAssociate }) {
   const [restoreError, setRestoreError] = useState("");
 
   const downloadBackup = () => {
@@ -6204,6 +6583,28 @@ function BackupTab({ data, woCounter, onRestore, confirmAction, vineyardBlocks, 
         confirmAction={confirmAction}
         addPlaceholder="New clone, e.g. 667"
       />
+
+      <ManageListPanel
+        title="Spray Programs"
+        description="Used on Vineyard work orders tagged Spray / Pest Management."
+        items={sprayPrograms}
+        onAdd={onAddSprayProgram}
+        onRename={onRenameSprayProgram}
+        onDelete={onDeleteSprayProgram}
+        confirmAction={confirmAction}
+        addPlaceholder="New spray program"
+      />
+
+      <ManageListPanel
+        title="Tasting Associates"
+        description="Used in THO Timesheets — keeping names consistent here is what lets the Payout Calculator match hours to tips correctly."
+        items={tastingAssociates}
+        onAdd={onAddAssociate}
+        onRename={onRenameAssociate}
+        onDelete={onDeleteAssociate}
+        confirmAction={confirmAction}
+        addPlaceholder="New tasting associate"
+      />
     </div>
   );
 }
@@ -6316,6 +6717,8 @@ export default function WineryDataTracker() {
   const [woCounter, setWoCounter] = useState(1);
   const [vineyardBlocks, setVineyardBlocks] = useState(VINEYARD_BLOCKS);
   const [clones, setClones] = useState(GRAPE_CLONES);
+  const [sprayPrograms, setSprayPrograms] = useState(SPRAY_PROGRAMS);
+  const [tastingAssociates, setTastingAssociates] = useState(TASTING_ASSOCIATES);
   const [defaultTareWeight, setDefaultTareWeight] = useState("");
   const [vesselTypes, setVesselTypes] = useState(VESSEL_TYPES);
   const [lotNames, setLotNames] = useState([]);
@@ -6408,6 +6811,20 @@ export default function WineryDataTracker() {
         if (res && !cancelled) setClones(JSON.parse(res.value));
       } catch {
         storage.set("clones", JSON.stringify(GRAPE_CLONES), true).catch(() => {});
+      }
+
+      try {
+        const res = await storage.get("spray_programs", true);
+        if (res && !cancelled) setSprayPrograms(JSON.parse(res.value));
+      } catch {
+        storage.set("spray_programs", JSON.stringify(SPRAY_PROGRAMS), true).catch(() => {});
+      }
+
+      try {
+        const res = await storage.get("tasting_associates", true);
+        if (res && !cancelled) setTastingAssociates(JSON.parse(res.value));
+      } catch {
+        storage.set("tasting_associates", JSON.stringify(TASTING_ASSOCIATES), true).catch(() => {});
       }
 
       try {
@@ -6606,7 +7023,7 @@ export default function WineryDataTracker() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const missing = activeSection.fields.find((f) => f.type !== "textarea" && !String(form[f.name]).trim());
+    const missing = activeSection.fields.find((f) => f.type !== "textarea" && !f.optional && !String(form[f.name]).trim());
     if (missing) {
       setError(`Please fill in "${missing.label}"`);
       return;
@@ -6692,7 +7109,7 @@ export default function WineryDataTracker() {
   const saveEditRow = async () => {
     if (!editingRow) return;
     const section = SIMPLE_SECTIONS.find((s) => s.key === editingRow.key);
-    const missing = section.fields.find((f) => f.type !== "textarea" && f.type !== "photo" && !String(editingRow.form[f.name] ?? "").trim());
+    const missing = section.fields.find((f) => f.type !== "textarea" && f.type !== "photo" && !f.optional && !String(editingRow.form[f.name] ?? "").trim());
     if (missing) {
       setError(`Please fill in "${missing.label}"`);
       return;
@@ -6775,6 +7192,62 @@ export default function WineryDataTracker() {
     const updated = clones.filter((c) => c !== name);
     setClones(updated);
     await persist("clones", updated);
+  };
+
+  const addSprayProgram = (name) => {
+    setSprayPrograms((prev) => {
+      if (prev.includes(name)) return prev;
+      const updated = [...prev, name].sort((a, b) => a.localeCompare(b));
+      storage.set("spray_programs", JSON.stringify(updated), true).catch(() => {
+        setSaveError("Your last change didn't save — check your connection and try again.");
+      });
+      return updated;
+    });
+  };
+
+  const renameSprayProgram = async (oldName, newName) => {
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === oldName) return;
+    const updated = sprayPrograms.map((s) => (s === oldName ? trimmed : s)).sort((a, b) => a.localeCompare(b));
+    setSprayPrograms(updated);
+    await persist("spray_programs", updated);
+    const updatedOrders = data.workorders.map((o) => (o.sprayProgram === oldName ? { ...o, sprayProgram: trimmed } : o));
+    setData((prev) => ({ ...prev, workorders: updatedOrders }));
+    await persist("workorders", updatedOrders);
+  };
+
+  const deleteSprayProgram = async (name) => {
+    const updated = sprayPrograms.filter((s) => s !== name);
+    setSprayPrograms(updated);
+    await persist("spray_programs", updated);
+  };
+
+  const addAssociate = (name) => {
+    setTastingAssociates((prev) => {
+      if (prev.includes(name)) return prev;
+      const updated = [...prev, name].sort((a, b) => a.localeCompare(b));
+      storage.set("tasting_associates", JSON.stringify(updated), true).catch(() => {
+        setSaveError("Your last change didn't save — check your connection and try again.");
+      });
+      return updated;
+    });
+  };
+
+  const renameAssociate = async (oldName, newName) => {
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === oldName) return;
+    const updated = tastingAssociates.map((a) => (a === oldName ? trimmed : a)).sort((a, b) => a.localeCompare(b));
+    setTastingAssociates(updated);
+    await persist("tasting_associates", updated);
+    const updatedTimesheets = data.thoTimesheets.map((t) => (t.employeeName === oldName ? { ...t, employeeName: trimmed } : t));
+    setData((prev) => ({ ...prev, thoTimesheets: updatedTimesheets }));
+    await persist("thoTimesheets", updatedTimesheets);
+  };
+
+  const deleteAssociate = async (name) => {
+    const updated = tastingAssociates.filter((a) => a !== name);
+    setTastingAssociates(updated);
+    await persist("tasting_associates", updated);
   };
 
   const updateDefaultTareWeight = (value) => {
@@ -7625,6 +8098,8 @@ export default function WineryDataTracker() {
             lotNames={lotNames}
             onRegisterLotName={addLotName}
             onLogWeather={logWeatherSnapshot}
+            sprayPrograms={sprayPrograms}
+            onAddSprayProgram={addSprayProgram}
           />
         ) : activeKey === "workorders" ? (
           <>
@@ -7658,6 +8133,8 @@ export default function WineryDataTracker() {
                     barrelsList={data.barrels}
                     lotNamesList={lotNames}
                     onRegisterLotName={addLotName}
+                    sprayProgramsList={sprayPrograms}
+                    onAddSprayProgram={addSprayProgram}
                   />
                 ))}
                 {newWorkOrderForm.taskType === "Additions" && newWorkOrderForm.additionType === "SO2" && (
@@ -7862,6 +8339,8 @@ export default function WineryDataTracker() {
                       barrelsList={data.barrels}
                       lotNamesList={lotNames}
                       onRegisterLotName={addLotName}
+                      sprayProgramsList={sprayPrograms}
+                      onAddSprayProgram={addSprayProgram}
                     />
                   ))}
                 </ul>
@@ -7893,6 +8372,8 @@ export default function WineryDataTracker() {
                     barrelsList={data.barrels}
                     lotNamesList={lotNames}
                     onRegisterLotName={addLotName}
+                    sprayProgramsList={sprayPrograms}
+                    onAddSprayProgram={addSprayProgram}
                   />
                 ))}
               </div>
@@ -8132,8 +8613,11 @@ export default function WineryDataTracker() {
             onUpdateTasting={updateTasting}
             onDeleteTasting={deleteTasting}
             onAddBlend={addBlend}
+            onUpdateBlend={updateBlend}
             onDeleteBlend={deleteBlend}
           />
+        ) : activeKey === "thoPayout" ? (
+          <THOPayoutCalculator data={data} />
         ) : activeKey === "techSheets" ? (
           <>
             {techSheetMode.mode === "form" ? (
@@ -8220,10 +8704,18 @@ export default function WineryDataTracker() {
             onAddClone={addClone}
             onRenameClone={renameClone}
             onDeleteClone={deleteClone}
+            sprayPrograms={sprayPrograms}
+            onAddSprayProgram={addSprayProgram}
+            onRenameSprayProgram={renameSprayProgram}
+            onDeleteSprayProgram={deleteSprayProgram}
+            tastingAssociates={tastingAssociates}
+            onAddAssociate={addAssociate}
+            onRenameAssociate={renameAssociate}
+            onDeleteAssociate={deleteAssociate}
           />
         ) : (
           <>
-            {activeKey === "labResults" && (
+            {["labResults", "thoTimesheets", "thoTips"].includes(activeKey) && (
               <div className="flex justify-end mb-3">
                 <button
                   onClick={() => setShowBulkImport((v) => !v)}
@@ -8234,7 +8726,7 @@ export default function WineryDataTracker() {
               </div>
             )}
 
-            {activeKey === "labResults" && showBulkImport && (
+            {["labResults", "thoTimesheets", "thoTips"].includes(activeKey) && showBulkImport && (
               <BulkImportPanel fields={activeSection.fields} onImport={bulkImportRows} onClose={() => setShowBulkImport(false)} />
             )}
 
@@ -8255,7 +8747,7 @@ export default function WineryDataTracker() {
                 <h2 className="font-brand text-lg text-emerald-950 mb-3">New {activeSection.label} Entry</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {activeSection.fields.map((f) => (
-                    <Field key={f.name} f={f} value={form[f.name]} onChange={(v) => handleChange(f.name, v)} blocksList={vineyardBlocks} onAddBlock={addVineyardBlock} clonesList={clones} onAddClone={addClone} />
+                    <Field key={f.name} f={f} value={form[f.name]} onChange={(v) => handleChange(f.name, v)} blocksList={vineyardBlocks} onAddBlock={addVineyardBlock} clonesList={clones} onAddClone={addClone} associatesList={tastingAssociates} onAddAssociate={addAssociate} />
                   ))}
                 </div>
                 {error && <p className="font-body text-sm text-red-700 mt-3">{error}</p>}
@@ -8362,7 +8854,7 @@ export default function WineryDataTracker() {
                             {activeSection.fields.map((f) => (
                               <td key={f.name} className="px-2 py-2 align-top" style={{ minWidth: isEditing ? 130 : undefined }}>
                                 {isEditing ? (
-                                  <Field f={f} value={editingRow.form[f.name]} onChange={(v) => editRowChange(f.name, v)} hideLabel blocksList={vineyardBlocks} onAddBlock={addVineyardBlock} clonesList={clones} onAddClone={addClone} />
+                                  <Field f={f} value={editingRow.form[f.name]} onChange={(v) => editRowChange(f.name, v)} hideLabel blocksList={vineyardBlocks} onAddBlock={addVineyardBlock} clonesList={clones} onAddClone={addClone} associatesList={tastingAssociates} onAddAssociate={addAssociate} />
                                 ) : f.type === "photo" ? (
                                   row[f.name] ? (
                                     <a href={row[f.name]} target="_blank" rel="noopener noreferrer">
