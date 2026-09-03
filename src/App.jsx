@@ -7727,6 +7727,23 @@ function WineryDataTrackerInner() {
         results.techSheets = [];
       }
 
+      // thoTimesheets and thoTips aren't in ALL_TABS (they're only reachable through the
+      // combined Payroll page, not as independent nav tabs), so the generic ALL_TABS loading
+      // loop above skips them — they need to be loaded explicitly here instead.
+      try {
+        const res = await storage.get("thoTimesheets", true);
+        results.thoTimesheets = res ? JSON.parse(res.value) : [];
+      } catch {
+        results.thoTimesheets = [];
+      }
+
+      try {
+        const res = await storage.get("thoTips", true);
+        results.thoTips = res ? JSON.parse(res.value) : [];
+      } catch {
+        results.thoTips = [];
+      }
+
       try {
         const res = await storage.get("historyMilestones", true);
         results.historyMilestones = res ? JSON.parse(res.value) : [];
@@ -8972,7 +8989,7 @@ function WineryDataTrackerInner() {
 
   const totalEntries =
     data.workorders.length +
-    SIMPLE_SECTIONS.reduce((sum, s) => sum + data[s.key].length, 0) +
+    SIMPLE_SECTIONS.reduce((sum, s) => sum + (data[s.key]?.length ?? 0), 0) +
     data.ferment.reduce((sum, lot) => sum + lot.readings.length, 0);
 
   const sortedFermentForDisplay = sortRows(data.ferment, fermentSort.field, fermentSort.direction);
@@ -9885,10 +9902,10 @@ function WineryDataTrackerInner() {
               <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
                 <h2 className="font-brand text-lg text-emerald-950">{activeSection.label} Log</h2>
                 <span className="font-body text-xs text-stone-500">
-                  {data[activeKey].length} entr{data[activeKey].length === 1 ? "y" : "ies"}
+                  {(data[activeKey]?.length ?? 0)} entr{(data[activeKey]?.length ?? 0) === 1 ? "y" : "ies"}
                 </span>
               </div>
-              {data[activeKey].length === 0 ? (
+              {(data[activeKey]?.length ?? 0) === 0 ? (
                 <p className="font-body text-sm text-stone-500 px-4 py-8 text-center">No entries yet — add one above.</p>
               ) : (
                 <div className="overflow-x-auto">
