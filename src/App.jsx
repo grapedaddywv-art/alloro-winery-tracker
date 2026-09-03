@@ -58,6 +58,12 @@ import {
   DollarSign,
   LogOut,
   Eye,
+  Award,
+  MapPin,
+  BookOpen,
+  Phone,
+  Tag,
+  Search,
   Car,
   Receipt,
 } from "lucide-react";
@@ -292,6 +298,72 @@ const SIMPLE_SECTIONS = [
       { name: "amount", label: "Amount ($)", type: "number" },
       { name: "description", label: "Detailed Description", type: "text" },
       { name: "receipt", label: "Receipt Photo", type: "photo" },
+    ],
+  },
+  {
+    key: "accolades",
+    label: "Accolades",
+    icon: Award,
+    sheetName: "Accolades",
+    fields: [
+      { name: "date", label: "Date", type: "date" },
+      { name: "wineName", label: "Wine Name", type: "text" },
+      { name: "vintage", label: "Vintage", type: "text" },
+      { name: "publication", label: "Publication / Critic", type: "text" },
+      { name: "score", label: "Score / Rating", type: "text" },
+      { name: "notes", label: "Review Notes / Quote", type: "textarea" },
+    ],
+  },
+  {
+    key: "vineyardBlockDetails",
+    label: "Vineyard Blocks",
+    icon: MapPin,
+    sheetName: "Vineyard Blocks",
+    fields: [
+      { name: "block", label: "Block / Vineyard", type: "block-picker" },
+      { name: "variety", label: "Variety", type: "select", options: GRAPE_VARIETIES },
+      { name: "acreage", label: "Acreage", type: "number" },
+      { name: "soilType", label: "Soil Type", type: "text" },
+    ],
+  },
+  {
+    key: "contacts",
+    label: "Contacts",
+    icon: Phone,
+    sheetName: "Contacts",
+    fields: [
+      { name: "name", label: "Name", type: "text" },
+      { name: "type", label: "Type", type: "select", options: ["Employee", "Vendor", "Emergency Contact"] },
+      { name: "roleOrCompany", label: "Role / Company", type: "text" },
+      { name: "phone", label: "Phone", type: "text" },
+      { name: "email", label: "Email", type: "text" },
+      { name: "notes", label: "Notes", type: "textarea" },
+    ],
+  },
+  {
+    key: "winePricing",
+    label: "Pricing",
+    icon: Tag,
+    sheetName: "Pricing",
+    fields: [
+      { name: "wineName", label: "Wine Name", type: "text" },
+      { name: "vintage", label: "Vintage", type: "text" },
+      { name: "wholesalePrice", label: "Wholesale Price ($)", type: "number" },
+      { name: "retailPrice", label: "Retail Price ($)", type: "number" },
+      { name: "notes", label: "Notes", type: "textarea" },
+    ],
+  },
+  {
+    key: "wineClubTiers",
+    label: "Wine Club",
+    icon: Wine,
+    sheetName: "Wine Club",
+    fields: [
+      { name: "tierName", label: "Tier Name", type: "text" },
+      { name: "price", label: "Price per Shipment ($)", type: "number" },
+      { name: "shipmentFrequency", label: "Shipment Frequency", type: "text" },
+      { name: "benefits", label: "Benefits", type: "textarea" },
+      { name: "notes", label: "Notes", type: "textarea" },
     ],
   },
 ];
@@ -765,8 +837,9 @@ const ALL_TABS = [
   { key: "blending", label: "Blending", icon: Wine },
   SIMPLE_SECTIONS.find((s) => s.key === "tanks"),
   SIMPLE_SECTIONS.find((s) => s.key === "bottling"),
+  { key: "techSheetBuilder", label: "Tech Sheet Builder", icon: FileText },
   SIMPLE_SECTIONS.find((s) => s.key === "labResults"),
-  { key: "techSheets", label: "Tech Sheets", icon: FileText },
+  { key: "aboutAlloro", label: "Team Resources", icon: BookOpen },
   { key: "thoPayroll", label: "Payroll", icon: DollarSign },
   SIMPLE_SECTIONS.find((s) => s.key === "thoMileage"),
   SIMPLE_SECTIONS.find((s) => s.key === "thoExpenses"),
@@ -785,9 +858,9 @@ const PERSISTENT_NAV_KEYS = ["home", "workorders"];
 // straight back to where you left off instead of resetting to the first tab every time.
 const NAV_CATEGORIES = {
   vineyard: { label: "Vineyard", dotColor: "bg-lime-400", keys: ["fruitAnalysis", "harvest", "vineHealth"] },
-  winery: { label: "Winery", dotColor: "bg-amber-400", keys: ["ferment", "barrels", "blending", "tanks", "bottling"] },
-  tho: { label: "THO", dotColor: "bg-rose-400", keys: ["thoPayroll", "thoMileage", "thoExpenses"] },
-  data: { label: "Data", dotColor: "bg-sky-300", keys: ["labResults", "techSheets", "calendar", "formulas", "backup"] },
+  winery: { label: "Winery", dotColor: "bg-amber-400", keys: ["ferment", "barrels", "blending", "tanks", "bottling", "techSheetBuilder"] },
+  tho: { label: "THO", dotColor: "bg-rose-400", keys: ["thoPayroll", "thoMileage", "thoExpenses", "aboutAlloro"] },
+  data: { label: "Data", dotColor: "bg-sky-300", keys: ["labResults", "calendar", "formulas", "backup"] },
 };
 
 function categoryOfKey(key) {
@@ -2794,12 +2867,16 @@ function TechSheetCard({ sheet, harvestEntries, onView, onEdit, onDelete }) {
         <button onClick={onView} className="font-body text-xs font-medium text-emerald-800 hover:text-emerald-900 border border-emerald-200 rounded-md px-2.5 py-1.5">
           View
         </button>
-        <button onClick={onEdit} className="text-stone-400 hover:text-emerald-800" title="Edit">
-          <Pencil size={15} />
-        </button>
-        <button onClick={onDelete} className="text-stone-400 hover:text-red-700" title="Delete">
-          <Trash2 size={15} />
-        </button>
+        {onEdit && (
+          <button onClick={onEdit} className="text-stone-400 hover:text-emerald-800" title="Edit">
+            <Pencil size={15} />
+          </button>
+        )}
+        {onDelete && (
+          <button onClick={onDelete} className="text-stone-400 hover:text-red-700" title="Delete">
+            <Trash2 size={15} />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -3102,6 +3179,585 @@ function THOPayrollPage({ data, onAddThoEntry, onUpdateThoEntry, onDeleteThoEntr
         allowImport
       />
       <THOPayoutCalculator data={data} />
+    </div>
+  );
+}
+
+// ---------- Tech Sheets panel — list/form/view modes, extracted so it can be embedded inside
+// the About Alloro tab instead of living as its own top-level page. ----------
+function TechSheetsPanel({ data, techSheetMode, setTechSheetMode, onSave, onDelete, onPrint }) {
+  if (techSheetMode.mode === "form") {
+    return (
+      <TechSheetForm
+        initial={techSheetMode.sheetId ? data.techSheets.find((s) => s.id === techSheetMode.sheetId) : null}
+        harvestEntries={data.harvest}
+        onSave={async (sheet) => {
+          await onSave(sheet);
+          setTechSheetMode({ mode: "view", sheetId: sheet.id });
+        }}
+        onCancel={() => setTechSheetMode({ mode: "list", sheetId: null })}
+      />
+    );
+  }
+  if (techSheetMode.mode === "view" && techSheetMode.sheetId) {
+    const sheet = data.techSheets.find((s) => s.id === techSheetMode.sheetId);
+    if (!sheet) return null;
+    return (
+      <TechSheetDocument
+        sheet={sheet}
+        harvestEntries={data.harvest}
+        onPrint={() => onPrint(sheet.id)}
+        onClose={() => setTechSheetMode({ mode: "list", sheetId: null })}
+      />
+    );
+  }
+  return (
+    <>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="font-brand text-xl text-emerald-950">Tech Sheets</h2>
+          <p className="font-body text-xs text-stone-500">One document per wine and vintage — for your team and for distribution.</p>
+        </div>
+        <button
+          onClick={() => setTechSheetMode({ mode: "form", sheetId: null })}
+          className="font-body flex items-center gap-1.5 text-sm font-medium bg-emerald-900 hover:bg-emerald-800 text-white px-3 py-2 rounded-md"
+        >
+          <Plus size={15} /> New Tech Sheet
+        </button>
+      </div>
+      {data.techSheets.length === 0 ? (
+        <p className="font-body text-sm text-stone-500 bg-white border border-stone-200 rounded-lg p-6 text-center">
+          No tech sheets yet — create one once a wine's ready.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {data.techSheets.map((sheet) => (
+            <TechSheetCard
+              key={sheet.id}
+              sheet={sheet}
+              harvestEntries={data.harvest}
+              onView={() => setTechSheetMode({ mode: "view", sheetId: sheet.id })}
+              onEdit={() => setTechSheetMode({ mode: "form", sheetId: sheet.id })}
+              onDelete={() => onDelete(sheet.id)}
+            />
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+// ---------- Case Production summary — computed from Bottling records, grouped by the calendar
+// year each run was bottled (not vintage, since a wine can be bottled the year after harvest). ----------
+function CaseProductionSummary({ bottling }) {
+  const byYear = {};
+  bottling.forEach((b) => {
+    if (!b.date) return;
+    const year = b.date.slice(0, 4);
+    const cases = parseFloat(b.cases) || 0;
+    if (!byYear[year]) byYear[year] = { total: 0, byWine: {} };
+    byYear[year].total += cases;
+    const wineKey = `${b.wineName || "Untitled"}${b.vintage ? " (" + b.vintage + ")" : ""}`;
+    byYear[year].byWine[wineKey] = (byYear[year].byWine[wineKey] || 0) + cases;
+  });
+  const years = Object.keys(byYear).sort((a, b) => b.localeCompare(a));
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <h2 className="font-brand text-xl text-emerald-950">Case Production by Year</h2>
+        <p className="font-body text-xs text-stone-500">Computed automatically from Bottling records, grouped by the year each run was bottled.</p>
+      </div>
+      {years.length === 0 ? (
+        <p className="font-body text-sm text-stone-500 bg-white border border-stone-200 rounded-lg p-6 text-center">No bottling records yet.</p>
+      ) : (
+        years.map((year) => (
+          <div key={year} className="bg-white border border-stone-200 rounded-lg overflow-hidden">
+            <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
+              <h3 className="font-brand text-lg text-emerald-950">{year}</h3>
+              <span className="font-body text-sm text-stone-600">{byYear[year].total.toLocaleString()} cases total</span>
+            </div>
+            <div className="p-4 space-y-1.5">
+              {Object.entries(byYear[year].byWine).map(([wine, cases]) => (
+                <div key={wine} className="flex items-center justify-between font-body text-sm">
+                  <span className="text-stone-700">{wine}</span>
+                  <span className="text-stone-500">{cases.toLocaleString()} cases</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+// ---------- History: a narrative "our story" text plus a dated timeline of milestones ----------
+function HistoryPanel({ alloroStory, onUpdateStory, milestones, onAddThoEntry, onUpdateThoEntry, onDeleteThoEntry, confirmAction }) {
+  const [storyDraft, setStoryDraft] = useState(alloroStory);
+  const [storySaved, setStorySaved] = useState(false);
+
+  const saveStory = () => {
+    onUpdateStory(storyDraft);
+    setStorySaved(true);
+    setTimeout(() => setStorySaved(false), 1500);
+  };
+
+  const milestoneFields = [
+    { name: "date", label: "Date", type: "date" },
+    { name: "title", label: "Title", type: "text" },
+    { name: "description", label: "Description", type: "textarea" },
+  ];
+  const sortedMilestones = [...milestones].sort((a, b) => (a.date < b.date ? -1 : 1));
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
+        <h2 className="font-brand text-lg text-emerald-950 mb-1">Our Story</h2>
+        <p className="font-body text-xs text-stone-500 mb-3">A narrative about Alloro — the kind of thing you'd put on a website "About" page.</p>
+        <textarea
+          value={storyDraft}
+          onChange={(e) => setStoryDraft(e.target.value)}
+          rows={8}
+          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-emerald-800"
+        />
+        <button
+          onClick={saveStory}
+          className={`font-body text-sm font-medium px-4 py-2 rounded-md text-white ${storySaved ? "bg-emerald-700" : "bg-emerald-900 hover:bg-emerald-800"}`}
+        >
+          {storySaved ? "✓ Saved" : "Save Story"}
+        </button>
+      </div>
+
+      <SimpleDataPanel
+        title="Timeline"
+        fields={milestoneFields}
+        rows={sortedMilestones}
+        onAdd={(entry) => onAddThoEntry("historyMilestones", entry)}
+        onUpdate={(id, changes) => onUpdateThoEntry("historyMilestones", id, changes)}
+        onDelete={(id) => onDeleteThoEntry("historyMilestones", id)}
+        confirmAction={confirmAction}
+      />
+    </div>
+  );
+}
+
+// ---------- Vineyard: an uploaded reference map image plus a structured block/variety/acreage
+// /soil table ----------
+// Real block data from Alloro's own annotated property map — grouped into the same five
+// property sections shown in the source photo, sized proportionally to actual acreage (using
+// the square root, so it's the *area* that's proportionally accurate, not just one dimension).
+const VINEYARD_MAP_ZONES = [
+  {
+    zone: "Church Block",
+    blocks: [
+      { name: "Church Chard", acreage: 0.8, planted: 1999, variety: "ch" },
+      { name: "Church Riesling", acreage: 1, planted: 1999, variety: "ri" },
+      { name: "Church Pommard", acreage: 3.5, planted: 1999, variety: "pn" },
+      { name: "Church 114", acreage: 3, planted: 1999, variety: "pn" },
+    ],
+  },
+  {
+    zone: "La Casa & Three Gables",
+    blocks: [
+      { name: "La Casa Riesling", acreage: 1.5, planted: null, variety: "ri" },
+      { name: "La Casa Nebbiolo", acreage: 0.4, planted: 2022, variety: "ne" },
+      { name: "Three Gables", acreage: 2, planted: 1999, variety: "un" },
+      { name: "Muscat", acreage: 0.5, planted: 1999, variety: "mu" },
+    ],
+  },
+  {
+    zone: "NW & Winery Block",
+    blocks: [
+      { name: "NV 114", acreage: 1.1, planted: 2004, variety: "pn" },
+      { name: "NW Nebbiolo", acreage: 0.5, planted: 2022, variety: "ne" },
+      { name: "NW Pommard", acreage: 3.5, planted: 1999, variety: "pn" },
+      { name: "NW 114", acreage: 3, planted: 1999, variety: "pn" },
+      { name: "Winery 777", acreage: 4, planted: 1999, variety: "pn" },
+    ],
+  },
+  {
+    zone: "Solar & Antonina Block",
+    blocks: [
+      { name: "Solar Chard 76", acreage: 1.2, planted: 2008, variety: "ch" },
+      { name: "Antonina 777", acreage: 2.1, planted: 2014, variety: "pn" },
+      { name: "Antonina Chard 76", acreage: 3.1, planted: 2014, variety: "ch" },
+    ],
+  },
+  {
+    zone: "Pearl & Arneis Block",
+    blocks: [
+      { name: "Arneis", acreage: 0.75, planted: 2022, variety: "ar" },
+      { name: "Pearl 777", acreage: 1.7, planted: 2008, variety: "pn" },
+      { name: "Pearl 115", acreage: 2, planted: 2008, variety: "pn" },
+    ],
+  },
+];
+const VINEYARD_VARIETY_COLORS = {
+  pn: { hex: "#c04b3a", label: "Pinot Noir" },
+  ch: { hex: "#d4af6a", label: "Chardonnay" },
+  ri: { hex: "#5b9e85", label: "Riesling" },
+  ne: { hex: "#7d70b8", label: "Nebbiolo" },
+  mu: { hex: "#c76a94", label: "Muscat" },
+  ar: { hex: "#7a9c4a", label: "Arneis" },
+  un: { hex: "#a8a29e", label: "Unspecified" },
+};
+
+function VineyardMapWidget() {
+  const [selected, setSelected] = useState(null);
+  const totalAcres = VINEYARD_MAP_ZONES.reduce((sum, z) => sum + z.blocks.reduce((s, b) => s + b.acreage, 0), 0);
+  const totalBlocks = VINEYARD_MAP_ZONES.reduce((sum, z) => sum + z.blocks.length, 0);
+  const selectedBlock = selected
+    ? VINEYARD_MAP_ZONES.flatMap((z) => z.blocks.map((b) => ({ ...b, zone: z.zone }))).find((b) => b.name === selected)
+    : null;
+
+  return (
+    <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
+      <h2 className="font-brand text-lg text-emerald-950 mb-1">Vineyard Map</h2>
+      <p className="font-body text-xs text-stone-500 mb-3">
+        {totalBlocks} blocks · {totalAcres.toFixed(2)} acres total · sized to scale by acreage. Tap a block for details.
+      </p>
+      <div className="flex flex-wrap gap-3 mb-4">
+        {Object.entries(VINEYARD_VARIETY_COLORS).map(([key, v]) => (
+          <span key={key} className="flex items-center gap-1.5 font-body text-xs text-stone-600">
+            <span className="w-2.5 h-2.5 rounded shrink-0" style={{ backgroundColor: v.hex }} />
+            {v.label}
+          </span>
+        ))}
+      </div>
+      {VINEYARD_MAP_ZONES.map((zone) => (
+        <div key={zone.zone} className="border border-dashed border-stone-300 rounded-lg p-3 mb-3">
+          <p className="font-body text-sm font-medium text-stone-700 mb-2">{zone.zone}</p>
+          <div className="flex flex-wrap gap-2 items-end">
+            {zone.blocks.map((b) => {
+              const size = Math.round(34 + 34 * Math.sqrt(b.acreage));
+              const color = VINEYARD_VARIETY_COLORS[b.variety];
+              const isSelected = selected === b.name;
+              return (
+                <button
+                  key={b.name}
+                  type="button"
+                  onClick={() => setSelected(b.name)}
+                  style={{ width: size, height: size, backgroundColor: color.hex + "30", borderColor: color.hex }}
+                  className={`rounded-md border flex items-center justify-center text-center p-1 transition-transform hover:scale-105 ${
+                    isSelected ? "ring-2 ring-emerald-700 ring-offset-1" : ""
+                  }`}
+                >
+                  <span className="font-body text-[10px] font-medium leading-tight" style={{ color: color.hex }}>
+                    {b.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      {selectedBlock && (
+        <div className="bg-stone-50 rounded-md p-3 mt-2">
+          <p className="font-body text-sm font-semibold text-stone-800">{selectedBlock.name}</p>
+          <p className="font-body text-xs text-stone-500 mt-0.5">{selectedBlock.zone}</p>
+          <p className="font-body text-xs text-stone-500 mt-0.5">
+            {VINEYARD_VARIETY_COLORS[selectedBlock.variety].label} · {selectedBlock.acreage} acres
+            {selectedBlock.planted ? ` · planted ${selectedBlock.planted}` : ""}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function VineyardPanel({ vineyardMapImage, onUpdateMapImage, blockDetails, onAddThoEntry, onUpdateThoEntry, onDeleteThoEntry, confirmAction, vineyardBlocks, onAddBlock }) {
+  const blockFields = SIMPLE_SECTIONS.find((s) => s.key === "vineyardBlockDetails").fields;
+
+  return (
+    <div className="space-y-4">
+      <VineyardMapWidget />
+
+      <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
+        <h2 className="font-brand text-lg text-emerald-950 mb-1">Reference Photo</h2>
+        <p className="font-body text-xs text-stone-500 mb-3">Upload the original photo or scan for reference alongside the interactive map above.</p>
+        {vineyardMapImage && (
+          <img src={vineyardMapImage} alt="Vineyard map" className="w-full max-w-lg rounded-lg border border-stone-200 mb-3" />
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            try {
+              const dataUrl = await compressImage(file);
+              onUpdateMapImage(dataUrl);
+            } catch {
+              // ignore failed upload
+            }
+            e.target.value = "";
+          }}
+          className="font-body w-full text-xs text-stone-600 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-emerald-900 file:text-white file:text-xs file:font-medium hover:file:bg-emerald-800"
+        />
+        {vineyardMapImage && (
+          <button onClick={() => onUpdateMapImage("")} className="font-body text-xs text-stone-400 hover:text-red-700 mt-2">
+            Remove map image
+          </button>
+        )}
+      </div>
+
+      <SimpleDataPanel
+        title="Blocks, Varieties & Soil"
+        fields={blockFields}
+        rows={blockDetails}
+        onAdd={(entry) => onAddThoEntry("vineyardBlockDetails", entry)}
+        onUpdate={(id, changes) => onUpdateThoEntry("vineyardBlockDetails", id, changes)}
+        onDelete={(id) => onDeleteThoEntry("vineyardBlockDetails", id)}
+        confirmAction={confirmAction}
+        blocksList={vineyardBlocks}
+        onAddBlock={onAddBlock}
+      />
+    </div>
+  );
+}
+
+// ---------- About Alloro: the shared brand/info hub — Overview (case production), History,
+// Vineyard, Accolades, and Tech Sheets, as internal sub-tabs on one page. ----------
+// ---------- Read-only Tech Sheets browsing for About Alloro — view and print only. Building
+// and editing tech sheets happens under Winery instead, so there's exactly one place that can
+// change them, and no risk of the "published" copy drifting from what's actually true. ----------
+function TechSheetsReadOnlyPanel({ data, viewSheetId, setViewSheetId, onPrint }) {
+  if (viewSheetId) {
+    const sheet = data.techSheets.find((s) => s.id === viewSheetId);
+    if (!sheet) return null;
+    return (
+      <TechSheetDocument
+        sheet={sheet}
+        harvestEntries={data.harvest}
+        onPrint={() => onPrint(sheet.id)}
+        onClose={() => setViewSheetId(null)}
+      />
+    );
+  }
+  return (
+    <>
+      <div className="mb-4">
+        <h2 className="font-brand text-xl text-emerald-950">Tech Sheets</h2>
+        <p className="font-body text-xs text-stone-500">View and print — built and kept up to date under Winery.</p>
+      </div>
+      {data.techSheets.length === 0 ? (
+        <p className="font-body text-sm text-stone-500 bg-white border border-stone-200 rounded-lg p-6 text-center">
+          No tech sheets published yet.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {data.techSheets.map((sheet) => (
+            <TechSheetCard key={sheet.id} sheet={sheet} harvestEntries={data.harvest} onView={() => setViewSheetId(sheet.id)} />
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+// ---------- Search across all Team Resources content — History, Vineyard, Accolades, Tech
+// Sheets, Contacts, Pricing, and Wine Club — so the team can find what they need from one box
+// instead of hunting through sub-tabs. ----------
+function searchTeamResources(query, data, alloroStory) {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const results = [];
+  const hit = (haystack) => haystack.toLowerCase().includes(q);
+
+  if (alloroStory && hit(alloroStory)) {
+    results.push({ subTab: "history", title: "Our Story", snippet: alloroStory.slice(0, 140) });
+  }
+  data.historyMilestones.forEach((m) => {
+    if (hit(`${m.title || ""} ${m.description || ""}`)) {
+      results.push({ subTab: "history", title: m.title || "Milestone", snippet: m.description || "" });
+    }
+  });
+  data.vineyardBlockDetails.forEach((b) => {
+    if (hit(`${b.block || ""} ${b.variety || ""} ${b.soilType || ""}`)) {
+      results.push({ subTab: "vineyard", title: b.block || "Block", snippet: [b.variety, b.soilType].filter(Boolean).join(" · ") });
+    }
+  });
+  data.accolades.forEach((a) => {
+    if (hit(`${a.wineName || ""} ${a.publication || ""} ${a.notes || ""}`)) {
+      results.push({ subTab: "accolades", title: `${a.wineName || "Wine"}${a.publication ? " — " + a.publication : ""}`, snippet: a.notes || "" });
+    }
+  });
+  data.techSheets.forEach((t) => {
+    if (hit(`${t.wineName || ""} ${t.vintage || ""} ${t.vintageNotes || ""} ${t.varietyCloneBlend || ""} ${t.elevageDetails || ""}`)) {
+      results.push({ subTab: "techSheets", title: `${t.wineName || "Wine"}${t.vintage ? " " + t.vintage : ""}`, snippet: t.vintageNotes || "", sheetId: t.id });
+    }
+  });
+  data.contacts.forEach((c) => {
+    if (hit(`${c.name || ""} ${c.roleOrCompany || ""} ${c.notes || ""}`)) {
+      results.push({ subTab: "contacts", title: c.name || "Contact", snippet: c.roleOrCompany || "" });
+    }
+  });
+  data.winePricing.forEach((p) => {
+    if (hit(`${p.wineName || ""} ${p.notes || ""}`)) {
+      results.push({ subTab: "pricing", title: p.wineName || "Wine", snippet: `Wholesale $${p.wholesalePrice || "—"} · Retail $${p.retailPrice || "—"}` });
+    }
+  });
+  data.wineClubTiers.forEach((t) => {
+    if (hit(`${t.tierName || ""} ${t.benefits || ""} ${t.notes || ""}`)) {
+      results.push({ subTab: "wineClub", title: t.tierName || "Tier", snippet: t.benefits || "" });
+    }
+  });
+  return results;
+}
+
+function AboutAlloroTab({ data, setPrintJob, alloroStory, onUpdateStory, vineyardMapImage, onUpdateMapImage, onAddThoEntry, onUpdateThoEntry, onDeleteThoEntry, confirmAction, vineyardBlocks, onAddBlock }) {
+  const [subTab, setSubTab] = useState("overview");
+  const [viewSheetId, setViewSheetId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const accoladeFields = SIMPLE_SECTIONS.find((s) => s.key === "accolades").fields;
+  const sortedAccolades = [...data.accolades].sort((a, b) => (a.date < b.date ? 1 : -1));
+  const contactFields = SIMPLE_SECTIONS.find((s) => s.key === "contacts").fields;
+  const pricingFields = SIMPLE_SECTIONS.find((s) => s.key === "winePricing").fields;
+  const wineClubFields = SIMPLE_SECTIONS.find((s) => s.key === "wineClubTiers").fields;
+  const searchResults = searchTeamResources(searchQuery, data, alloroStory);
+
+  const SUB_TABS = [
+    { key: "overview", label: "Overview" },
+    { key: "history", label: "History" },
+    { key: "vineyard", label: "Vineyard" },
+    { key: "accolades", label: "Accolades" },
+    { key: "techSheets", label: "Tech Sheets" },
+    { key: "contacts", label: "Contacts" },
+    { key: "pricing", label: "Pricing" },
+    { key: "wineClub", label: "Wine Club" },
+  ];
+
+  const goToResult = (result) => {
+    setSubTab(result.subTab);
+    if (result.sheetId) setViewSheetId(result.sheetId);
+    setSearchQuery("");
+  };
+
+  return (
+    <div>
+      <div className="relative mb-4">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search Team Resources — history, vineyard, accolades, tech sheets, contacts, pricing, wine club…"
+          className="font-body w-full border border-stone-300 rounded-md pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+        />
+      </div>
+
+      {searchQuery.trim() ? (
+        <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-stone-200">
+            <p className="font-body text-xs text-stone-500">{searchResults.length} result{searchResults.length === 1 ? "" : "s"}</p>
+          </div>
+          {searchResults.length === 0 ? (
+            <p className="font-body text-sm text-stone-400 text-center py-8">No matches.</p>
+          ) : (
+            <div className="divide-y divide-stone-100">
+              {searchResults.map((r, i) => (
+                <button key={i} onClick={() => goToResult(r)} className="w-full text-left px-4 py-3 hover:bg-stone-50">
+                  <div className="flex items-center justify-between">
+                    <p className="font-body text-sm font-medium text-stone-800">{r.title}</p>
+                    <span className="font-body text-xs text-stone-400">{SUB_TABS.find((t) => t.key === r.subTab)?.label}</span>
+                  </div>
+                  {r.snippet && <p className="font-body text-xs text-stone-500 mt-0.5 truncate">{r.snippet}</p>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="flex gap-2 mb-6 flex-wrap">
+            {SUB_TABS.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setSubTab(t.key)}
+                className={`font-body text-sm font-medium px-4 py-2 rounded-md border ${
+                  subTab === t.key ? "bg-emerald-900 text-white border-emerald-900" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {subTab === "overview" ? (
+            <CaseProductionSummary bottling={data.bottling} />
+          ) : subTab === "history" ? (
+            <HistoryPanel
+              alloroStory={alloroStory}
+              onUpdateStory={onUpdateStory}
+              milestones={data.historyMilestones}
+              onAddThoEntry={onAddThoEntry}
+              onUpdateThoEntry={onUpdateThoEntry}
+              onDeleteThoEntry={onDeleteThoEntry}
+              confirmAction={confirmAction}
+            />
+          ) : subTab === "vineyard" ? (
+            <VineyardPanel
+              vineyardMapImage={vineyardMapImage}
+              onUpdateMapImage={onUpdateMapImage}
+              blockDetails={data.vineyardBlockDetails}
+              onAddThoEntry={onAddThoEntry}
+              onUpdateThoEntry={onUpdateThoEntry}
+              onDeleteThoEntry={onDeleteThoEntry}
+              confirmAction={confirmAction}
+              vineyardBlocks={vineyardBlocks}
+              onAddBlock={onAddBlock}
+            />
+          ) : subTab === "accolades" ? (
+            <SimpleDataPanel
+              title="Wine Accolades"
+              fields={accoladeFields}
+              rows={sortedAccolades}
+              onAdd={(entry) => onAddThoEntry("accolades", entry)}
+              onUpdate={(id, changes) => onUpdateThoEntry("accolades", id, changes)}
+              onDelete={(id) => onDeleteThoEntry("accolades", id)}
+              confirmAction={confirmAction}
+            />
+          ) : subTab === "contacts" ? (
+            <SimpleDataPanel
+              title="Contacts"
+              fields={contactFields}
+              rows={data.contacts}
+              onAdd={(entry) => onAddThoEntry("contacts", entry)}
+              onUpdate={(id, changes) => onUpdateThoEntry("contacts", id, changes)}
+              onDelete={(id) => onDeleteThoEntry("contacts", id)}
+              confirmAction={confirmAction}
+            />
+          ) : subTab === "pricing" ? (
+            <SimpleDataPanel
+              title="Pricing"
+              fields={pricingFields}
+              rows={data.winePricing}
+              onAdd={(entry) => onAddThoEntry("winePricing", entry)}
+              onUpdate={(id, changes) => onUpdateThoEntry("winePricing", id, changes)}
+              onDelete={(id) => onDeleteThoEntry("winePricing", id)}
+              confirmAction={confirmAction}
+            />
+          ) : subTab === "wineClub" ? (
+            <SimpleDataPanel
+              title="Wine Club Tiers"
+              fields={wineClubFields}
+              rows={data.wineClubTiers}
+              onAdd={(entry) => onAddThoEntry("wineClubTiers", entry)}
+              onUpdate={(id, changes) => onUpdateThoEntry("wineClubTiers", id, changes)}
+              onDelete={(id) => onDeleteThoEntry("wineClubTiers", id)}
+              confirmAction={confirmAction}
+            />
+          ) : (
+            <TechSheetsReadOnlyPanel
+              data={data}
+              viewSheetId={viewSheetId}
+              setViewSheetId={setViewSheetId}
+              onPrint={(sheetId) => setPrintJob({ type: "techSheet", sheetId })}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -6842,7 +7498,16 @@ try {
 // Storage keys a "tho" role login is allowed to write. Deny-by-default: anything not in this
 // short, easy-to-audit list is refused by persist() below, regardless of what the UI shows —
 // this is the actual enforcement point, not a UI convenience.
+// Storage keys the "tho" role is allowed to write. Deny-by-default: anything not in this short,
+// easy-to-audit list is refused by persist()/guardedStorageSet, regardless of what the UI shows.
+// "About Alloro" (techSheets, historyMilestones, accolades, vineyardBlockDetails, the story text,
+// the map image) is deliberately NOT included here — admin-only to edit, view-only for THO.
 const THO_EDITABLE_STORAGE_KEYS = ["thoTimesheets", "thoTips", "thoMileage", "thoExpenses", "tasting_associates"];
+
+// Nav pages (not storage keys) the "tho" role can actually edit, used to decide when to show the
+// "View only" banner. "aboutAlloro" lives inside the THO nav category but isn't in this list, so
+// it still gets the banner even though the rest of THO doesn't.
+const THO_EDITABLE_NAV_KEYS = ["thoPayroll", "thoMileage", "thoExpenses"];
 
 // Reads/writes which role is currently signed in ("admin" | "tho" | null). Wrapped in try/catch
 // since localStorage isn't available in every environment this file runs in (e.g. it's blocked
@@ -6917,7 +7582,7 @@ export default function WineryDataTracker() {
     }
   }, [role, activeKey]);
   const [data, setData] = useState(
-    Object.fromEntries([["workorders", []], ...SIMPLE_SECTIONS.map((s) => [s.key, []]), ["ferment", []], ["barrels", []], ["templates", []], ["tastings", []], ["blends", []], ["weatherLogs", []], ["techSheets", []]])
+    Object.fromEntries([["workorders", []], ...SIMPLE_SECTIONS.map((s) => [s.key, []]), ["ferment", []], ["barrels", []], ["templates", []], ["tastings", []], ["blends", []], ["weatherLogs", []], ["techSheets", []], ["historyMilestones", []], ["accolades", []], ["vineyardBlockDetails", []]])
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -6954,6 +7619,8 @@ export default function WineryDataTracker() {
   const [sprayPrograms, setSprayPrograms] = useState(SPRAY_PROGRAMS);
   const [tastingAssociates, setTastingAssociates] = useState(TASTING_ASSOCIATES);
   const [defaultTareWeight, setDefaultTareWeight] = useState("");
+  const [alloroStory, setAlloroStory] = useState("");
+  const [vineyardMapImage, setVineyardMapImage] = useState("");
   const [vesselTypes, setVesselTypes] = useState(VESSEL_TYPES);
   const [lotNames, setLotNames] = useState([]);
   const [workOrderSort, setWorkOrderSort] = useState({ field: "", direction: "asc" });
@@ -7032,6 +7699,48 @@ export default function WineryDataTracker() {
       }
 
       try {
+        const res = await storage.get("historyMilestones", true);
+        results.historyMilestones = res ? JSON.parse(res.value) : [];
+      } catch {
+        results.historyMilestones = [];
+      }
+
+      try {
+        const res = await storage.get("accolades", true);
+        results.accolades = res ? JSON.parse(res.value) : [];
+      } catch {
+        results.accolades = [];
+      }
+
+      try {
+        const res = await storage.get("vineyardBlockDetails", true);
+        results.vineyardBlockDetails = res ? JSON.parse(res.value) : [];
+      } catch {
+        results.vineyardBlockDetails = [];
+      }
+
+      try {
+        const res = await storage.get("contacts", true);
+        results.contacts = res ? JSON.parse(res.value) : [];
+      } catch {
+        results.contacts = [];
+      }
+
+      try {
+        const res = await storage.get("winePricing", true);
+        results.winePricing = res ? JSON.parse(res.value) : [];
+      } catch {
+        results.winePricing = [];
+      }
+
+      try {
+        const res = await storage.get("wineClubTiers", true);
+        results.wineClubTiers = res ? JSON.parse(res.value) : [];
+      } catch {
+        results.wineClubTiers = [];
+      }
+
+      try {
         const res = await storage.get("vineyard_blocks", true);
         if (res && !cancelled) setVineyardBlocks(JSON.parse(res.value));
       } catch {
@@ -7066,6 +7775,20 @@ export default function WineryDataTracker() {
         if (res && !cancelled) setDefaultTareWeight(res.value);
       } catch {
         // stays at "" (no default set yet)
+      }
+
+      try {
+        const res = await storage.get("alloro_story", true);
+        if (res && !cancelled) setAlloroStory(res.value);
+      } catch {
+        // stays at "" (no story written yet)
+      }
+
+      try {
+        const res = await storage.get("vineyard_map_image", true);
+        if (res && !cancelled) setVineyardMapImage(res.value);
+      } catch {
+        // stays at "" (no map uploaded yet)
       }
 
       try {
@@ -7145,6 +7868,43 @@ export default function WineryDataTracker() {
             await storage.set("labResults", JSON.stringify(mergedLabResults), true);
             await storage.set("lab_results_seed_v1", "true", true);
             results.labResults = mergedLabResults;
+          } catch {
+            // ignore — worst case the import is retried next load
+          }
+        }
+
+        // One-time seed: import the real block/variety/acreage data from the annotated property
+        // map shared during setup, so the structured Vineyard table starts populated to match
+        // the interactive map instead of needing all 19 blocks retyped by hand. Also merges the
+        // block names into the managed Blocks list so the block-picker shows them correctly.
+        try {
+          await storage.get("vineyard_map_seed_v1", true);
+        } catch {
+          try {
+            const VARIETY_LABELS = { pn: "Pinot Noir", ch: "Chardonnay", ri: "Riesling", ne: "Nebbiolo", mu: "Muscat", ar: "Arneis", un: "Other" };
+            const seedRows = [];
+            const seedBlockNames = [];
+            VINEYARD_MAP_ZONES.forEach((zone) => {
+              zone.blocks.forEach((b) => {
+                seedRows.push({ id: genId(), block: b.name, variety: VARIETY_LABELS[b.variety], acreage: b.acreage, soilType: "" });
+                seedBlockNames.push(b.name);
+              });
+            });
+            const mergedBlockDetails = [...seedRows, ...(results.vineyardBlockDetails || [])];
+            await storage.set("vineyardBlockDetails", JSON.stringify(mergedBlockDetails), true);
+            results.vineyardBlockDetails = mergedBlockDetails;
+
+            let currentBlocks = [];
+            try {
+              const blocksRes = await storage.get("vineyard_blocks", true);
+              currentBlocks = blocksRes ? JSON.parse(blocksRes.value) : [];
+            } catch {
+              currentBlocks = [];
+            }
+            const mergedBlockNames = [...new Set([...currentBlocks, ...seedBlockNames])].sort((a, b) => a.localeCompare(b));
+            await storage.set("vineyard_blocks", JSON.stringify(mergedBlockNames), true);
+
+            await storage.set("vineyard_map_seed_v1", "true", true);
           } catch {
             // ignore — worst case the import is retried next load
           }
@@ -7534,6 +8294,20 @@ export default function WineryDataTracker() {
   const updateDefaultTareWeight = (value) => {
     setDefaultTareWeight(value);
     guardedStorageSet("default_tare_weight", value, true).catch(() => {});
+  };
+
+  const updateAlloroStory = (value) => {
+    setAlloroStory(value);
+    guardedStorageSet("alloro_story", value, true).catch(() => {
+      setSaveError("Your last change didn't save — check your connection and try again.");
+    });
+  };
+
+  const updateVineyardMapImage = (value) => {
+    setVineyardMapImage(value);
+    guardedStorageSet("vineyard_map_image", value, true).catch(() => {
+      setSaveError("Your last change didn't save — check your connection and try again.");
+    });
   };
 
   const addVesselType = (name) => {
@@ -8371,7 +9145,7 @@ export default function WineryDataTracker() {
       </nav>
 
       <main className="max-w-5xl mx-auto px-4 py-6 sm:px-6">
-        {role === "tho" && !NAV_CATEGORIES.tho.keys.includes(activeKey) && (
+        {role === "tho" && !THO_EDITABLE_NAV_KEYS.includes(activeKey) && (
           <div className="bg-rose-50 border border-rose-200 rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
             <Eye size={15} className="text-rose-700 shrink-0" />
             <p className="font-body text-sm text-rose-800">View only — you're signed in with tasting house access. Changes here won't save.</p>
@@ -8925,66 +9699,30 @@ export default function WineryDataTracker() {
             tastingAssociates={tastingAssociates}
             onAddAssociate={addAssociate}
           />
-        ) : activeKey === "techSheets" ? (
-          <>
-            {techSheetMode.mode === "form" ? (
-              <TechSheetForm
-                initial={techSheetMode.sheetId ? data.techSheets.find((s) => s.id === techSheetMode.sheetId) : null}
-                harvestEntries={data.harvest}
-                onSave={async (sheet) => {
-                  await saveTechSheet(sheet);
-                  setTechSheetMode({ mode: "view", sheetId: sheet.id });
-                }}
-                onCancel={() => setTechSheetMode({ mode: "list", sheetId: null })}
-              />
-            ) : techSheetMode.mode === "view" && techSheetMode.sheetId ? (
-              (() => {
-                const sheet = data.techSheets.find((s) => s.id === techSheetMode.sheetId);
-                if (!sheet) return null;
-                return (
-                  <TechSheetDocument
-                    sheet={sheet}
-                    harvestEntries={data.harvest}
-                    onPrint={() => setPrintJob({ type: "techSheet", sheetId: sheet.id })}
-                    onClose={() => setTechSheetMode({ mode: "list", sheetId: null })}
-                  />
-                );
-              })()
-            ) : (
-              <>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="font-brand text-xl text-emerald-950">Tech Sheets</h2>
-                    <p className="font-body text-xs text-stone-500">One document per wine and vintage — for your team and for distribution.</p>
-                  </div>
-                  <button
-                    onClick={() => setTechSheetMode({ mode: "form", sheetId: null })}
-                    className="font-body flex items-center gap-1.5 text-sm font-medium bg-emerald-900 hover:bg-emerald-800 text-white px-3 py-2 rounded-md"
-                  >
-                    <Plus size={15} /> New Tech Sheet
-                  </button>
-                </div>
-                {data.techSheets.length === 0 ? (
-                  <p className="font-body text-sm text-stone-500 bg-white border border-stone-200 rounded-lg p-6 text-center">
-                    No tech sheets yet — create one once a wine's ready.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {data.techSheets.map((sheet) => (
-                      <TechSheetCard
-                        key={sheet.id}
-                        sheet={sheet}
-                        harvestEntries={data.harvest}
-                        onView={() => setTechSheetMode({ mode: "view", sheetId: sheet.id })}
-                        onEdit={() => setTechSheetMode({ mode: "form", sheetId: sheet.id })}
-                        onDelete={() => deleteTechSheet(sheet.id)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </>
+        ) : activeKey === "aboutAlloro" ? (
+          <AboutAlloroTab
+            data={data}
+            setPrintJob={setPrintJob}
+            alloroStory={alloroStory}
+            onUpdateStory={updateAlloroStory}
+            vineyardMapImage={vineyardMapImage}
+            onUpdateMapImage={updateVineyardMapImage}
+            onAddThoEntry={addThoEntry}
+            onUpdateThoEntry={updateThoEntry}
+            onDeleteThoEntry={deleteThoEntry}
+            confirmAction={confirmAction}
+            vineyardBlocks={vineyardBlocks}
+            onAddBlock={addVineyardBlock}
+          />
+        ) : activeKey === "techSheetBuilder" ? (
+          <TechSheetsPanel
+            data={data}
+            techSheetMode={techSheetMode}
+            setTechSheetMode={setTechSheetMode}
+            onSave={saveTechSheet}
+            onDelete={deleteTechSheet}
+            onPrint={(sheetId) => setPrintJob({ type: "techSheet", sheetId })}
+          />
         ) : activeKey === "calendar" ? (
           <MasterCalendar data={data} />
         ) : activeKey === "formulas" ? (
