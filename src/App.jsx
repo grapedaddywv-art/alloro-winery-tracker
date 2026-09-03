@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, Fragment } from "react";
+import { useState, useEffect, useCallback, useMemo, Fragment, Component } from "react";
 import * as XLSX from "xlsx";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { storage } from "./lib/storage";
@@ -7561,7 +7561,47 @@ function PasswordGate({ onUnlock }) {
   );
 }
 
-export default function WineryDataTracker() {
+// Catches any crash anywhere in the app and shows the actual error instead of leaving a blank
+// white screen — without this, a single unhandled error unmounts the entire page silently,
+// which is exactly what made an earlier bug so hard to diagnose from a description alone.
+class AppErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+  componentDidCatch(error, info) {
+    console.error("Alloro Winery Tracker crashed:", error, info);
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="min-h-screen bg-stone-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-red-200 rounded-lg p-6 max-w-lg w-full">
+            <h1 className="font-brand text-xl text-red-800 mb-2">Something went wrong</h1>
+            <p className="font-body text-sm text-stone-600 mb-3">
+              The app hit an error and couldn't continue. The actual error message is below — screenshot this and send it over, it'll say exactly what broke.
+            </p>
+            <pre className="font-mono text-xs text-red-700 bg-red-50 border border-red-100 rounded p-3 whitespace-pre-wrap break-words mb-4">
+              {String(this.state.error?.message || this.state.error)}
+            </pre>
+            <button
+              onClick={() => window.location.reload()}
+              className="font-body bg-emerald-900 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2 rounded-md"
+            >
+              Reload the page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function WineryDataTrackerInner() {
   const [role, setRole] = useState(() => readStoredRole());
   const [activeKey, setActiveKey] = useState(ALL_TABS[0].key);
   useEffect(() => {
@@ -7639,6 +7679,7 @@ export default function WineryDataTracker() {
   }, [printJob]);
 
   useEffect(() => {
+    if (!role) return; // nothing on the login screen needs this — don't do any of it until signed in
     let cancelled = false;
     (async () => {
       const results = {};
@@ -7903,7 +7944,7 @@ export default function WineryDataTracker() {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [role]);
 
   useEffect(() => {
     if (activeSection) setForm({ ...emptyForm(activeSection.fields), date: todayISO() });
@@ -10203,5 +10244,13 @@ export default function WineryDataTracker() {
           })()}
       </div>
     </div>
+  );
+}
+
+export default function WineryDataTracker() {
+  return (
+    <AppErrorBoundary>
+      <WineryDataTrackerInner />
+    </AppErrorBoundary>
   );
 }
