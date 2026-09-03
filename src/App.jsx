@@ -7481,38 +7481,29 @@ function BackupTab({ data, woCounter, onRestore, confirmAction, vineyardBlocks, 
   );
 }
 
-// Two passwords, each mapping to a role — reads from Vite environment variables when deployed
-// (VITE_ADMIN_PASSWORD / VITE_THO_PASSWORD, set in Vercel), falling back to defaults if not set.
-// Wrapped in try/catch since import.meta.env isn't guaranteed to exist everywhere this runs.
+// Single admin password for now — reads from a Vite environment variable when deployed
+// (VITE_ADMIN_PASSWORD, set in Vercel), falling back to the default if not set. The two-role
+// system (admin/tho) is still here underneath, just collapsed to one login for now — every
+// successful login grants "admin", so re-adding a second, view-only password later is a small
+// change, not a rebuild.
 let ADMIN_PASSWORD = "AlloroCrew2026";
-let THO_PASSWORD = "AlloroTHO2026";
 try {
-  if (import.meta && import.meta.env) {
-    if (import.meta.env.VITE_ADMIN_PASSWORD) ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
-    if (import.meta.env.VITE_THO_PASSWORD) THO_PASSWORD = import.meta.env.VITE_THO_PASSWORD;
+  if (import.meta && import.meta.env && import.meta.env.VITE_ADMIN_PASSWORD) {
+    ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
   }
 } catch {
-  // import.meta not available here — stick with the defaults
+  // import.meta not available here — stick with the default
 }
 
-// Storage keys a "tho" role login is allowed to write. Deny-by-default: anything not in this
-// short, easy-to-audit list is refused by persist() below, regardless of what the UI shows —
-// this is the actual enforcement point, not a UI convenience.
-// Storage keys the "tho" role is allowed to write. Deny-by-default: anything not in this short,
-// easy-to-audit list is refused by persist()/guardedStorageSet, regardless of what the UI shows.
-// "About Alloro" (techSheets, historyMilestones, accolades, vineyardBlockDetails, the story text,
-// the map image) is deliberately NOT included here — admin-only to edit, view-only for THO.
+// Storage keys a "tho" role login would be allowed to write, once that role is reintroduced.
+// Not currently reachable — kept here so the guard logic and nav filtering below don't need to
+// be rewritten when the second login comes back.
 const THO_EDITABLE_STORAGE_KEYS = ["thoTimesheets", "thoTips", "thoMileage", "thoExpenses", "tasting_associates"];
-
-// Nav pages (not storage keys) the "tho" role can actually edit, used to decide when to show the
-// "View only" banner. "aboutAlloro" lives inside the THO nav category but isn't in this list, so
-// it still gets the banner even though the rest of THO doesn't.
 const THO_EDITABLE_NAV_KEYS = ["thoPayroll", "thoMileage", "thoExpenses"];
 
-// Reads/writes which role is currently signed in ("admin" | "tho" | null). Wrapped in try/catch
-// since localStorage isn't available in every environment this file runs in (e.g. it's blocked
-// inside Claude artifacts) — falls back to a session-only login (React state) there instead of
-// crashing.
+// Reads/writes which role is currently signed in ("admin" | null — "tho" isn't reachable right
+// now). Wrapped in try/catch since localStorage isn't available in every environment this file
+// runs in (e.g. it's blocked inside Claude artifacts) — falls back to a session-only login there.
 function readStoredRole() {
   try {
     const v = window.localStorage.getItem("winery_role");
@@ -7530,7 +7521,7 @@ function writeStoredRole(role) {
   }
 }
 
-// ---------- Two-password login gate shown before the app loads ----------
+// ---------- Single-password login gate shown before the app loads ----------
 function PasswordGate({ onUnlock }) {
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
@@ -7540,9 +7531,6 @@ function PasswordGate({ onUnlock }) {
     if (value === ADMIN_PASSWORD) {
       setError("");
       onUnlock("admin");
-    } else if (value === THO_PASSWORD) {
-      setError("");
-      onUnlock("tho");
     } else {
       setError("That's not the right password — try again.");
     }
