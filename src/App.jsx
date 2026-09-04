@@ -64,6 +64,9 @@ import {
   Phone,
   Tag,
   Search,
+  Shield,
+  Truck,
+  BookMarked,
   Car,
   Receipt,
 } from "lucide-react";
@@ -119,6 +122,15 @@ const FERMENT_WORK_STAGES = ["Start Primary Fermentation", "Complete Primary Fer
 const ADDITION_TYPES = ["Acid", "Sugar", "Water", "Tannin", "Nutrients", "SO2"];
 // Grape varieties available for Harvest Tonnage
 const GRAPE_VARIETIES = ["Pinot Noir", "Chardonnay", "Riesling", "Muscat", "Nebbiolo", "Arneis", "Other"];
+const US_STATES = [
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware",
+  "District of Columbia", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
+  "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota",
+  "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
+  "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon",
+  "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah",
+  "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming",
+];
 // Typical full-season GDD ranges (base 50°F, Winkler Index climate regions) for each variety —
 // general viticultural reference, not a precise target. Actual optimal GDD varies by clone,
 // site, and desired wine style; "Other" has no standard published range.
@@ -364,6 +376,54 @@ const SIMPLE_SECTIONS = [
       { name: "shipmentFrequency", label: "Shipment Frequency", type: "text" },
       { name: "benefits", label: "Benefits", type: "textarea" },
       { name: "notes", label: "Notes", type: "textarea" },
+    ],
+  },
+  {
+    key: "statePermits",
+    label: "My Permits",
+    icon: Shield,
+    sheetName: "State Permits",
+    fields: [
+      { name: "state", label: "State", type: "select", options: US_STATES },
+      { name: "permitNumber", label: "Permit / License #", type: "text" },
+      { name: "issuingAgency", label: "Issuing Agency", type: "text" },
+      { name: "issueDate", label: "Issue Date", type: "date" },
+      { name: "expirationDate", label: "Expiration / Renewal Date", type: "date" },
+      { name: "reminderLeadDays", label: "Reminder Lead Time (days)", type: "number" },
+      { name: "renewalCost", label: "Renewal Cost ($)", type: "number", optional: true },
+      { name: "selfNotedCap", label: "Self-Noted Annual Case Cap (optional, informational only)", type: "number", optional: true },
+      { name: "permitDocument", label: "Permit Document", type: "document", optional: true },
+      { name: "notes", label: "Notes", type: "textarea" },
+    ],
+  },
+  {
+    key: "shipmentLog",
+    label: "Shipment Log",
+    icon: Truck,
+    sheetName: "Shipment Log",
+    fields: [
+      { name: "date", label: "Date", type: "date" },
+      { name: "destinationState", label: "Destination State", type: "select", options: US_STATES },
+      { name: "cases", label: "Cases Shipped", type: "number" },
+      { name: "volumeGallons", label: "Volume (gallons)", type: "number", optional: true },
+      { name: "orderValue", label: "Order Value ($)", type: "number", optional: true },
+      { name: "taxCollected", label: "Tax Collected ($, self-reported)", type: "number", optional: true },
+      { name: "referenceOrderNumber", label: "Reference Invoice / Order #", type: "text", optional: true },
+    ],
+  },
+  {
+    key: "stateRuleReference",
+    label: "State Reference",
+    icon: BookMarked,
+    sheetName: "State Reference",
+    fields: [
+      { name: "state", label: "State", type: "select", options: US_STATES },
+      { name: "dtcStatus", label: "DTC Shipping Status", type: "select", options: ["Allowed", "Restricted", "Banned", "Not Yet Verified"] },
+      { name: "restrictionNotes", label: "Restriction Notes (plain English)", type: "textarea" },
+      { name: "annualCapPerHousehold", label: "Annual Cap per Household (if known)", type: "text", optional: true },
+      { name: "reportFrequency", label: "Typical Report Frequency", type: "text", optional: true },
+      { name: "lastVerifiedDate", label: "Last Verified Date", type: "date", optional: true },
+      { name: "sourceLink", label: "Source Link", type: "text", optional: true },
     ],
   },
 ];
@@ -839,6 +899,7 @@ const ALL_TABS = [
   SIMPLE_SECTIONS.find((s) => s.key === "bottling"),
   { key: "techSheetBuilder", label: "Tech Sheet Builder", icon: FileText },
   SIMPLE_SECTIONS.find((s) => s.key === "labResults"),
+  { key: "compliance", label: "Compliance", icon: Shield },
   { key: "aboutAlloro", label: "Team Resources", icon: BookOpen },
   { key: "thoPayroll", label: "Payroll", icon: DollarSign },
   SIMPLE_SECTIONS.find((s) => s.key === "thoMileage"),
@@ -860,7 +921,7 @@ const NAV_CATEGORIES = {
   vineyard: { label: "Vineyard", dotColor: "bg-lime-400", keys: ["fruitAnalysis", "harvest", "vineHealth"] },
   winery: { label: "Winery", dotColor: "bg-amber-400", keys: ["ferment", "barrels", "blending", "tanks", "bottling", "techSheetBuilder"] },
   tho: { label: "THO", dotColor: "bg-rose-400", keys: ["thoPayroll", "thoMileage", "thoExpenses", "aboutAlloro"] },
-  data: { label: "Data", dotColor: "bg-sky-300", keys: ["labResults", "calendar", "formulas", "backup"] },
+  data: { label: "Data", dotColor: "bg-sky-300", keys: ["labResults", "compliance", "calendar", "formulas", "backup"] },
 };
 
 function categoryOfKey(key) {
@@ -890,7 +951,7 @@ function buildExportSections(data) {
     const rows = data[section.key].map((row) =>
       Object.fromEntries(section.fields.map((f) => [
         f.label,
-        f.type === "photo" ? (row[f.name] ? "Yes" : "No") : (row[f.name] ?? ""),
+        (f.type === "photo" || f.type === "document") ? (row[f.name] ? "Yes" : "No") : (row[f.name] ?? ""),
       ]))
     );
     sections.push({ title: section.sheetName, headers, rows });
@@ -1499,6 +1560,51 @@ function Field({ f, value, onChange, hideLabel, fermentLots, barrelsList, blocks
               <a href={value} target="_blank" rel="noopener noreferrer">
                 <img src={value} alt="Receipt preview" className="w-16 h-16 object-cover rounded border border-stone-300" />
               </a>
+              <button type="button" onClick={() => onChange("")} className="font-body text-xs text-stone-400 hover:text-red-700">
+                Remove
+              </button>
+            </div>
+          )}
+        </div>
+      ) : f.type === "document" ? (
+        <div>
+          <input
+            type="file"
+            accept="image/*,application/pdf"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              try {
+                if (file.type === "application/pdf") {
+                  const dataUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                  });
+                  onChange(dataUrl);
+                } else {
+                  const dataUrl = await compressImage(file);
+                  onChange(dataUrl);
+                }
+              } catch {
+                // ignore failed upload
+              }
+              e.target.value = "";
+            }}
+            className="font-body w-full text-xs text-stone-600 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-emerald-900 file:text-white file:text-xs file:font-medium hover:file:bg-emerald-800"
+          />
+          {value && (
+            <div className="mt-2 flex items-center gap-2">
+              {value.startsWith("data:application/pdf") ? (
+                <a href={value} target="_blank" rel="noopener noreferrer" className="font-body text-xs text-emerald-800 underline">
+                  View uploaded PDF
+                </a>
+              ) : (
+                <a href={value} target="_blank" rel="noopener noreferrer">
+                  <img src={value} alt="Document preview" className="w-16 h-16 object-cover rounded border border-stone-300" />
+                </a>
+              )}
               <button type="button" onClick={() => onChange("")} className="font-body text-xs text-stone-400 hover:text-red-700">
                 Remove
               </button>
@@ -3110,6 +3216,20 @@ function SimpleDataPanel({ title, fields, rows, onAdd, onUpdate, onDelete, confi
                             ) : (
                               "—"
                             )
+                          ) : f.type === "document" ? (
+                            row[f.name] ? (
+                              row[f.name].startsWith("data:application/pdf") ? (
+                                <a href={row[f.name]} target="_blank" rel="noopener noreferrer" className="font-body text-xs text-emerald-800 underline">
+                                  View PDF
+                                </a>
+                              ) : (
+                                <a href={row[f.name]} target="_blank" rel="noopener noreferrer">
+                                  <img src={row[f.name]} alt="Document" className="w-9 h-9 object-cover rounded border border-stone-300" />
+                                </a>
+                              )
+                            ) : (
+                              "—"
+                            )
                           ) : (
                             <span className="whitespace-nowrap">{row[f.name] || "—"}</span>
                           )}
@@ -3344,138 +3464,14 @@ function HistoryPanel({ alloroStory, onUpdateStory, milestones, onAddThoEntry, o
 
 // ---------- Vineyard: an uploaded reference map image plus a structured block/variety/acreage
 // /soil table ----------
-// Real block data from Alloro's own annotated property map — grouped into the same five
-// property sections shown in the source photo, sized proportionally to actual acreage (using
-// the square root, so it's the *area* that's proportionally accurate, not just one dimension).
-const VINEYARD_MAP_ZONES = [
-  {
-    zone: "Church Block",
-    blocks: [
-      { name: "Church Chard", acreage: 0.8, planted: 1999, variety: "ch" },
-      { name: "Church Riesling", acreage: 1, planted: 1999, variety: "ri" },
-      { name: "Church Pommard", acreage: 3.5, planted: 1999, variety: "pn" },
-      { name: "Church 114", acreage: 3, planted: 1999, variety: "pn" },
-    ],
-  },
-  {
-    zone: "La Casa & Three Gables",
-    blocks: [
-      { name: "La Casa Riesling", acreage: 1.5, planted: null, variety: "ri" },
-      { name: "La Casa Nebbiolo", acreage: 0.4, planted: 2022, variety: "ne" },
-      { name: "Three Gables", acreage: 2, planted: 1999, variety: "un" },
-      { name: "Muscat", acreage: 0.5, planted: 1999, variety: "mu" },
-    ],
-  },
-  {
-    zone: "NW & Winery Block",
-    blocks: [
-      { name: "NV 114", acreage: 1.1, planted: 2004, variety: "pn" },
-      { name: "NW Nebbiolo", acreage: 0.5, planted: 2022, variety: "ne" },
-      { name: "NW Pommard", acreage: 3.5, planted: 1999, variety: "pn" },
-      { name: "NW 114", acreage: 3, planted: 1999, variety: "pn" },
-      { name: "Winery 777", acreage: 4, planted: 1999, variety: "pn" },
-    ],
-  },
-  {
-    zone: "Solar & Antonina Block",
-    blocks: [
-      { name: "Solar Chard 76", acreage: 1.2, planted: 2008, variety: "ch" },
-      { name: "Antonina 777", acreage: 2.1, planted: 2014, variety: "pn" },
-      { name: "Antonina Chard 76", acreage: 3.1, planted: 2014, variety: "ch" },
-    ],
-  },
-  {
-    zone: "Pearl & Arneis Block",
-    blocks: [
-      { name: "Arneis", acreage: 0.75, planted: 2022, variety: "ar" },
-      { name: "Pearl 777", acreage: 1.7, planted: 2008, variety: "pn" },
-      { name: "Pearl 115", acreage: 2, planted: 2008, variety: "pn" },
-    ],
-  },
-];
-const VINEYARD_VARIETY_COLORS = {
-  pn: { hex: "#c04b3a", label: "Pinot Noir" },
-  ch: { hex: "#d4af6a", label: "Chardonnay" },
-  ri: { hex: "#5b9e85", label: "Riesling" },
-  ne: { hex: "#7d70b8", label: "Nebbiolo" },
-  mu: { hex: "#c76a94", label: "Muscat" },
-  ar: { hex: "#7a9c4a", label: "Arneis" },
-  un: { hex: "#a8a29e", label: "Unspecified" },
-};
-
-function VineyardMapWidget() {
-  const [selected, setSelected] = useState(null);
-  const totalAcres = VINEYARD_MAP_ZONES.reduce((sum, z) => sum + z.blocks.reduce((s, b) => s + b.acreage, 0), 0);
-  const totalBlocks = VINEYARD_MAP_ZONES.reduce((sum, z) => sum + z.blocks.length, 0);
-  const selectedBlock = selected
-    ? VINEYARD_MAP_ZONES.flatMap((z) => z.blocks.map((b) => ({ ...b, zone: z.zone }))).find((b) => b.name === selected)
-    : null;
-
-  return (
-    <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-      <h2 className="font-brand text-lg text-emerald-950 mb-1">Vineyard Map</h2>
-      <p className="font-body text-xs text-stone-500 mb-3">
-        {totalBlocks} blocks · {totalAcres.toFixed(2)} acres total · sized to scale by acreage. Tap a block for details.
-      </p>
-      <div className="flex flex-wrap gap-3 mb-4">
-        {Object.entries(VINEYARD_VARIETY_COLORS).map(([key, v]) => (
-          <span key={key} className="flex items-center gap-1.5 font-body text-xs text-stone-600">
-            <span className="w-2.5 h-2.5 rounded shrink-0" style={{ backgroundColor: v.hex }} />
-            {v.label}
-          </span>
-        ))}
-      </div>
-      {VINEYARD_MAP_ZONES.map((zone) => (
-        <div key={zone.zone} className="border border-dashed border-stone-300 rounded-lg p-3 mb-3">
-          <p className="font-body text-sm font-medium text-stone-700 mb-2">{zone.zone}</p>
-          <div className="flex flex-wrap gap-2 items-end">
-            {zone.blocks.map((b) => {
-              const size = Math.round(34 + 34 * Math.sqrt(b.acreage));
-              const color = VINEYARD_VARIETY_COLORS[b.variety];
-              const isSelected = selected === b.name;
-              return (
-                <button
-                  key={b.name}
-                  type="button"
-                  onClick={() => setSelected(b.name)}
-                  style={{ width: size, height: size, backgroundColor: color.hex + "30", borderColor: color.hex }}
-                  className={`rounded-md border flex items-center justify-center text-center p-1 transition-transform hover:scale-105 ${
-                    isSelected ? "ring-2 ring-emerald-700 ring-offset-1" : ""
-                  }`}
-                >
-                  <span className="font-body text-[10px] font-medium leading-tight" style={{ color: color.hex }}>
-                    {b.name}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-      {selectedBlock && (
-        <div className="bg-stone-50 rounded-md p-3 mt-2">
-          <p className="font-body text-sm font-semibold text-stone-800">{selectedBlock.name}</p>
-          <p className="font-body text-xs text-stone-500 mt-0.5">{selectedBlock.zone}</p>
-          <p className="font-body text-xs text-stone-500 mt-0.5">
-            {VINEYARD_VARIETY_COLORS[selectedBlock.variety].label} · {selectedBlock.acreage} acres
-            {selectedBlock.planted ? ` · planted ${selectedBlock.planted}` : ""}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function VineyardPanel({ vineyardMapImage, onUpdateMapImage, blockDetails, onAddThoEntry, onUpdateThoEntry, onDeleteThoEntry, confirmAction, vineyardBlocks, onAddBlock }) {
   const blockFields = SIMPLE_SECTIONS.find((s) => s.key === "vineyardBlockDetails").fields;
 
   return (
     <div className="space-y-4">
-      <VineyardMapWidget />
-
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-1">Reference Photo</h2>
-        <p className="font-body text-xs text-stone-500 mb-3">Upload the original photo or scan for reference alongside the interactive map above.</p>
+        <h2 className="font-brand text-lg text-emerald-950 mb-1">Vineyard Map</h2>
+        <p className="font-body text-xs text-stone-500 mb-3">Upload a photo or scan of the actual vineyard map for reference.</p>
         {vineyardMapImage && (
           <img src={vineyardMapImage} alt="Vineyard map" className="w-full max-w-lg rounded-lg border border-stone-200 mb-3" />
         )}
@@ -3757,6 +3753,195 @@ function AboutAlloroTab({ data, setPrintJob, alloroStory, onUpdateStory, vineyar
             />
           )}
         </>
+      )}
+    </div>
+  );
+}
+
+// ---------- Compliance: a tracker, not an authority. Only tracks what the winery tells it —
+// their permits, their self-noted caps, their shipments — and reminds them of dates. Never
+// asserts legality, never calculates tax owed, never files anything. ----------
+const COMPLIANCE_DISCLAIMER =
+  "This is a tracking tool based on information you provide. It is not legal, tax, or compliance advice. Verify current rules with your state's Alcohol Beverage Control agency before shipping.";
+
+// Furthest-along status a permit can be in, computed purely from dates the winery entered —
+// never asserts a shipment is legal, just watches the dates.
+function computePermitStatus(permit) {
+  if (!permit.expirationDate) return "Not Licensed";
+  const today = todayISO();
+  if (today >= permit.expirationDate) return "Expired";
+  const leadDays = parseInt(permit.reminderLeadDays, 10) || 45;
+  const exp = new Date(permit.expirationDate + "T00:00:00");
+  const reminder = new Date(exp);
+  reminder.setDate(reminder.getDate() - leadDays);
+  const reminderISO = reminder.toISOString().slice(0, 10);
+  if (today >= reminderISO) return "Expiring Soon";
+  return "Active";
+}
+
+// Best (most current) status on file per state, since a state can have more than one permit
+// record over time (e.g. an old expired one plus a fresh renewal).
+function bestPermitStatusByState(permits) {
+  const rank = { Active: 3, "Expiring Soon": 2, Expired: 1, "Not Licensed": 0 };
+  const map = {};
+  permits.forEach((p) => {
+    if (!p.state) return;
+    const status = computePermitStatus(p);
+    if (!map[p.state] || rank[status] > rank[map[p.state]]) map[p.state] = status;
+  });
+  return map;
+}
+
+// Flags states with shipments logged but no currently-valid permit on file — a flag to
+// investigate, not proof of an actual violation.
+function complianceConflicts(shipments, permits) {
+  const statusByState = bestPermitStatusByState(permits);
+  const shippedStates = [...new Set(shipments.map((s) => s.destinationState).filter(Boolean))];
+  return shippedStates.filter((state) => {
+    const status = statusByState[state];
+    return !status || status === "Expired" || status === "Not Licensed";
+  });
+}
+
+function ComplianceOverview({ permits, shipments, setSubTab }) {
+  const statusByState = bestPermitStatusByState(permits);
+  const licensed = Object.entries(statusByState).filter(([, s]) => s === "Active").map(([st]) => st).sort();
+  const expiringSoon = Object.entries(statusByState).filter(([, s]) => s === "Expiring Soon").map(([st]) => st).sort();
+  const expired = Object.entries(statusByState).filter(([, s]) => s === "Expired").map(([st]) => st).sort();
+  const conflicts = complianceConflicts(shipments, permits).sort();
+
+  const Chip = ({ text, color }) => (
+    <span className={`font-body text-xs rounded px-2 py-0.5 ${color}`}>{text}</span>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+        <p className="font-body text-xs text-amber-800">{COMPLIANCE_DISCLAIMER}</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="bg-white border border-stone-200 rounded-lg p-4">
+          <p className="font-body text-xs text-stone-500 mb-2">Licensed states</p>
+          <p className="font-brand text-2xl text-emerald-950 mb-2">{licensed.length}</p>
+          <div className="flex flex-wrap gap-1">
+            {licensed.length === 0 ? <span className="font-body text-xs text-stone-400">None yet</span> : licensed.map((s) => <Chip key={s} text={s} color="bg-green-50 text-green-700" />)}
+          </div>
+        </div>
+        <div className="bg-white border border-stone-200 rounded-lg p-4">
+          <p className="font-body text-xs text-stone-500 mb-2">Expiring soon</p>
+          <p className="font-brand text-2xl text-amber-700 mb-2">{expiringSoon.length}</p>
+          <div className="flex flex-wrap gap-1">
+            {expiringSoon.length === 0 ? <span className="font-body text-xs text-stone-400">None</span> : expiringSoon.map((s) => <Chip key={s} text={s} color="bg-amber-50 text-amber-700" />)}
+          </div>
+        </div>
+        <div className="bg-white border border-stone-200 rounded-lg p-4">
+          <p className="font-body text-xs text-stone-500 mb-2">Needs attention</p>
+          <p className="font-brand text-2xl text-red-700 mb-2">{expired.length + conflicts.length}</p>
+          <div className="flex flex-wrap gap-1">
+            {expired.length === 0 && conflicts.length === 0 ? (
+              <span className="font-body text-xs text-stone-400">None</span>
+            ) : (
+              <>
+                {expired.map((s) => <Chip key={"exp-" + s} text={`${s} — expired`} color="bg-red-50 text-red-700" />)}
+                {conflicts.map((s) => <Chip key={"conf-" + s} text={`${s} — no active permit on file`} color="bg-red-50 text-red-700" />)}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <p className="font-body text-xs text-stone-400">
+        "Needs attention" flags are worth checking, not proof of an actual violation — a conflict just means shipments were logged to a state without a currently-valid permit on file here.
+        <button onClick={() => setSubTab("reference")} className="text-emerald-700 underline ml-1">Browse all 50 states →</button>
+      </p>
+    </div>
+  );
+}
+
+function ComplianceTab({ data, onAddThoEntry, onUpdateThoEntry, onDeleteThoEntry, confirmAction, associatesList, onAddAssociate }) {
+  const [subTab, setSubTab] = useState("overview");
+  const permitFields = SIMPLE_SECTIONS.find((s) => s.key === "statePermits").fields;
+  const shipmentFields = SIMPLE_SECTIONS.find((s) => s.key === "shipmentLog").fields;
+  const referenceFields = SIMPLE_SECTIONS.find((s) => s.key === "stateRuleReference").fields;
+
+  const sortedPermits = [...data.statePermits].sort((a, b) => (a.expirationDate || "9999").localeCompare(b.expirationDate || "9999"));
+  const sortedShipments = [...data.shipmentLog].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  const sortedReference = [...data.stateRuleReference].sort((a, b) => (a.state || "").localeCompare(b.state || ""));
+
+  const SUB_TABS = [
+    { key: "overview", label: "Overview" },
+    { key: "permits", label: "My Permits" },
+    { key: "shipments", label: "Shipment Log" },
+    { key: "reference", label: "State Reference" },
+  ];
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-6 flex-wrap">
+        {SUB_TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setSubTab(t.key)}
+            className={`font-body text-sm font-medium px-4 py-2 rounded-md border ${
+              subTab === t.key ? "bg-emerald-900 text-white border-emerald-900" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {subTab === "overview" ? (
+        <ComplianceOverview permits={data.statePermits} shipments={data.shipmentLog} setSubTab={setSubTab} />
+      ) : subTab === "permits" ? (
+        <div className="space-y-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <p className="font-body text-xs text-amber-800">{COMPLIANCE_DISCLAIMER}</p>
+          </div>
+          <SimpleDataPanel
+            title="My Permits"
+            fields={permitFields}
+            rows={sortedPermits}
+            onAdd={(entry) => onAddThoEntry("statePermits", entry)}
+            onUpdate={(id, changes) => onUpdateThoEntry("statePermits", id, changes)}
+            onDelete={(id) => onDeleteThoEntry("statePermits", id)}
+            confirmAction={confirmAction}
+          />
+        </div>
+      ) : subTab === "shipments" ? (
+        <div className="space-y-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <p className="font-body text-xs text-amber-800">{COMPLIANCE_DISCLAIMER}</p>
+          </div>
+          <SimpleDataPanel
+            title="Shipment Log"
+            fields={shipmentFields}
+            rows={sortedShipments}
+            onAdd={(entry) => onAddThoEntry("shipmentLog", entry)}
+            onUpdate={(id, changes) => onUpdateThoEntry("shipmentLog", id, changes)}
+            onDelete={(id) => onDeleteThoEntry("shipmentLog", id)}
+            confirmAction={confirmAction}
+          />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <p className="font-body text-xs text-amber-800">{COMPLIANCE_DISCLAIMER}</p>
+          </div>
+          <p className="font-body text-xs text-stone-500">
+            All 50 states + DC are listed below. Most start as "Not Yet Verified" — this is curated public information, refreshed on a quarterly cadence, not original legal analysis. Update a state's status once you've actually verified it against a current source.
+          </p>
+          <SimpleDataPanel
+            title="State Reference"
+            fields={referenceFields}
+            rows={sortedReference}
+            onAdd={(entry) => onAddThoEntry("stateRuleReference", entry)}
+            onUpdate={(id, changes) => onUpdateThoEntry("stateRuleReference", id, changes)}
+            onDelete={(id) => onDeleteThoEntry("stateRuleReference", id)}
+            confirmAction={confirmAction}
+          />
+        </div>
       )}
     </div>
   );
@@ -7786,6 +7971,30 @@ function WineryDataTrackerInner() {
         results.wineClubTiers = [];
       }
 
+      // statePermits, shipmentLog, and stateRuleReference aren't in ALL_TABS (only reachable
+      // through the Compliance tab's internal sub-tabs, not as independent nav entries), so the
+      // generic ALL_TABS loading loop skips them — load explicitly here instead.
+      try {
+        const res = await storage.get("statePermits", true);
+        results.statePermits = res ? JSON.parse(res.value) : [];
+      } catch {
+        results.statePermits = [];
+      }
+
+      try {
+        const res = await storage.get("shipmentLog", true);
+        results.shipmentLog = res ? JSON.parse(res.value) : [];
+      } catch {
+        results.shipmentLog = [];
+      }
+
+      try {
+        const res = await storage.get("stateRuleReference", true);
+        results.stateRuleReference = res ? JSON.parse(res.value) : [];
+      } catch {
+        results.stateRuleReference = [];
+      }
+
       try {
         const res = await storage.get("vineyard_blocks", true);
         if (res && !cancelled) setVineyardBlocks(JSON.parse(res.value));
@@ -7919,38 +8128,44 @@ function WineryDataTrackerInner() {
           }
         }
 
-        // One-time seed: import the real block/variety/acreage data from the annotated property
-        // map shared during setup, so the structured Vineyard table starts populated to match
-        // the interactive map instead of needing all 19 blocks retyped by hand. Also merges the
-        // block names into the managed Blocks list so the block-picker shows them correctly.
+        // One-time seed: populate the State Reference table with all 50 states + DC so the
+        // full structure exists to browse and fill in. Only the handful of states with a
+        // genuinely known status get one seeded here — everything else starts honestly marked
+        // "Not Yet Verified" rather than guessed, since this table's whole purpose is to never
+        // assert something that hasn't actually been checked against a current source.
         try {
-          await storage.get("vineyard_map_seed_v1", true);
+          await storage.get("state_reference_seed_v1", true);
         } catch {
           try {
-            const VARIETY_LABELS = { pn: "Pinot Noir", ch: "Chardonnay", ri: "Riesling", ne: "Nebbiolo", mu: "Muscat", ar: "Arneis", un: "Other" };
-            const seedRows = [];
-            const seedBlockNames = [];
-            VINEYARD_MAP_ZONES.forEach((zone) => {
-              zone.blocks.forEach((b) => {
-                seedRows.push({ id: genId(), block: b.name, variety: VARIETY_LABELS[b.variety], acreage: b.acreage, soilType: "" });
-                seedBlockNames.push(b.name);
-              });
+            const KNOWN_STATUSES = {
+              "Utah": { dtcStatus: "Banned", restrictionNotes: "DTC wine shipping banned outright." },
+              "Delaware": { dtcStatus: "Banned", restrictionNotes: "DTC wine shipping banned outright." },
+              "Indiana": { dtcStatus: "Restricted", restrictionNotes: "Allowed with major restrictions — verify current specifics before shipping." },
+              "Mississippi": { dtcStatus: "Restricted", restrictionNotes: "Allowed with major restrictions. Rules were loosened in 2025 — recheck current specifics before relying on this." },
+              "New Jersey": { dtcStatus: "Restricted", restrictionNotes: "Allowed with a 250,000-gallon winery production cap. Legislative bills were pending as of 2026 — recheck before relying on this." },
+              "Oklahoma": { dtcStatus: "Restricted", restrictionNotes: "Allowed with major restrictions — verify current specifics before shipping." },
+              "Rhode Island": { dtcStatus: "Restricted", restrictionNotes: "Allowed with major restrictions — verify current specifics before shipping." },
+              "Wyoming": { dtcStatus: "Restricted", restrictionNotes: "Allowed with major restrictions — verify current specifics before shipping." },
+              "Louisiana": { dtcStatus: "Restricted", restrictionNotes: "Allowed with major restrictions — verify current specifics before shipping." },
+              "Arkansas": { dtcStatus: "Not Yet Verified", restrictionNotes: "Rules were loosened in 2025 — status not yet re-verified here, check before relying on this." },
+            };
+            const seedRows = US_STATES.map((state) => {
+              const known = KNOWN_STATUSES[state];
+              return {
+                id: genId(),
+                state,
+                dtcStatus: known ? known.dtcStatus : "Not Yet Verified",
+                restrictionNotes: known ? known.restrictionNotes : "",
+                annualCapPerHousehold: "",
+                reportFrequency: "",
+                lastVerifiedDate: "",
+                sourceLink: "",
+              };
             });
-            const mergedBlockDetails = [...seedRows, ...(results.vineyardBlockDetails || [])];
-            await storage.set("vineyardBlockDetails", JSON.stringify(mergedBlockDetails), true);
-            results.vineyardBlockDetails = mergedBlockDetails;
-
-            let currentBlocks = [];
-            try {
-              const blocksRes = await storage.get("vineyard_blocks", true);
-              currentBlocks = blocksRes ? JSON.parse(blocksRes.value) : [];
-            } catch {
-              currentBlocks = [];
-            }
-            const mergedBlockNames = [...new Set([...currentBlocks, ...seedBlockNames])].sort((a, b) => a.localeCompare(b));
-            await storage.set("vineyard_blocks", JSON.stringify(mergedBlockNames), true);
-
-            await storage.set("vineyard_map_seed_v1", "true", true);
+            const mergedReference = [...seedRows, ...(results.stateRuleReference || [])];
+            await storage.set("stateRuleReference", JSON.stringify(mergedReference), true);
+            results.stateRuleReference = mergedReference;
+            await storage.set("state_reference_seed_v1", "true", true);
           } catch {
             // ignore — worst case the import is retried next load
           }
@@ -9768,6 +9983,14 @@ function WineryDataTrackerInner() {
             onSave={saveTechSheet}
             onDelete={deleteTechSheet}
             onPrint={(sheetId) => setPrintJob({ type: "techSheet", sheetId })}
+          />
+        ) : activeKey === "compliance" ? (
+          <ComplianceTab
+            data={data}
+            onAddThoEntry={addThoEntry}
+            onUpdateThoEntry={updateThoEntry}
+            onDeleteThoEntry={deleteThoEntry}
+            confirmAction={confirmAction}
           />
         ) : activeKey === "calendar" ? (
           <MasterCalendar data={data} />
