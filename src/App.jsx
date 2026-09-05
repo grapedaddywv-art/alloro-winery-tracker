@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useMemo, Fragment, Component } from "react";
 import * as XLSX from "xlsx";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import jsPDF from "jspdf";
 import { storage } from "./lib/storage";
+import autoTable from "jspdf-autotable";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import Papa from "papaparse";
 import {
   ClipboardList,
@@ -30,6 +32,7 @@ import {
   CloudRain,
   Wind,
   Droplets,
+  Gauge,
   Sunrise,
   Sunset,
   Thermometer,
@@ -74,6 +77,7 @@ import {
 
 // McMinnville Municipal Airport (KMMV), Oregon — used for the homepage weather widget
 const HOME_COORDS = { lat: 45.1944, lon: -123.1364, tz: "America/Los_Angeles" };
+const HOME_STATION_ID = "KMMV"; // McMinnville Municipal Airport — nearest real NWS observation station
 
 // Maps Open-Meteo WMO weather codes to a short label + emoji
 const WEATHER_CODES = {
@@ -100,6 +104,12 @@ const WEATHER_CODES = {
   99: { label: "Thunderstorm w/ hail", icon: "⛈️" },
 };
 const weatherInfo = (code) => WEATHER_CODES[code] || { label: "—", icon: "🌡️" };
+// NWS station observations report in metric (Celsius, m/s, Pa) regardless of the rest of the
+// app's units — converted here so the real station reading displays in the same F/mph/inHg the
+// modeled Open-Meteo values already use.
+const cToF = (c) => (c == null ? null : c * 9 / 5 + 32);
+const mpsToMph = (mps) => (mps == null ? null : mps * 2.23694);
+const paToInHg = (pa) => (pa == null ? null : pa * 0.0002953);
 
 // Crew members available for assignment across all tabs
 const CREW_MEMBERS = ["Ryan Clifford", "Tom Fitzpatrick", "Daniel Lethin", "David Nemarnik"];
@@ -113,9 +123,6 @@ const WINERY_TASK_TYPES = ["Transfer", "Top Off", "Additions", "Rack", "Cold Sta
 const TASK_TYPES = WINERY_TASK_TYPES;
 const VINEYARD_TASK_TYPES = ["Prune", "Canopy Management", "Spray / Pest Management", "Irrigate", "Mow / Cultivate", "Scout / Monitor", "Trellis / Wire Work", "Frost Protection", "Fruit Thinning", "Other"];
 const WORKORDER_CATEGORIES = ["Vineyard", "Winery"];
-function taskTypesForCategory(category) {
-  return category === "Vineyard" ? VINEYARD_TASK_TYPES : WINERY_TASK_TYPES;
-}
 // Stages a Fermentation work order can mark — completing one of these, linked to a Lot,
 // automatically advances that lot's position on the Fermentation Overview stage map.
 const FERMENT_WORK_STAGES = ["Start Primary Fermentation", "Complete Primary Fermentation", "Start Malolactic Fermentation", "Complete Malolactic Fermentation"];
@@ -409,6 +416,8 @@ const SIMPLE_SECTIONS = [
       { name: "volumeGallons", label: "Volume (gallons)", type: "number", optional: true },
       { name: "orderValue", label: "Order Value ($)", type: "number", optional: true },
       { name: "taxCollected", label: "Tax Collected ($, self-reported)", type: "number", optional: true },
+      { name: "fulfillmentMethod", label: "Fulfillment Method", type: "select", options: ["Self-fulfilled", "Third-party fulfillment house"], optional: true },
+      { name: "ageVerificationConfirmed", label: "Age Verification Confirmed at Delivery", type: "checkbox-group", options: ["Yes"], optional: true },
       { name: "referenceOrderNumber", label: "Reference Invoice / Order #", type: "text", optional: true },
     ],
   },
@@ -422,6 +431,9 @@ const SIMPLE_SECTIONS = [
       { name: "dtcStatus", label: "DTC Shipping Status", type: "select", options: ["Allowed", "Restricted", "Banned", "Not Yet Verified"] },
       { name: "restrictionNotes", label: "Restriction Notes (plain English)", type: "textarea" },
       { name: "annualCapPerHousehold", label: "Annual Cap per Household (if known)", type: "text", optional: true },
+      { name: "fulfillmentHouseAllowed", label: "Third-Party Fulfillment House", type: "select", options: ["Allowed", "Not Permitted", "Not Yet Verified"], optional: true },
+      { name: "containerSizeRestriction", label: "Container Size Restriction (if any)", type: "text", optional: true },
+      { name: "ageVerificationNotes", label: "Age Verification / Delivery Notes", type: "textarea", optional: true },
       { name: "reportFrequency", label: "Typical Report Frequency", type: "text", optional: true },
       { name: "lastVerifiedDate", label: "Last Verified Date", type: "date", optional: true },
       { name: "sourceLink", label: "Source Link", type: "text", optional: true },
@@ -492,8 +504,19 @@ const WORKORDER_FIELDS = [
 const TEMPLATE_FIELDS = WORKORDER_FIELDS.filter((f) => !["date", "dateAssigned", "lots", "barrels"].includes(f.name));
 // Returns WORKORDER_FIELDS with the Task Type options swapped to match the chosen category, so
 // Vineyard work orders offer vineyard tasks and Winery work orders offer winery tasks
-function workOrderFieldsForCategory(fields, category) {
-  return fields.map((f) => (f.name === "taskType" ? { ...f, options: taskTypesForCategory(category) } : f));
+function workOrderFieldsForCategory(fields, category, vineyardTaskTypes, wineryTaskTypes, onAddVineyardTaskType, onAddWineryTaskType) {
+  const isVineyard = category === "Vineyard";
+  return fields.map((f) =>
+    f.name === "taskType"
+      ? {
+          ...f,
+          type: "addable-select",
+          options: isVineyard ? vineyardTaskTypes : wineryTaskTypes,
+          onAddOption: isVineyard ? onAddVineyardTaskType : onAddWineryTaskType,
+          addLabel: "New task type",
+        }
+      : f
+  );
 }
 // Hides fields that only make sense for a specific Task Type until that type is actually
 // selected — e.g. "Addition Type" only shows once Task Type is "Additions" — instead of always
@@ -973,7 +996,7 @@ const PERSISTENT_NAV_KEYS = ["home", "workorders"];
 const NAV_CATEGORIES = {
   vineyard: { label: "Vineyard", dotColor: "bg-lime-400", keys: ["fruitAnalysis", "harvest", "vineHealth"] },
   winery: { label: "Winery", dotColor: "bg-amber-400", keys: ["ferment", "barrels", "blending", "tanks", "bottling", "techSheetBuilder"] },
-  tho: { label: "THO", dotColor: "bg-rose-400", keys: ["thoPayroll", "thoMileage", "thoExpenses", "aboutAlloro"] },
+  tho: { label: "Sales", dotColor: "bg-rose-400", keys: ["thoPayroll", "thoMileage", "thoExpenses", "aboutAlloro"] },
   data: { label: "Data", dotColor: "bg-sky-300", keys: ["labResults", "compliance", "calendar", "formulas", "backup"] },
 };
 
@@ -985,34 +1008,80 @@ function categoryOfKey(key) {
 }
 
 // Flattens all app data into a common shape ({title, headers, rows}) shared by every export format
-function buildExportSections(data) {
-  const sections = [];
+const VINTAGE_RELEVANT_EXPORT_KEYS = ["ferment", "bottling", "accolades", "winePricing", "labelApprovals"];
 
-  const woHeaders = ["Work Order #", "Date Assigned", "Due Date", "Assigned To", "Task", "Task Type", "Addition Type", "Lots", "Barrels", "Calculations", "Directions", "Priority", "Status", "Date Completed", "Notes"];
-  const woRows = data.workorders.map((o) => ({
-    "Work Order #": formatOrderNumber(o.orderNumber), "Date Assigned": o.dateAssigned, "Due Date": o.date, "Assigned To": o.assignedTo, "Task": o.task,
-    "Task Type": o.taskType, "Addition Type": o.taskType === "Additions" ? o.additionType : "",
-    "Lots": Array.isArray(o.lots) ? o.lots.join(", ") : "",
-    "Barrels": Array.isArray(o.barrels) ? o.barrels.map((id) => (data.barrels || []).find((b) => b.id === id)?.barrelNumber).filter(Boolean).join(", ") : "",
-    "Calculations": o.calculations, "Directions": o.directions,
-    "Priority": o.priority, "Status": o.status, "Date Completed": o.dateCompleted, "Notes": o.notes,
-  }));
-  sections.push({ title: "Work Orders", headers: woHeaders, rows: woRows });
+// Grouped for the export selection modal, matching the app's own nav categories so the checkbox
+// list reads like the rest of the app rather than an arbitrary flat list of 23 items.
+const EXPORT_SECTION_GROUPS = [
+  { label: "Work Orders & Production", keys: ["workorders", "ferment", "barrels", "harvest", "fruitAnalysis", "vineHealth", "tanks", "bottling"] },
+  { label: "Vineyard", keys: ["vineyardBlockDetails"] },
+  { label: "Lab & Quality", keys: ["labResults"] },
+  { label: "Sales / Team", keys: ["thoTimesheets", "thoTips", "thoMileage", "thoExpenses"] },
+  { label: "Business & Sales", keys: ["accolades", "contacts", "winePricing", "wineClubTiers"] },
+  { label: "Compliance", keys: ["statePermits", "shipmentLog", "stateRuleReference", "labelApprovals", "ttbFilings"] },
+];
+const EXPORT_SECTION_LABELS = {
+  workorders: "Work Orders", ferment: "Fermentation", barrels: "Barrels", harvest: "Harvest Tonnage",
+  fruitAnalysis: "Fruit Analysis", vineHealth: "Vine Health", tanks: "Vessels", bottling: "Bottling",
+  vineyardBlockDetails: "Vineyard Blocks", labResults: "Lab Results",
+  thoTimesheets: "Timesheets", thoTips: "Tips", thoMileage: "Mileage", thoExpenses: "Expenses",
+  accolades: "Accolades", contacts: "Contacts", winePricing: "Pricing", wineClubTiers: "Wine Club",
+  statePermits: "My Permits", shipmentLog: "Shipment Log", stateRuleReference: "State Reference",
+  labelApprovals: "Label Approvals", ttbFilings: "TTB Filings",
+};
+
+// Every vintage year actually present across the sections a vintage filter can apply to, for the
+// export modal's dropdown — computed from real data rather than a fixed year list.
+function availableExportVintages(data) {
+  const years = new Set();
+  VINTAGE_RELEVANT_EXPORT_KEYS.forEach((key) => {
+    (data[key] || []).forEach((row) => {
+      if (row.vintage) years.add(String(row.vintage));
+    });
+  });
+  return [...years].sort((a, b) => b.localeCompare(a));
+}
+
+function buildExportSections(data, selectedKeys, vintageFilter) {
+  const sections = [];
+  const include = (key) => !selectedKeys || selectedKeys.has(key);
+  const matchesVintage = (key, rowVintage) => {
+    if (!vintageFilter || vintageFilter === "All") return true;
+    if (!VINTAGE_RELEVANT_EXPORT_KEYS.includes(key)) return true;
+    return String(rowVintage ?? "") === vintageFilter;
+  };
+
+  if (include("workorders")) {
+    const woHeaders = ["Work Order #", "Date Assigned", "Due Date", "Assigned To", "Task", "Task Type", "Addition Type", "Lots", "Barrels", "Calculations", "Directions", "Priority", "Status", "Date Completed", "Notes"];
+    const woRows = data.workorders.map((o) => ({
+      "Work Order #": formatOrderNumber(o.orderNumber), "Date Assigned": o.dateAssigned, "Due Date": o.date, "Assigned To": o.assignedTo, "Task": o.task,
+      "Task Type": o.taskType, "Addition Type": o.taskType === "Additions" ? o.additionType : "",
+      "Lots": Array.isArray(o.lots) ? o.lots.join(", ") : "",
+      "Barrels": Array.isArray(o.barrels) ? o.barrels.map((id) => (data.barrels || []).find((b) => b.id === id)?.barrelNumber).filter(Boolean).join(", ") : "",
+      "Calculations": o.calculations, "Directions": o.directions,
+      "Priority": o.priority, "Status": o.status, "Date Completed": o.dateCompleted, "Notes": o.notes,
+    }));
+    sections.push({ title: "Work Orders", headers: woHeaders, rows: woRows });
+  }
 
   SIMPLE_SECTIONS.forEach((section) => {
+    if (!include(section.key)) return;
     const headers = section.fields.map((f) => f.label);
-    const rows = data[section.key].map((row) =>
-      Object.fromEntries(section.fields.map((f) => [
-        f.label,
-        (f.type === "photo" || f.type === "document") ? (row[f.name] ? "Yes" : "No") : (row[f.name] ?? ""),
-      ]))
-    );
+    const rows = data[section.key]
+      .filter((row) => matchesVintage(section.key, row.vintage))
+      .map((row) =>
+        Object.fromEntries(section.fields.map((f) => [
+          f.label,
+          (f.type === "photo" || f.type === "document") ? (row[f.name] ? "Yes" : "No") : (row[f.name] ?? ""),
+        ]))
+      );
     sections.push({ title: section.sheetName, headers, rows });
   });
 
-  const fermentHeaders = ["Tank / Lot ID", "Vessel", "Variety", "Start Date", "Starting Brix", "Starting Temp (°F)", "Status", "Reading Date", "Work Done", "Brix", "Temp (°F)", "pH", "Notes"];
-  const fermentRows = [];
-  data.ferment.forEach((lot) => {
+  if (include("ferment")) {
+    const fermentHeaders = ["Tank / Lot ID", "Vessel", "Variety", "Start Date", "Starting Brix", "Starting Temp (°F)", "Status", "Reading Date", "Work Done", "Brix", "Temp (°F)", "pH", "Notes"];
+    const fermentRows = [];
+    data.ferment.filter((lot) => matchesVintage("ferment", lot.vintage)).forEach((lot) => {
     const lotBase = {
       "Tank / Lot ID": lot.tankId, "Vessel": lot.vessel, "Variety": lot.variety, "Start Date": lot.startDate,
       "Starting Brix": lot.startingBrix, "Starting Temp (°F)": lot.startingTemp, "Status": lot.status,
@@ -1030,39 +1099,42 @@ function buildExportSections(data) {
         });
       });
     }
-  });
-  sections.push({ title: "Fermentation", headers: fermentHeaders, rows: fermentRows });
+    });
+    sections.push({ title: "Fermentation", headers: fermentHeaders, rows: fermentRows });
+  }
 
-  const barrelHeaders = [
-    "Barrel #", "Cooperage", "Barrel Year", "Wine Color", "Forest Origin", "Toast", "Status", "Fill Count",
-    "Fill Lot", "Fill Variety", "Fill Date", "Empty Date", "Sold Date", "Sold To", "Buyer Contact", "Sale Price",
-    "Retired Date", "Retired Reason", "Notes",
-  ];
-  const barrelRows = [];
-  (data.barrels || []).forEach((b) => {
-    const parsed = parseBarrelNumber(b.barrelNumber);
-    const base = {
-      "Barrel #": b.barrelNumber, "Cooperage": b.cooperage || parsed?.cooperage || "", "Barrel Year": parsed ? `20${parsed.year}` : "",
-      "Wine Color": b.wineColor || "", "Forest Origin": b.forest || "",
-      "Toast": b.toast, "Status": barrelStatus(b), "Fill Count": b.fills.length,
-      "Sold Date": b.soldDate, "Sold To": b.soldTo, "Buyer Contact": b.soldContact, "Sale Price": b.soldPrice,
-      "Retired Date": b.retiredDate, "Retired Reason": b.retiredReason, "Notes": b.notes,
-    };
-    if (b.fills.length === 0) {
-      barrelRows.push({ ...base, "Fill Lot": "", "Fill Variety": "", "Fill Date": "", "Empty Date": "" });
-    } else {
-      [...b.fills].sort((x, y) => (x.fillDate > y.fillDate ? 1 : -1)).forEach((f) => {
-        const components = getFillComponents(f, data.ferment);
-        barrelRows.push({
-          ...base,
-          "Fill Lot": summarizeFillComponents(f, data.ferment),
-          "Fill Variety": [...new Set(components.map((c) => c.variety).filter(Boolean))].join(", "),
-          "Fill Date": f.fillDate, "Empty Date": f.emptyDate,
+  if (include("barrels")) {
+    const barrelHeaders = [
+      "Barrel #", "Cooperage", "Barrel Year", "Wine Color", "Forest Origin", "Toast", "Status", "Fill Count",
+      "Fill Lot", "Fill Variety", "Fill Date", "Empty Date", "Sold Date", "Sold To", "Buyer Contact", "Sale Price",
+      "Retired Date", "Retired Reason", "Notes",
+    ];
+    const barrelRows = [];
+    (data.barrels || []).forEach((b) => {
+      const parsed = parseBarrelNumber(b.barrelNumber);
+      const base = {
+        "Barrel #": b.barrelNumber, "Cooperage": b.cooperage || parsed?.cooperage || "", "Barrel Year": parsed ? `20${parsed.year}` : "",
+        "Wine Color": b.wineColor || "", "Forest Origin": b.forest || "",
+        "Toast": b.toast, "Status": barrelStatus(b), "Fill Count": b.fills.length,
+        "Sold Date": b.soldDate, "Sold To": b.soldTo, "Buyer Contact": b.soldContact, "Sale Price": b.soldPrice,
+        "Retired Date": b.retiredDate, "Retired Reason": b.retiredReason, "Notes": b.notes,
+      };
+      if (b.fills.length === 0) {
+        barrelRows.push({ ...base, "Fill Lot": "", "Fill Variety": "", "Fill Date": "", "Empty Date": "" });
+      } else {
+        [...b.fills].sort((x, y) => (x.fillDate > y.fillDate ? 1 : -1)).forEach((f) => {
+          const components = getFillComponents(f, data.ferment);
+          barrelRows.push({
+            ...base,
+            "Fill Lot": summarizeFillComponents(f, data.ferment),
+            "Fill Variety": [...new Set(components.map((c) => c.variety).filter(Boolean))].join(", "),
+            "Fill Date": f.fillDate, "Empty Date": f.emptyDate,
+          });
         });
-      });
-    }
-  });
-  sections.push({ title: "Barrels", headers: barrelHeaders, rows: barrelRows });
+      }
+    });
+    sections.push({ title: "Barrels", headers: barrelHeaders, rows: barrelRows });
+  }
 
   return sections;
 }
@@ -1589,6 +1661,8 @@ function Field({ f, value, onChange, hideLabel, fermentLots, barrelsList, blocks
         <AddableSelectField value={value} onChange={onChange} options={sprayProgramsList || []} onAddOption={onAddSprayProgram} addLabel="New spray program" />
       ) : f.type === "associate-picker" ? (
         <AddableSelectField value={value} onChange={onChange} options={associatesList || []} onAddOption={onAddAssociate} addLabel="New tasting associate" />
+      ) : f.type === "addable-select" ? (
+        <AddableSelectField value={value} onChange={onChange} options={f.options || []} onAddOption={f.onAddOption} addLabel={f.addLabel || "New option"} />
       ) : f.type === "photo" ? (
         <div>
           <input
@@ -1679,11 +1753,11 @@ function Field({ f, value, onChange, hideLabel, fermentLots, barrelsList, blocks
 }
 
 // ---------- Work order checklist row ----------
-function WorkOrderRow({ order, onToggle, onDelete, onDuplicate, onSaveAsTemplate, isEditing, editForm, onEditChange, onStartEdit, onSaveEdit, onCancelEdit, fermentLots, barrelsList, lotNamesList, onRegisterLotName, sprayProgramsList, onAddSprayProgram }) {
+function WorkOrderRow({ order, onToggle, onDelete, onDuplicate, onSaveAsTemplate, isEditing, editForm, onEditChange, onStartEdit, onSaveEdit, onCancelEdit, fermentLots, barrelsList, lotNamesList, onRegisterLotName, sprayProgramsList, onAddSprayProgram, vineyardTaskTypes, wineryTaskTypes, onAddVineyardTaskType, onAddWineryTaskType }) {
   const isComplete = order.status === "Complete";
 
   if (isEditing) {
-    const visibleFields = visibleWorkOrderFields(workOrderFieldsForCategory(WORKORDER_FIELDS, editForm.category), editForm);
+    const visibleFields = visibleWorkOrderFields(workOrderFieldsForCategory(WORKORDER_FIELDS, editForm.category, vineyardTaskTypes, wineryTaskTypes, onAddVineyardTaskType, onAddWineryTaskType), editForm);
     return (
       <li className="px-4 py-3 bg-ink-50">
         {order.orderNumber && (
@@ -1868,7 +1942,7 @@ function TemplateRow({ template, onUse, onDelete }) {
 }
 
 
-function ArchiveGroup({ label, orders, onToggle, onDelete, onDuplicate, onSaveAsTemplate, editingWorkOrderId, editWorkOrderForm, onEditChange, onStartEdit, onSaveEdit, onCancelEdit, fermentLots, barrelsList, lotNamesList, onRegisterLotName, sprayProgramsList, onAddSprayProgram }) {
+function ArchiveGroup({ label, orders, onToggle, onDelete, onDuplicate, onSaveAsTemplate, editingWorkOrderId, editWorkOrderForm, onEditChange, onStartEdit, onSaveEdit, onCancelEdit, fermentLots, barrelsList, lotNamesList, onRegisterLotName, sprayProgramsList, onAddSprayProgram, vineyardTaskTypes, wineryTaskTypes, onAddVineyardTaskType, onAddWineryTaskType }) {
   const [expanded, setExpanded] = useState(false);
   return (
     <div className="border-b border-stone-100 last:border-b-0">
@@ -1901,6 +1975,10 @@ function ArchiveGroup({ label, orders, onToggle, onDelete, onDuplicate, onSaveAs
               onRegisterLotName={onRegisterLotName}
               sprayProgramsList={sprayProgramsList}
               onAddSprayProgram={onAddSprayProgram}
+              vineyardTaskTypes={vineyardTaskTypes}
+              wineryTaskTypes={wineryTaskTypes}
+              onAddVineyardTaskType={onAddVineyardTaskType}
+              onAddWineryTaskType={onAddWineryTaskType}
             />
           ))}
         </ul>
@@ -3900,12 +3978,23 @@ function complianceConflicts(shipments, permits) {
   });
 }
 
-function ComplianceOverview({ permits, shipments, labels, ttbFilings, setSubTab }) {
+// Flags shipments that used a third-party fulfillment house into a state where the State
+// Reference table says that's not permitted (e.g. Oklahoma) — only fires when that state's
+// fulfillment rule has actually been verified, never on an unverified/blank state.
+function fulfillmentHouseConflicts(shipments, stateReference) {
+  const restrictedStates = new Set(
+    stateReference.filter((r) => r.fulfillmentHouseAllowed === "Not Permitted").map((r) => r.state)
+  );
+  return shipments.filter((s) => s.fulfillmentMethod === "Third-party fulfillment house" && restrictedStates.has(s.destinationState));
+}
+
+function ComplianceOverview({ permits, shipments, labels, ttbFilings, stateReference, setSubTab }) {
   const statusByState = bestPermitStatusByState(permits);
   const licensed = Object.entries(statusByState).filter(([, s]) => s === "Active").map(([st]) => st).sort();
   const expiringSoon = Object.entries(statusByState).filter(([, s]) => s === "Expiring Soon").map(([st]) => st).sort();
   const expired = Object.entries(statusByState).filter(([, s]) => s === "Expired").map(([st]) => st).sort();
   const conflicts = complianceConflicts(shipments, permits).sort();
+  const fulfillmentConflicts = fulfillmentHouseConflicts(shipments, stateReference);
 
   const labelName = (l) => l.fancifulName || l.brandName || "Untitled label";
   const approvedLabels = labels.filter((l) => computeLabelStatus(l) === "Approved");
@@ -3946,9 +4035,9 @@ function ComplianceOverview({ permits, shipments, labels, ttbFilings, setSubTab 
         </div>
         <div className="bg-white border border-stone-200 rounded-lg p-4">
           <p className="font-body text-xs text-stone-500 mb-2">Needs attention</p>
-          <p className="font-brand text-2xl text-red-700 mb-2">{expired.length + conflicts.length + labelsNeedingAttention.length + ttbNeedingAttention.length}</p>
+          <p className="font-brand text-2xl text-red-700 mb-2">{expired.length + conflicts.length + labelsNeedingAttention.length + ttbNeedingAttention.length + fulfillmentConflicts.length}</p>
           <div className="flex flex-wrap gap-1">
-            {expired.length === 0 && conflicts.length === 0 && labelsNeedingAttention.length === 0 && ttbNeedingAttention.length === 0 ? (
+            {expired.length === 0 && conflicts.length === 0 && labelsNeedingAttention.length === 0 && ttbNeedingAttention.length === 0 && fulfillmentConflicts.length === 0 ? (
               <span className="font-body text-xs text-stone-400">None</span>
             ) : (
               <>
@@ -3956,6 +4045,7 @@ function ComplianceOverview({ permits, shipments, labels, ttbFilings, setSubTab 
                 {conflicts.map((s) => <Chip key={"conf-" + s} text={`${s} — no active permit on file`} color="bg-red-50 text-red-700" />)}
                 {labelsNeedingAttention.map((l) => <Chip key={l.id} text={`${labelName(l)} — ${computeLabelStatus(l).toLowerCase()}`} color="bg-red-50 text-red-700" />)}
                 {ttbNeedingAttention.map((f) => <Chip key={f.id} text={`TTB ${f.period} — ${computeTTBFilingStatus(f).toLowerCase()}`} color="bg-red-50 text-red-700" />)}
+                {fulfillmentConflicts.map((s) => <Chip key={s.id} text={`${s.destinationState} shipment — fulfillment house not permitted there`} color="bg-red-50 text-red-700" />)}
               </>
             )}
           </div>
@@ -4010,7 +4100,7 @@ function ComplianceTab({ data, onAddThoEntry, onUpdateThoEntry, onDeleteThoEntry
       </div>
 
       {subTab === "overview" ? (
-        <ComplianceOverview permits={data.statePermits} shipments={data.shipmentLog} labels={data.labelApprovals} ttbFilings={data.ttbFilings} setSubTab={setSubTab} />
+        <ComplianceOverview permits={data.statePermits} shipments={data.shipmentLog} labels={data.labelApprovals} ttbFilings={data.ttbFilings} stateReference={data.stateRuleReference} setSubTab={setSubTab} />
       ) : subTab === "permits" ? (
         <div className="space-y-4">
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
@@ -5497,7 +5587,7 @@ function PrintEmpty({ children }) {
 
 // ---------- Homepage: weather, growing degree days, today's work, and the calendar ----------
 // ---------- One barrel row: shows status, current contents, and fill/empty/sell actions ----------
-function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, confirmAction, selected, onToggleSelect }) {
+function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, confirmAction, selected, onToggleSelect, cooperageNames, onAddCooperageName, barrelToastLevels, onAddBarrelToastLevel, barrelWineColors, onAddBarrelWineColor, barrelForestOrigins, onAddBarrelForestOrigin }) {
   const [expanded, setExpanded] = useState(false);
   const [showFillForm, setShowFillForm] = useState(false);
   const [fillRows, setFillRows] = useState([{ id: genId(), lotLabel: "", percentage: "100" }]);
@@ -5897,55 +5987,43 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
                 </div>
                 <div>
                   <label className="font-body block text-xs font-medium text-stone-600 mb-1">Cooperage</label>
-                  <select
+                  <AddableSelectField
                     value={editForm.cooperage}
-                    onChange={(e) => setEditForm((p) => ({ ...p, cooperage: e.target.value }))}
-                    className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm"
-                  >
-                    <option value="">— (use barrel # letter code)</option>
-                    {COOPERAGE_NAMES.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
+                    onChange={(v) => setEditForm((p) => ({ ...p, cooperage: v }))}
+                    options={cooperageNames}
+                    onAddOption={onAddCooperageName}
+                    addLabel="New cooperage"
+                  />
                 </div>
                 <div>
                   <label className="font-body block text-xs font-medium text-stone-600 mb-1">Toast</label>
-                  <select
+                  <AddableSelectField
                     value={editForm.toast}
-                    onChange={(e) => setEditForm((p) => ({ ...p, toast: e.target.value }))}
-                    className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm"
-                  >
-                    <option value="">—</option>
-                    {BARREL_TOAST_LEVELS.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
+                    onChange={(v) => setEditForm((p) => ({ ...p, toast: v }))}
+                    options={barrelToastLevels}
+                    onAddOption={onAddBarrelToastLevel}
+                    addLabel="New toast level"
+                  />
                 </div>
                 <div>
                   <label className="font-body block text-xs font-medium text-stone-600 mb-1">Wine Color</label>
-                  <select
+                  <AddableSelectField
                     value={editForm.wineColor}
-                    onChange={(e) => setEditForm((p) => ({ ...p, wineColor: e.target.value }))}
-                    className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm"
-                  >
-                    <option value="">—</option>
-                    {BARREL_WINE_COLORS.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
+                    onChange={(v) => setEditForm((p) => ({ ...p, wineColor: v }))}
+                    options={barrelWineColors}
+                    onAddOption={onAddBarrelWineColor}
+                    addLabel="New wine color"
+                  />
                 </div>
                 <div>
                   <label className="font-body block text-xs font-medium text-stone-600 mb-1">Forest Origin</label>
-                  <select
+                  <AddableSelectField
                     value={editForm.forest}
-                    onChange={(e) => setEditForm((p) => ({ ...p, forest: e.target.value }))}
-                    className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm"
-                  >
-                    <option value="">—</option>
-                    {BARREL_FOREST_ORIGINS.map((f) => (
-                      <option key={f} value={f}>{f}</option>
-                    ))}
-                  </select>
+                    onChange={(v) => setEditForm((p) => ({ ...p, forest: v }))}
+                    options={barrelForestOrigins}
+                    onAddOption={onAddBarrelForestOrigin}
+                    addLabel="New forest origin"
+                  />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="font-body block text-xs font-medium text-stone-600 mb-1">Notes</label>
@@ -6179,7 +6257,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
 }
 
 // ---------- Barrels tab: bulk import, add, filter/search, and the barrel list ----------
-function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel, onUpdateBarrel, onDeleteBarrel, onBulkEmpty, onBulkFill, onBulkSell, confirmAction }) {
+function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel, onUpdateBarrel, onDeleteBarrel, onBulkEmpty, onBulkFill, onBulkSell, confirmAction, cooperageNames, onAddCooperageName, barrelToastLevels, onAddBarrelToastLevel, barrelWineColors, onAddBarrelWineColor, barrelForestOrigins, onAddBarrelForestOrigin }) {
   const [bulkText, setBulkText] = useState("");
   const [bulkErrors, setBulkErrors] = useState([]);
   const [showBulk, setShowBulk] = useState(data.barrels.length === 0);
@@ -6386,55 +6464,43 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
           </div>
           <div>
             <label className="font-body block text-xs font-medium text-stone-600 mb-1">Cooperage</label>
-            <select
+            <AddableSelectField
               value={newBarrel.cooperage}
-              onChange={(e) => setNewBarrel((p) => ({ ...p, cooperage: e.target.value }))}
-              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
-            >
-              <option value="">— (use barrel # letter code)</option>
-              {COOPERAGE_NAMES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+              onChange={(v) => setNewBarrel((p) => ({ ...p, cooperage: v }))}
+              options={cooperageNames}
+              onAddOption={onAddCooperageName}
+              addLabel="New cooperage"
+            />
           </div>
           <div>
             <label className="font-body block text-xs font-medium text-stone-600 mb-1">Toast</label>
-            <select
+            <AddableSelectField
               value={newBarrel.toast}
-              onChange={(e) => setNewBarrel((p) => ({ ...p, toast: e.target.value }))}
-              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
-            >
-              <option value="">—</option>
-              {BARREL_TOAST_LEVELS.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
+              onChange={(v) => setNewBarrel((p) => ({ ...p, toast: v }))}
+              options={barrelToastLevels}
+              onAddOption={onAddBarrelToastLevel}
+              addLabel="New toast level"
+            />
           </div>
           <div>
             <label className="font-body block text-xs font-medium text-stone-600 mb-1">Wine Color</label>
-            <select
+            <AddableSelectField
               value={newBarrel.wineColor}
-              onChange={(e) => setNewBarrel((p) => ({ ...p, wineColor: e.target.value }))}
-              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
-            >
-              <option value="">—</option>
-              {BARREL_WINE_COLORS.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+              onChange={(v) => setNewBarrel((p) => ({ ...p, wineColor: v }))}
+              options={barrelWineColors}
+              onAddOption={onAddBarrelWineColor}
+              addLabel="New wine color"
+            />
           </div>
           <div>
             <label className="font-body block text-xs font-medium text-stone-600 mb-1">Forest Origin</label>
-            <select
+            <AddableSelectField
               value={newBarrel.forest}
-              onChange={(e) => setNewBarrel((p) => ({ ...p, forest: e.target.value }))}
-              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
-            >
-              <option value="">—</option>
-              {BARREL_FOREST_ORIGINS.map((f) => (
-                <option key={f} value={f}>{f}</option>
-              ))}
-            </select>
+              onChange={(v) => setNewBarrel((p) => ({ ...p, forest: v }))}
+              options={barrelForestOrigins}
+              onAddOption={onAddBarrelForestOrigin}
+              addLabel="New forest origin"
+            />
           </div>
           <div className="sm:col-span-2">
             <label className="font-body block text-xs font-medium text-stone-600 mb-1">Notes</label>
@@ -6480,7 +6546,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
           </select>
           <select value={cooperageFilter} onChange={(e) => setCooperageFilter(e.target.value)} className="font-body text-sm border border-stone-300 rounded-md px-2 py-1.5">
             <option value="All">All Cooperages</option>
-            {COOPERAGE_NAMES.map((c) => (
+            {cooperageNames.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
@@ -6492,7 +6558,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
           </select>
           <select value={wineColorFilter} onChange={(e) => setWineColorFilter(e.target.value)} className="font-body text-sm border border-stone-300 rounded-md px-2 py-1.5">
             <option value="All">Red & White</option>
-            {BARREL_WINE_COLORS.map((c) => (
+            {barrelWineColors.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
@@ -6680,6 +6746,14 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
                 confirmAction={confirmAction}
                 selected={selectedIds.has(b.id)}
                 onToggleSelect={() => toggleSelect(b.id)}
+                cooperageNames={cooperageNames}
+                onAddCooperageName={onAddCooperageName}
+                barrelToastLevels={barrelToastLevels}
+                onAddBarrelToastLevel={onAddBarrelToastLevel}
+                barrelWineColors={barrelWineColors}
+                onAddBarrelWineColor={onAddBarrelWineColor}
+                barrelForestOrigins={barrelForestOrigins}
+                onAddBarrelForestOrigin={onAddBarrelForestOrigin}
               />
             ))}
           </div>
@@ -6689,10 +6763,12 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
   );
 }
 
-function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, editWorkOrderForm, editWorkOrderChange, startEditWorkOrder, saveEditWorkOrder, cancelEditWorkOrder, duplicateWorkOrder, saveAsTemplate, lotNames, onRegisterLotName, onLogWeather, sprayPrograms, onAddSprayProgram }) {
+function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, editWorkOrderForm, editWorkOrderChange, startEditWorkOrder, saveEditWorkOrder, cancelEditWorkOrder, duplicateWorkOrder, saveAsTemplate, lotNames, onRegisterLotName, onLogWeather, sprayPrograms, onAddSprayProgram, vineyardTaskTypes, wineryTaskTypes, onAddVineyardTaskType, onAddWineryTaskType }) {
   const [weather, setWeather] = useState(null);
   const [gdd, setGdd] = useState(null);
   const [weatherError, setWeatherError] = useState("");
+  const [stationObs, setStationObs] = useState(null);
+  const [stationObsError, setStationObsError] = useState("");
   const [gddCompareVariety, setGddCompareVariety] = useState("");
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
@@ -6724,6 +6800,26 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
         const json = await res.json();
         if (cancelled) return;
         setWeather(json);
+
+        // Real ground-station reading from the nearest NWS/METAR station (KMMV), separate from
+        // the Open-Meteo forecast call above — this is what actually answers "what is it doing
+        // right now at the airport" rather than a modeled estimate for a lat/lon. Failure here
+        // doesn't block the rest of the dashboard; current conditions just fall back to the
+        // Open-Meteo modeled values already being fetched.
+        try {
+          const obsRes = await fetch(`https://api.weather.gov/stations/${HOME_STATION_ID}/observations/latest`);
+          if (obsRes.ok) {
+            const obsJson = await obsRes.json();
+            if (!cancelled) {
+              setStationObs(obsJson?.properties || null);
+              setStationObsError("");
+            }
+          } else if (!cancelled) {
+            setStationObsError(`Station data unavailable (HTTP ${obsRes.status}) — showing modeled estimate instead.`);
+          }
+        } catch {
+          if (!cancelled) setStationObsError("Station data unavailable — showing modeled estimate instead.");
+        }
 
         // Growing Degree Days (base 50°F), summed from April 1 through today.
         // The live forecast call above only reaches ~7 days into the past (Open-Meteo caps
@@ -6797,6 +6893,20 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
   const completedToday = data.workorders.filter((o) => o.dateCompleted === today);
 
   const current = weather?.current;
+
+  // Prefer the real ground-station reading (KMMV) for what's happening right now; fall back to
+  // the Open-Meteo modeled value for any field the station didn't report (e.g. between
+  // observations, or during a station outage) so the dashboard never just goes blank.
+  const stationTempF = cToF(stationObs?.temperature?.value);
+  const stationHumidity = stationObs?.relativeHumidity?.value;
+  const stationWindMph = mpsToMph(stationObs?.windSpeed?.value);
+  const stationPressureInHg = paToInHg(stationObs?.barometricPressure?.value);
+  const usingRealStation = stationObs != null && stationTempF != null;
+
+  const liveTempF = stationTempF ?? current?.temperature_2m ?? null;
+  const liveHumidity = stationHumidity ?? current?.relative_humidity_2m ?? null;
+  const liveWindMph = stationWindMph ?? current?.wind_speed_10m ?? null;
+
   const weatherToday = todayInTimezone(HOME_COORDS.tz);
   const dailyIdx = weather?.daily?.time?.indexOf(weatherToday) ?? -1;
   const todayHigh = dailyIdx >= 0 ? weather.daily.temperature_2m_max[dailyIdx] : null;
@@ -6842,11 +6952,11 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
       date: weatherToday,
       high: todayHigh,
       low: todayLow,
-      currentTemp: current?.temperature_2m ?? null,
+      currentTemp: liveTempF ?? null,
       conditionCode: current?.weather_code ?? null,
-      conditionLabel: weatherInfo(current?.weather_code).label,
-      humidity: current?.relative_humidity_2m ?? null,
-      windMph: current?.wind_speed_10m ?? null,
+      conditionLabel: usingRealStation ? (stationObs?.textDescription || weatherInfo(current?.weather_code).label) : weatherInfo(current?.weather_code).label,
+      humidity: liveHumidity ?? null,
+      windMph: liveWindMph ?? null,
       precipitationIn: current?.precipitation ?? null,
       gddTotal: gdd?.total ?? null,
     });
@@ -6885,15 +6995,20 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
                 <span className="text-4xl">{weatherInfo(current?.weather_code).icon}</span>
                 <div>
                   <p className="font-brand text-3xl text-ink-950 leading-none">
-                    {current?.temperature_2m != null ? Math.round(current.temperature_2m) : "—"}°F
+                    {liveTempF != null ? Math.round(liveTempF) : "—"}°F
                   </p>
-                  <p className="font-body text-xs text-stone-500 mt-1">{weatherInfo(current?.weather_code).label}</p>
+                  <p className="font-body text-xs text-stone-500 mt-1">
+                    {usingRealStation ? (stationObs?.textDescription || weatherInfo(current?.weather_code).label) : weatherInfo(current?.weather_code).label}
+                  </p>
                 </div>
               </div>
               <div className="font-body text-sm text-stone-600 space-y-1">
                 <p className="flex items-center gap-1.5"><Thermometer size={14} className="text-stone-400" /> High {todayHigh != null ? `${Math.round(todayHigh)}°F` : "—"} · Low {todayLow != null ? `${Math.round(todayLow)}°F` : "—"}</p>
-                <p className="flex items-center gap-1.5"><Droplets size={14} className="text-stone-400" /> Humidity {current?.relative_humidity_2m != null ? `${current.relative_humidity_2m}%` : "—"}</p>
-                <p className="flex items-center gap-1.5"><Wind size={14} className="text-stone-400" /> Wind {current?.wind_speed_10m != null ? `${Math.round(current.wind_speed_10m)} mph` : "—"}</p>
+                <p className="flex items-center gap-1.5"><Droplets size={14} className="text-stone-400" /> Humidity {liveHumidity != null ? `${Math.round(liveHumidity)}%` : "—"}</p>
+                <p className="flex items-center gap-1.5"><Wind size={14} className="text-stone-400" /> Wind {liveWindMph != null ? `${Math.round(liveWindMph)} mph` : "—"}</p>
+                {stationPressureInHg != null && (
+                  <p className="flex items-center gap-1.5"><Gauge size={14} className="text-stone-400" /> Pressure {stationPressureInHg.toFixed(2)}" Hg</p>
+                )}
               </div>
               <div className="font-body text-sm text-stone-600 space-y-1">
                 <p className="flex items-center gap-1.5"><Sunrise size={14} className="text-stone-400" /> Sunrise {sunrise || "—"}</p>
@@ -6902,6 +7017,14 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
                 <p className="flex items-center gap-1.5"><Sun size={14} className="text-stone-400" /> Solar {current?.shortwave_radiation != null ? `${Math.round(current.shortwave_radiation)} W/m²` : "—"}</p>
               </div>
             </div>
+
+            <p className="font-body text-xs text-stone-400 mb-3">
+              {usingRealStation
+                ? `Temperature, humidity, and wind are a live reading from KMMV (updated ${stationObs?.timestamp ? new Date(stationObs.timestamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "recently"}). High/low, sunrise/sunset, solar, and soil data below remain modeled estimates — a single station reading can't provide those.`
+                : stationObsError
+                ? `${stationObsError} All figures above are modeled estimates for this location, not a live station reading.`
+                : "Modeled estimate for this location — not yet confirmed against a live station reading."}
+            </p>
 
             {frostRisk && (
               <p className="font-body text-xs bg-sky-50 text-sky-800 border border-sky-100 rounded-md px-3 py-2 mb-4">
@@ -7067,6 +7190,10 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
                 onRegisterLotName={onRegisterLotName}
                 sprayProgramsList={sprayPrograms}
                 onAddSprayProgram={onAddSprayProgram}
+                vineyardTaskTypes={vineyardTaskTypes}
+                wineryTaskTypes={wineryTaskTypes}
+                onAddVineyardTaskType={onAddVineyardTaskType}
+                onAddWineryTaskType={onAddWineryTaskType}
               />
             ))}
           </ul>
@@ -7770,6 +7897,101 @@ function ManageListPanel({ title, description, items, onAdd, onRename, onDelete,
   );
 }
 
+// A real modal (not a dropdown) so there's room for the section checklist and vintage filter —
+// opens on "Export Data", closes on backdrop click or Cancel, without exporting anything until
+// one of the four format buttons is actually clicked.
+function ExportSelectionModal({ data, selectedKeys, onChangeSelectedKeys, vintageFilter, onChangeVintageFilter, onClose, onExportExcel, onExportWord, onExportCSV, onExportPDF }) {
+  const vintages = availableExportVintages(data);
+  const allKeys = EXPORT_SECTION_GROUPS.flatMap((g) => g.keys);
+  const allSelected = allKeys.every((k) => selectedKeys.has(k));
+
+  const toggleKey = (key) => {
+    const next = new Set(selectedKeys);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    onChangeSelectedKeys(next);
+  };
+
+  const toggleAll = () => {
+    onChangeSelectedKeys(allSelected ? new Set() : new Set(allKeys));
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
+      <div className="fixed inset-4 sm:inset-x-0 sm:top-10 sm:bottom-10 sm:mx-auto sm:max-w-lg bg-white rounded-lg shadow-xl z-50 flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200 shrink-0">
+          <h2 className="font-brand text-lg text-ink-950">Export Data</h2>
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-700">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+          <div>
+            <label className="font-body block text-xs font-medium text-stone-600 mb-1">Vintage</label>
+            <select
+              value={vintageFilter}
+              onChange={(e) => onChangeVintageFilter(e.target.value)}
+              className="font-body w-full max-w-[200px] border border-stone-300 rounded-md px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
+            >
+              <option value="All">All vintages</option>
+              {vintages.map((v) => (
+                <option key={v} value={v}>{v}</option>
+              ))}
+            </select>
+            <p className="font-body text-xs text-stone-400 mt-1">
+              Only applies to vintage-specific data (Fermentation, Bottling, Accolades, Pricing, Label Approvals). Everything else exports in full regardless of this filter.
+            </p>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="font-body block text-xs font-medium text-stone-600">What to include</label>
+              <button onClick={toggleAll} className="font-body text-xs text-ink-700 underline">
+                {allSelected ? "Deselect all" : "Select all"}
+              </button>
+            </div>
+            <div className="space-y-4">
+              {EXPORT_SECTION_GROUPS.map((group) => (
+                <div key={group.label}>
+                  <p className="font-body text-xs font-semibold text-stone-500 mb-1.5">{group.label}</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {group.keys.map((key) => (
+                      <label key={key} className="font-body flex items-center gap-2 text-sm text-stone-700">
+                        <input type="checkbox" checked={selectedKeys.has(key)} onChange={() => toggleKey(key)} className="rounded border-stone-300" />
+                        {EXPORT_SECTION_LABELS[key] || key}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="px-5 py-4 border-t border-stone-200 shrink-0">
+          <p className="font-body text-xs text-stone-500 mb-2">Export as:</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={onExportExcel} className="font-body text-sm font-medium bg-ink-900 hover:bg-ink-800 text-white px-4 py-2 rounded-md">
+              Excel (.xlsx)
+            </button>
+            <button onClick={onExportWord} className="font-body text-sm font-medium bg-ink-900 hover:bg-ink-800 text-white px-4 py-2 rounded-md">
+              Word (.doc)
+            </button>
+            <button onClick={onExportCSV} className="font-body text-sm font-medium bg-ink-900 hover:bg-ink-800 text-white px-4 py-2 rounded-md">
+              CSV (.csv)
+            </button>
+            <button onClick={onExportPDF} className="font-body text-sm font-medium bg-ink-900 hover:bg-ink-800 text-white px-4 py-2 rounded-md">
+              PDF (.pdf)
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function BackupTab({ data, woCounter, onRestore, confirmAction, vineyardBlocks, onAddBlock, onRenameBlock, onDeleteBlock, vesselTypes, onAddVesselType, onRenameVesselType, onDeleteVesselType, lotNames, onAddLotName, onRenameLotName, onDeleteLotName, clones, onAddClone, onRenameClone, onDeleteClone, sprayPrograms, onAddSprayProgram, onRenameSprayProgram, onDeleteSprayProgram, tastingAssociates, onAddAssociate, onRenameAssociate, onDeleteAssociate, wineryName, onUpdateWineryName, ttbFilingFrequency, onUpdateTtbFilingFrequency }) {
   const [restoreError, setRestoreError] = useState("");
   const [nameDraft, setNameDraft] = useState(wineryName);
@@ -7976,7 +8198,7 @@ function BackupTab({ data, woCounter, onRestore, confirmAction, vineyardBlocks, 
 
       <ManageListPanel
         title="Tasting Associates"
-        description="Used in THO Timesheets — keeping names consistent here is what lets the Payout Calculator match hours to tips correctly."
+        description="Used in Sales Timesheets — keeping names consistent here is what lets the Payout Calculator match hours to tips correctly."
         items={tastingAssociates}
         onAdd={onAddAssociate}
         onRename={onRenameAssociate}
@@ -8137,6 +8359,8 @@ function WineryDataTrackerInner() {
   const [error, setError] = useState("");
   const [saveError, setSaveError] = useState("");
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [exportSelectedKeys, setExportSelectedKeys] = useState(() => new Set(EXPORT_SECTION_GROUPS.flatMap((g) => g.keys)));
+  const [exportVintageFilter, setExportVintageFilter] = useState("All");
   const [lastTabByCategory, setLastTabByCategory] = useState({});
   useEffect(() => {
     const cat = categoryOfKey(activeKey);
@@ -8156,6 +8380,12 @@ function WineryDataTrackerInner() {
   const [vineyardBlocks, setVineyardBlocks] = useState(VINEYARD_BLOCKS);
   const [clones, setClones] = useState(GRAPE_CLONES);
   const [sprayPrograms, setSprayPrograms] = useState(SPRAY_PROGRAMS);
+  const [vineyardTaskTypes, setVineyardTaskTypes] = useState(VINEYARD_TASK_TYPES);
+  const [wineryTaskTypes, setWineryTaskTypes] = useState(WINERY_TASK_TYPES);
+  const [cooperageNames, setCooperageNames] = useState(COOPERAGE_NAMES);
+  const [barrelToastLevels, setBarrelToastLevels] = useState(BARREL_TOAST_LEVELS);
+  const [barrelWineColors, setBarrelWineColors] = useState(BARREL_WINE_COLORS);
+  const [barrelForestOrigins, setBarrelForestOrigins] = useState(BARREL_FOREST_ORIGINS);
   const [tastingAssociates, setTastingAssociates] = useState(TASTING_ASSOCIATES);
   const [defaultTareWeight, setDefaultTareWeight] = useState("");
   const [alloroStory, setAlloroStory] = useState("");
@@ -8386,6 +8616,48 @@ function WineryDataTrackerInner() {
       }
 
       try {
+        const res = await storage.get("vineyard_task_types", true);
+        if (res && !cancelled) setVineyardTaskTypes(JSON.parse(res.value));
+      } catch {
+        storage.set("vineyard_task_types", JSON.stringify(VINEYARD_TASK_TYPES), true).catch(() => {});
+      }
+
+      try {
+        const res = await storage.get("winery_task_types", true);
+        if (res && !cancelled) setWineryTaskTypes(JSON.parse(res.value));
+      } catch {
+        storage.set("winery_task_types", JSON.stringify(WINERY_TASK_TYPES), true).catch(() => {});
+      }
+
+      try {
+        const res = await storage.get("cooperage_names", true);
+        if (res && !cancelled) setCooperageNames(JSON.parse(res.value));
+      } catch {
+        storage.set("cooperage_names", JSON.stringify(COOPERAGE_NAMES), true).catch(() => {});
+      }
+
+      try {
+        const res = await storage.get("barrel_toast_levels", true);
+        if (res && !cancelled) setBarrelToastLevels(JSON.parse(res.value));
+      } catch {
+        storage.set("barrel_toast_levels", JSON.stringify(BARREL_TOAST_LEVELS), true).catch(() => {});
+      }
+
+      try {
+        const res = await storage.get("barrel_wine_colors", true);
+        if (res && !cancelled) setBarrelWineColors(JSON.parse(res.value));
+      } catch {
+        storage.set("barrel_wine_colors", JSON.stringify(BARREL_WINE_COLORS), true).catch(() => {});
+      }
+
+      try {
+        const res = await storage.get("barrel_forest_origins", true);
+        if (res && !cancelled) setBarrelForestOrigins(JSON.parse(res.value));
+      } catch {
+        storage.set("barrel_forest_origins", JSON.stringify(BARREL_FOREST_ORIGINS), true).catch(() => {});
+      }
+
+      try {
         const res = await storage.get("tasting_associates", true);
         if (res && !cancelled) setTastingAssociates(JSON.parse(res.value));
       } catch {
@@ -8506,14 +8778,25 @@ function WineryDataTrackerInner() {
           try {
             const KNOWN_STATUSES = {
               "Utah": { dtcStatus: "Banned", restrictionNotes: "DTC wine shipping banned outright." },
-              "Delaware": { dtcStatus: "Banned", restrictionNotes: "DTC wine shipping banned outright." },
+              "Delaware": {
+                dtcStatus: "Restricted",
+                restrictionNotes: "DTC shipping ban ended via HB 187, effective 8/15/2026 — recheck current specifics, this changed recently. Wine Direct Shipper License required; wineries already carried by a Delaware wholesaler are excluded from shipping directly.",
+                ageVerificationNotes: "Carriers must verify age at delivery. UPS and FedEx have reportedly declined to support Delaware shipments due to age-verification data-retention requirements — a practical barrier even though the law itself now permits shipping. Confirm current carrier support before relying on this.",
+              },
               "Indiana": { dtcStatus: "Restricted", restrictionNotes: "Allowed with major restrictions — verify current specifics before shipping." },
               "Mississippi": { dtcStatus: "Restricted", restrictionNotes: "Allowed with major restrictions. Rules were loosened in 2025 — recheck current specifics before relying on this." },
               "New Jersey": { dtcStatus: "Restricted", restrictionNotes: "Allowed with a 250,000-gallon winery production cap. Legislative bills were pending as of 2026 — recheck before relying on this." },
-              "Oklahoma": { dtcStatus: "Restricted", restrictionNotes: "Allowed with major restrictions — verify current specifics before shipping." },
+              "Oklahoma": {
+                dtcStatus: "Restricted",
+                restrictionNotes: "Allowed with major restrictions — verify current specifics before shipping.",
+                fulfillmentHouseAllowed: "Not Permitted",
+              },
               "Rhode Island": { dtcStatus: "Restricted", restrictionNotes: "Allowed with major restrictions — verify current specifics before shipping." },
               "Wyoming": { dtcStatus: "Restricted", restrictionNotes: "Allowed with major restrictions — verify current specifics before shipping." },
-              "Louisiana": { dtcStatus: "Restricted", restrictionNotes: "Allowed with major restrictions — verify current specifics before shipping." },
+              "Louisiana": {
+                dtcStatus: "Restricted",
+                restrictionNotes: "Only non-distributed products eligible for DTC. Container-size limitations on shipped/sold wine were separately removed 8/1/2026 — recheck current specifics before relying on this.",
+              },
               "Arkansas": { dtcStatus: "Not Yet Verified", restrictionNotes: "Rules were loosened in 2025 — status not yet re-verified here, check before relying on this." },
             };
             const seedRows = US_STATES.map((state) => {
@@ -8524,6 +8807,9 @@ function WineryDataTrackerInner() {
                 dtcStatus: known ? known.dtcStatus : "Not Yet Verified",
                 restrictionNotes: known ? known.restrictionNotes : "",
                 annualCapPerHousehold: "",
+                fulfillmentHouseAllowed: known && known.fulfillmentHouseAllowed ? known.fulfillmentHouseAllowed : "Not Yet Verified",
+                containerSizeRestriction: "",
+                ageVerificationNotes: known && known.ageVerificationNotes ? known.ageVerificationNotes : "",
                 reportFrequency: "",
                 lastVerifiedDate: "",
                 sourceLink: "",
@@ -8942,6 +9228,106 @@ function WineryDataTrackerInner() {
     const updated = sprayPrograms.filter((s) => s !== name);
     setSprayPrograms(updated);
     await persist("spray_programs", updated);
+  };
+
+  const addVineyardTaskType = (name) => {
+    setVineyardTaskTypes((prev) => {
+      if (prev.includes(name)) return prev;
+      const updated = [...prev, name];
+      guardedStorageSet("vineyard_task_types", JSON.stringify(updated), true).catch(() => {
+        setSaveError("Your last change didn't save — check your connection and try again.");
+      });
+      return updated;
+    });
+  };
+
+  const renameVineyardTaskType = async (oldName, newName) => {
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === oldName) return;
+    const updated = vineyardTaskTypes.map((s) => (s === oldName ? trimmed : s));
+    setVineyardTaskTypes(updated);
+    await persist("vineyard_task_types", updated);
+    const updatedOrders = data.workorders.map((o) => (o.taskType === oldName ? { ...o, taskType: trimmed } : o));
+    setData((prev) => ({ ...prev, workorders: updatedOrders }));
+    await persist("workorders", updatedOrders);
+  };
+
+  const deleteVineyardTaskType = async (name) => {
+    const updated = vineyardTaskTypes.filter((s) => s !== name);
+    setVineyardTaskTypes(updated);
+    await persist("vineyard_task_types", updated);
+  };
+
+  const addWineryTaskType = (name) => {
+    setWineryTaskTypes((prev) => {
+      if (prev.includes(name)) return prev;
+      const updated = [...prev, name];
+      guardedStorageSet("winery_task_types", JSON.stringify(updated), true).catch(() => {
+        setSaveError("Your last change didn't save — check your connection and try again.");
+      });
+      return updated;
+    });
+  };
+
+  const renameWineryTaskType = async (oldName, newName) => {
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === oldName) return;
+    const updated = wineryTaskTypes.map((s) => (s === oldName ? trimmed : s));
+    setWineryTaskTypes(updated);
+    await persist("winery_task_types", updated);
+    const updatedOrders = data.workorders.map((o) => (o.taskType === oldName ? { ...o, taskType: trimmed } : o));
+    setData((prev) => ({ ...prev, workorders: updatedOrders }));
+    await persist("workorders", updatedOrders);
+  };
+
+  const deleteWineryTaskType = async (name) => {
+    const updated = wineryTaskTypes.filter((s) => s !== name);
+    setWineryTaskTypes(updated);
+    await persist("winery_task_types", updated);
+  };
+
+  const addCooperageName = (name) => {
+    setCooperageNames((prev) => {
+      if (prev.includes(name)) return prev;
+      const updated = [...prev, name];
+      guardedStorageSet("cooperage_names", JSON.stringify(updated), true).catch(() => {
+        setSaveError("Your last change didn't save — check your connection and try again.");
+      });
+      return updated;
+    });
+  };
+
+  const addBarrelToastLevel = (name) => {
+    setBarrelToastLevels((prev) => {
+      if (prev.includes(name)) return prev;
+      const updated = [...prev, name];
+      guardedStorageSet("barrel_toast_levels", JSON.stringify(updated), true).catch(() => {
+        setSaveError("Your last change didn't save — check your connection and try again.");
+      });
+      return updated;
+    });
+  };
+
+  const addBarrelWineColor = (name) => {
+    setBarrelWineColors((prev) => {
+      if (prev.includes(name)) return prev;
+      const updated = [...prev, name];
+      guardedStorageSet("barrel_wine_colors", JSON.stringify(updated), true).catch(() => {
+        setSaveError("Your last change didn't save — check your connection and try again.");
+      });
+      return updated;
+    });
+  };
+
+  const addBarrelForestOrigin = (name) => {
+    setBarrelForestOrigins((prev) => {
+      if (prev.includes(name)) return prev;
+      const updated = [...prev, name];
+      guardedStorageSet("barrel_forest_origins", JSON.stringify(updated), true).catch(() => {
+        setSaveError("Your last change didn't save — check your connection and try again.");
+      });
+      return updated;
+    });
   };
 
   const addAssociate = (name) => {
@@ -9613,7 +9999,7 @@ function WineryDataTrackerInner() {
 
   const exportToExcel = useCallback(() => {
     const wb = XLSX.utils.book_new();
-    buildExportSections(getSortedData()).forEach((section) => {
+    buildExportSections(getSortedData(), exportSelectedKeys, exportVintageFilter).forEach((section) => {
       const rows = section.rows.length > 0 ? section.rows : [Object.fromEntries(section.headers.map((h) => [h, ""]))];
       const ws = XLSX.utils.json_to_sheet(rows, { header: section.headers });
       ws["!cols"] = section.headers.map(() => ({ wch: 16 }));
@@ -9625,7 +10011,7 @@ function WineryDataTrackerInner() {
 
   const exportToCSV = useCallback(() => {
     let csvText = "";
-    buildExportSections(getSortedData()).forEach((section) => {
+    buildExportSections(getSortedData(), exportSelectedKeys, exportVintageFilter).forEach((section) => {
       csvText += `## ${section.title}\n`;
       csvText += Papa.unparse({
         fields: section.headers,
@@ -9639,7 +10025,7 @@ function WineryDataTrackerInner() {
 
   const exportToWord = useCallback(() => {
     let bodyHtml = `<h1 style="font-family:Georgia,serif;color:#1D1915;">Alloro Winery Tracker</h1><p style="font-family:Arial,sans-serif;color:#555;">Exported ${todayISO()}</p>`;
-    buildExportSections(getSortedData()).forEach((section) => {
+    buildExportSections(getSortedData(), exportSelectedKeys, exportVintageFilter).forEach((section) => {
       bodyHtml += `<h2 style="font-family:Georgia,serif;color:#065f46;margin-top:24px;">${escapeHtml(section.title)}</h2>`;
       if (section.rows.length === 0) {
         bodyHtml += `<p style="font-family:Arial,sans-serif;color:#888;"><em>No entries.</em></p>`;
@@ -9654,6 +10040,40 @@ function WineryDataTrackerInner() {
     });
     const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"></head><body>${bodyHtml}</body></html>`;
     downloadBlob(new Blob(["\ufeff", html], { type: "application/msword" }), `alloro-winery-data-${todayISO()}.doc`);
+    setExportMenuOpen(false);
+  }, [data, workOrderSort, tableSort, fermentSort]);
+
+  // Generates the PDF directly and downloads it — unlike the old approach, this doesn't route
+  // through the browser's print dialog, so there's no "choose Save as PDF" step for the person.
+  const exportToPDF = useCallback(() => {
+    const doc = new jsPDF();
+    let firstSection = true;
+    buildExportSections(getSortedData(), exportSelectedKeys, exportVintageFilter).forEach((section) => {
+      if (!firstSection) doc.addPage();
+      firstSection = false;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text(section.title, 14, 17);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(120, 120, 120);
+      doc.text(`Exported ${todayISO()}`, 14, 23);
+      doc.setTextColor(0, 0, 0);
+      if (section.rows.length === 0) {
+        doc.setFontSize(10);
+        doc.text("No entries.", 14, 34);
+      } else {
+        autoTable(doc, {
+          startY: 28,
+          head: [section.headers],
+          body: section.rows.map((row) => section.headers.map((h) => String(row[h] ?? ""))),
+          styles: { fontSize: 7, cellPadding: 2 },
+          headStyles: { fillColor: [29, 25, 21] },
+          margin: { left: 14, right: 14 },
+        });
+      }
+    });
+    doc.save(`alloro-winery-data-${todayISO()}.pdf`);
     setExportMenuOpen(false);
   }, [data, workOrderSort, tableSort, fermentSort]);
 
@@ -9722,46 +10142,25 @@ function WineryDataTrackerInner() {
 
           <div className="relative">
             <button
-              onClick={() => setExportMenuOpen((v) => !v)}
+              onClick={() => setExportMenuOpen(true)}
               disabled={loading}
               className="font-body flex items-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-ink-950 font-semibold text-sm px-4 py-2 rounded-md transition-colors"
             >
-              <Download size={16} /> Export Data <ChevronDown size={14} />
+              <Download size={16} /> Export Data
             </button>
             {exportMenuOpen && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setExportMenuOpen(false)} />
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-stone-200 rounded-md shadow-lg overflow-hidden z-20">
-                  <button
-                    onClick={exportToExcel}
-                    className="font-body w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50"
-                  >
-                    Excel (.xlsx)
-                  </button>
-                  <button
-                    onClick={exportToWord}
-                    className="font-body w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 border-t border-stone-100"
-                  >
-                    Word (.doc)
-                  </button>
-                  <button
-                    onClick={exportToCSV}
-                    className="font-body w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 border-t border-stone-100"
-                  >
-                    CSV (.csv)
-                  </button>
-                  <button
-                    onClick={() => {
-                      setPrintJob({ type: "all" });
-                      setExportMenuOpen(false);
-                    }}
-                    className="font-body w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 border-t border-stone-100"
-                  >
-                    PDF (.pdf)
-                    <span className="block text-xs text-stone-400">opens print dialog — choose "Save as PDF"</span>
-                  </button>
-                </div>
-              </>
+              <ExportSelectionModal
+                data={data}
+                selectedKeys={exportSelectedKeys}
+                onChangeSelectedKeys={setExportSelectedKeys}
+                vintageFilter={exportVintageFilter}
+                onChangeVintageFilter={setExportVintageFilter}
+                onClose={() => setExportMenuOpen(false)}
+                onExportExcel={exportToExcel}
+                onExportWord={exportToWord}
+                onExportCSV={exportToCSV}
+                onExportPDF={exportToPDF}
+              />
             )}
           </div>
         </div>
@@ -9892,6 +10291,10 @@ function WineryDataTrackerInner() {
             onLogWeather={logWeatherSnapshot}
             sprayPrograms={sprayPrograms}
             onAddSprayProgram={addSprayProgram}
+            vineyardTaskTypes={vineyardTaskTypes}
+            wineryTaskTypes={wineryTaskTypes}
+            onAddVineyardTaskType={addVineyardTaskType}
+            onAddWineryTaskType={addWineryTaskType}
           />
         ) : activeKey === "workorders" ? (
           <>
@@ -9915,7 +10318,7 @@ function WineryDataTrackerInner() {
             <form onSubmit={addWorkOrder} className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5 mb-6">
               <h2 className="font-brand text-lg text-ink-950 mb-3">Add a {workOrderFilterCategory} Work Order</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {visibleWorkOrderFields(workOrderFieldsForCategory(WORKORDER_FIELDS, newWorkOrderForm.category), newWorkOrderForm).map((f) => (
+                {visibleWorkOrderFields(workOrderFieldsForCategory(WORKORDER_FIELDS, newWorkOrderForm.category, vineyardTaskTypes, wineryTaskTypes, addVineyardTaskType, addWineryTaskType), newWorkOrderForm).map((f) => (
                   <Field
                     key={f.name}
                     f={f}
@@ -10133,6 +10536,10 @@ function WineryDataTrackerInner() {
                       onRegisterLotName={addLotName}
                       sprayProgramsList={sprayPrograms}
                       onAddSprayProgram={addSprayProgram}
+                      vineyardTaskTypes={vineyardTaskTypes}
+                      wineryTaskTypes={wineryTaskTypes}
+                      onAddVineyardTaskType={addVineyardTaskType}
+                      onAddWineryTaskType={addWineryTaskType}
                     />
                   ))}
                 </ul>
@@ -10166,6 +10573,10 @@ function WineryDataTrackerInner() {
                     onRegisterLotName={addLotName}
                     sprayProgramsList={sprayPrograms}
                     onAddSprayProgram={addSprayProgram}
+                    vineyardTaskTypes={vineyardTaskTypes}
+                    wineryTaskTypes={wineryTaskTypes}
+                    onAddVineyardTaskType={addVineyardTaskType}
+                    onAddWineryTaskType={addWineryTaskType}
                   />
                 ))}
               </div>
@@ -10413,6 +10824,14 @@ function WineryDataTrackerInner() {
             onBulkFill={bulkFillBarrels}
             onBulkSell={bulkSellBarrels}
             confirmAction={confirmAction}
+            cooperageNames={cooperageNames}
+            onAddCooperageName={addCooperageName}
+            barrelToastLevels={barrelToastLevels}
+            onAddBarrelToastLevel={addBarrelToastLevel}
+            barrelWineColors={barrelWineColors}
+            onAddBarrelWineColor={addBarrelWineColor}
+            barrelForestOrigins={barrelForestOrigins}
+            onAddBarrelForestOrigin={addBarrelForestOrigin}
           />
         ) : activeKey === "blending" ? (
           <BlendingTab
@@ -10727,25 +11146,6 @@ function WineryDataTrackerInner() {
       )}
 
       <div className="print-sheet">
-        {printJob?.type === "all" && (
-          <>
-            <PrintHeader subtitle={`Full Data Export — Printed ${new Date().toLocaleDateString()}`} />
-            {buildExportSections(getSortedData()).map((section) => (
-              <div key={section.title}>
-                <PrintSectionTitle>{section.title}</PrintSectionTitle>
-                {section.rows.length === 0 ? (
-                  <PrintEmpty>No entries.</PrintEmpty>
-                ) : (
-                  <PrintTable
-                    headers={section.headers}
-                    rows={section.rows.map((row) => section.headers.map((h) => row[h]))}
-                  />
-                )}
-              </div>
-            ))}
-          </>
-        )}
-
         {printJob?.type === "workorders" && (
           <>
             <PrintHeader subtitle={`${workOrderFilterCategory} Work Orders — Printed ${new Date().toLocaleDateString()}`} />
