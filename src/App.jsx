@@ -67,6 +67,7 @@ import {
   Shield,
   Truck,
   BookMarked,
+  FileCheck,
   Car,
   Receipt,
 } from "lucide-react";
@@ -424,6 +425,29 @@ const SIMPLE_SECTIONS = [
       { name: "reportFrequency", label: "Typical Report Frequency", type: "text", optional: true },
       { name: "lastVerifiedDate", label: "Last Verified Date", type: "date", optional: true },
       { name: "sourceLink", label: "Source Link", type: "text", optional: true },
+    ],
+  },
+  {
+    key: "labelApprovals",
+    label: "Label Approvals",
+    icon: FileCheck,
+    sheetName: "Label Approvals",
+    fields: [
+      { name: "brandName", label: "Brand Name", type: "text" },
+      { name: "fancifulName", label: "Fanciful Name (wine name on label)", type: "text" },
+      { name: "vintage", label: "Vintage", type: "text", optional: true },
+      { name: "varietal", label: "Grape Varietal(s)", type: "text", optional: true },
+      { name: "appellation", label: "Wine Appellation", type: "text", optional: true },
+      { name: "classType", label: "TTB Class/Type Description", type: "text", optional: true },
+      { name: "ttbId", label: "TTB ID", type: "text" },
+      { name: "serialNumber", label: "Serial Number", type: "text", optional: true },
+      { name: "applicationType", label: "Application Type", type: "select", options: ["Certificate of Label Approval", "Certificate of Exemption", "Distinctive Liquor Bottle Approval", "Resubmission After Rejection"] },
+      { name: "dateApplied", label: "Date Applied", type: "date", optional: true },
+      { name: "dateIssued", label: "Date Issued", type: "date", optional: true },
+      { name: "status", label: "Status", type: "select", options: ["Approved", "Pending", "Rejected"] },
+      { name: "expirationDate", label: "Expiration Date (if any)", type: "date", optional: true },
+      { name: "labelDocument", label: "COLA Certificate / Label Images", type: "document", optional: true },
+      { name: "notes", label: "Notes", type: "textarea", optional: true },
     ],
   },
 ];
@@ -3809,6 +3833,22 @@ function bestPermitStatusByState(permits) {
   return map;
 }
 
+// Most COLAs never expire once approved — expiration only applies to conditional "use-up"
+// approvals, so a blank expiration date on an Approved label just means Approved, not Active.
+function computeLabelStatus(label) {
+  if (label.status === "Rejected") return "Rejected";
+  if (label.status === "Pending") return "Pending";
+  if (!label.expirationDate) return "Approved";
+  const today = todayISO();
+  if (today >= label.expirationDate) return "Expired";
+  const exp = new Date(label.expirationDate + "T00:00:00");
+  const reminder = new Date(exp);
+  reminder.setDate(reminder.getDate() - 45);
+  const reminderISO = reminder.toISOString().slice(0, 10);
+  if (today >= reminderISO) return "Expiring Soon";
+  return "Approved";
+}
+
 // Flags states with shipments logged but no currently-valid permit on file — a flag to
 // investigate, not proof of an actual violation.
 function complianceConflicts(shipments, permits) {
@@ -3820,12 +3860,16 @@ function complianceConflicts(shipments, permits) {
   });
 }
 
-function ComplianceOverview({ permits, shipments, setSubTab }) {
+function ComplianceOverview({ permits, shipments, labels, setSubTab }) {
   const statusByState = bestPermitStatusByState(permits);
   const licensed = Object.entries(statusByState).filter(([, s]) => s === "Active").map(([st]) => st).sort();
   const expiringSoon = Object.entries(statusByState).filter(([, s]) => s === "Expiring Soon").map(([st]) => st).sort();
   const expired = Object.entries(statusByState).filter(([, s]) => s === "Expired").map(([st]) => st).sort();
   const conflicts = complianceConflicts(shipments, permits).sort();
+
+  const labelName = (l) => l.fancifulName || l.brandName || "Untitled label";
+  const approvedLabels = labels.filter((l) => computeLabelStatus(l) === "Approved");
+  const labelsNeedingAttention = labels.filter((l) => ["Rejected", "Expired", "Expiring Soon"].includes(computeLabelStatus(l)));
 
   const Chip = ({ text, color }) => (
     <span className={`font-body text-xs rounded px-2 py-0.5 ${color}`}>{text}</span>
@@ -3837,7 +3881,7 @@ function ComplianceOverview({ permits, shipments, setSubTab }) {
         <p className="font-body text-xs text-amber-800">{COMPLIANCE_DISCLAIMER}</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white border border-stone-200 rounded-lg p-4">
           <p className="font-body text-xs text-stone-500 mb-2">Licensed states</p>
           <p className="font-brand text-2xl text-ink-950 mb-2">{licensed.length}</p>
@@ -3853,15 +3897,23 @@ function ComplianceOverview({ permits, shipments, setSubTab }) {
           </div>
         </div>
         <div className="bg-white border border-stone-200 rounded-lg p-4">
-          <p className="font-body text-xs text-stone-500 mb-2">Needs attention</p>
-          <p className="font-brand text-2xl text-red-700 mb-2">{expired.length + conflicts.length}</p>
+          <p className="font-body text-xs text-stone-500 mb-2">Approved labels</p>
+          <p className="font-brand text-2xl text-ink-950 mb-2">{approvedLabels.length}</p>
           <div className="flex flex-wrap gap-1">
-            {expired.length === 0 && conflicts.length === 0 ? (
+            {labels.length === 0 ? <span className="font-body text-xs text-stone-400">None on file yet</span> : <span className="font-body text-xs text-stone-400">{labels.length} total tracked</span>}
+          </div>
+        </div>
+        <div className="bg-white border border-stone-200 rounded-lg p-4">
+          <p className="font-body text-xs text-stone-500 mb-2">Needs attention</p>
+          <p className="font-brand text-2xl text-red-700 mb-2">{expired.length + conflicts.length + labelsNeedingAttention.length}</p>
+          <div className="flex flex-wrap gap-1">
+            {expired.length === 0 && conflicts.length === 0 && labelsNeedingAttention.length === 0 ? (
               <span className="font-body text-xs text-stone-400">None</span>
             ) : (
               <>
                 {expired.map((s) => <Chip key={"exp-" + s} text={`${s} — expired`} color="bg-red-50 text-red-700" />)}
                 {conflicts.map((s) => <Chip key={"conf-" + s} text={`${s} — no active permit on file`} color="bg-red-50 text-red-700" />)}
+                {labelsNeedingAttention.map((l) => <Chip key={l.id} text={`${labelName(l)} — ${computeLabelStatus(l).toLowerCase()}`} color="bg-red-50 text-red-700" />)}
               </>
             )}
           </div>
@@ -3881,15 +3933,18 @@ function ComplianceTab({ data, onAddThoEntry, onUpdateThoEntry, onDeleteThoEntry
   const permitFields = SIMPLE_SECTIONS.find((s) => s.key === "statePermits").fields;
   const shipmentFields = SIMPLE_SECTIONS.find((s) => s.key === "shipmentLog").fields;
   const referenceFields = SIMPLE_SECTIONS.find((s) => s.key === "stateRuleReference").fields;
+  const labelFields = SIMPLE_SECTIONS.find((s) => s.key === "labelApprovals").fields;
 
   const sortedPermits = [...data.statePermits].sort((a, b) => (a.expirationDate || "9999").localeCompare(b.expirationDate || "9999"));
   const sortedShipments = [...data.shipmentLog].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   const sortedReference = [...data.stateRuleReference].sort((a, b) => (a.state || "").localeCompare(b.state || ""));
+  const sortedLabels = [...data.labelApprovals].sort((a, b) => (a.brandName + a.fancifulName).localeCompare(b.brandName + b.fancifulName));
 
   const SUB_TABS = [
     { key: "overview", label: "Overview" },
     { key: "permits", label: "My Permits" },
     { key: "shipments", label: "Shipment Log" },
+    { key: "labels", label: "Label Approvals" },
     { key: "reference", label: "State Reference" },
   ];
 
@@ -3910,7 +3965,7 @@ function ComplianceTab({ data, onAddThoEntry, onUpdateThoEntry, onDeleteThoEntry
       </div>
 
       {subTab === "overview" ? (
-        <ComplianceOverview permits={data.statePermits} shipments={data.shipmentLog} setSubTab={setSubTab} />
+        <ComplianceOverview permits={data.statePermits} shipments={data.shipmentLog} labels={data.labelApprovals} setSubTab={setSubTab} />
       ) : subTab === "permits" ? (
         <div className="space-y-4">
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
@@ -3941,6 +3996,24 @@ function ComplianceTab({ data, onAddThoEntry, onUpdateThoEntry, onDeleteThoEntry
             confirmAction={confirmAction}
           />
         </div>
+      ) : subTab === "labels" ? (
+        <div className="space-y-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <p className="font-body text-xs text-amber-800">
+              This tracks labels you've already submitted or had approved — it doesn't submit anything to TTB or review your label for you.
+            </p>
+          </div>
+          <LabelPreSubmissionChecklist />
+          <SimpleDataPanel
+            title="Label Approvals"
+            fields={labelFields}
+            rows={sortedLabels}
+            onAdd={(entry) => onAddThoEntry("labelApprovals", entry)}
+            onUpdate={(id, changes) => onUpdateThoEntry("labelApprovals", id, changes)}
+            onDelete={(id) => onDeleteThoEntry("labelApprovals", id)}
+            confirmAction={confirmAction}
+          />
+        </div>
       ) : (
         <div className="space-y-4">
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
@@ -3958,6 +4031,45 @@ function ComplianceTab({ data, onAddThoEntry, onUpdateThoEntry, onDeleteThoEntry
             onDelete={(id) => onDeleteThoEntry("stateRuleReference", id)}
             confirmAction={confirmAction}
           />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Common, genuinely technical reasons TTB rejects label submissions — collapsed by default so it
+// doesn't clutter the page, but there for someone about to submit a new label. This is a
+// checklist to prompt a careful look, not a determination that a label will pass.
+function LabelPreSubmissionChecklist() {
+  const [expanded, setExpanded] = useState(false);
+  const items = [
+    "Government health warning present, worded exactly as required, and not split awkwardly across a seam or fold",
+    "Brand name, class/type designation, alcohol content, and net contents all present and legible",
+    "Bottler/producer name and address (\"Grown, Produced & Bottled by...\") present and accurate",
+    "Sulfite declaration included if applicable (\"Contains Sulfites\")",
+    "Mandatory text meets minimum type size and appears on a contrasting background",
+    "Wine appellation matches what's actually permitted for that grape source",
+    "If resubmitting after a rejection, the prior TTB ID is referenced on the new application",
+  ];
+  return (
+    <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
+      <button onClick={() => setExpanded((v) => !v)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-stone-50">
+        <span className="font-body text-sm font-medium text-stone-700">Before you submit — common rejection reasons</span>
+        {expanded ? <ChevronUp size={16} className="text-stone-400" /> : <ChevronDown size={16} className="text-stone-400" />}
+      </button>
+      {expanded && (
+        <div className="px-4 pb-4">
+          <p className="font-body text-xs text-stone-500 mb-2">
+            Most TTB label rejections come down to formatting details, not the brand or artwork itself. This isn't a review of your specific label — just the recurring issues worth a careful look before you submit.
+          </p>
+          <ul className="space-y-1.5">
+            {items.map((item, i) => (
+              <li key={i} className="font-body text-xs text-stone-600 flex items-start gap-2">
+                <span className="text-stone-300 mt-0.5">•</span>
+                {item}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
@@ -8106,6 +8218,13 @@ function WineryDataTrackerInner() {
       }
 
       try {
+        const res = await storage.get("labelApprovals", true);
+        results.labelApprovals = res ? JSON.parse(res.value) : [];
+      } catch {
+        results.labelApprovals = [];
+      }
+
+      try {
         const res = await storage.get("vineyard_blocks", true);
         if (res && !cancelled) setVineyardBlocks(JSON.parse(res.value));
       } catch {
@@ -8276,6 +8395,59 @@ function WineryDataTrackerInner() {
             await storage.set("stateRuleReference", JSON.stringify(mergedReference), true);
             results.stateRuleReference = mergedReference;
             await storage.set("state_reference_seed_v1", "true", true);
+          } catch {
+            // ignore — worst case the import is retried next load
+          }
+        }
+
+        // One-time seed: import the two real approved COLAs Alloro shared during setup, so Label
+        // Approvals starts with real data instead of an empty tab.
+        try {
+          await storage.get("label_approvals_seed_v1", true);
+        } catch {
+          try {
+            const seedLabels = [
+              {
+                id: genId(),
+                brandName: "Alloro Vineyard",
+                fancifulName: "Blanc de Noirs",
+                vintage: "2022",
+                varietal: "Pinot noir",
+                appellation: "Laurelwood District",
+                classType: "Table Red Wine",
+                ttbId: "26241001000077",
+                serialNumber: "26BDNR",
+                applicationType: "Certificate of Label Approval",
+                dateApplied: "2026-08-29",
+                dateIssued: "2026-09-01",
+                status: "Approved",
+                expirationDate: "",
+                labelDocument: "",
+                notes: "Sparkling wine (Metodo Classico), classed by TTB as Table Red Wine. 12.7% alc/vol, 750mL.",
+              },
+              {
+                id: genId(),
+                brandName: "Alloro Vineyard",
+                fancifulName: "La Casa Series Estate Arneis",
+                vintage: "2025",
+                varietal: "Arneis",
+                appellation: "Laurelwood District",
+                classType: "Table Red Wine",
+                ttbId: "26241001000083",
+                serialNumber: "26ARNS",
+                applicationType: "Certificate of Label Approval",
+                dateApplied: "2026-08-29",
+                dateIssued: "2026-09-01",
+                status: "Approved",
+                expirationDate: "",
+                labelDocument: "",
+                notes: "13.9% alc/vol, 750mL. Class/type as issued by TTB — recorded as-is from the certificate, not corrected.",
+              },
+            ];
+            const mergedLabels = [...seedLabels, ...(results.labelApprovals || [])];
+            await storage.set("labelApprovals", JSON.stringify(mergedLabels), true);
+            results.labelApprovals = mergedLabels;
+            await storage.set("label_approvals_seed_v1", "true", true);
           } catch {
             // ignore — worst case the import is retried next load
           }
