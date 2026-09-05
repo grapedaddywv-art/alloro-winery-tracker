@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, Fragment, Component } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import * as XLSX from "xlsx";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { storage } from "./lib/storage";
@@ -10970,6 +10971,7 @@ export default function WineryDataTracker() {
   return (
     <AppErrorBoundary>
       <WineryDataTrackerInner />
+      <Analytics />
     </AppErrorBoundary>
   );
 }
