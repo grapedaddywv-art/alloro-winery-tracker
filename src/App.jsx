@@ -4148,55 +4148,87 @@ function FermentStageStepper({ stageIndex }) {
   );
 }
 
-function FermentOverviewCard({ lot, onClick }) {
+function FermentOverviewCard({ lot, onClick, onCloseOut, confirmAction }) {
   const stageIndex = computeStageIndex(lot);
   const latestReading = [...lot.readings].sort((a, b) => (a.date < b.date ? 1 : -1))[0];
   return (
-    <button type="button" onClick={onClick} className="bg-white border border-stone-200 rounded-lg p-4 w-full text-left hover:border-ink-300 transition-colors">
+    <div className="bg-white border border-stone-200 rounded-lg p-4 hover:border-ink-300 transition-colors">
       <div className="flex items-start justify-between gap-3 mb-4">
-        <div>
+        <button type="button" onClick={onClick} className="text-left flex-1 min-w-0">
           <p className="font-brand text-base text-ink-950">{lot.tankId || "Untitled"}</p>
           <p className="font-body text-xs text-stone-500">
             {[lot.vessel, lot.variety, lot.vintage].filter(Boolean).join(" · ") || "No details yet"}
           </p>
+        </button>
+        <div className="text-right shrink-0 flex items-start gap-2">
+          {latestReading && (
+            <div>
+              <p className="font-body text-xs text-stone-400">As of {latestReading.date}</p>
+              <p className="font-body text-sm text-stone-700">
+                {latestReading.brix !== "" && latestReading.brix != null ? `${latestReading.brix}° Brix` : ""}
+                {latestReading.temp !== "" && latestReading.temp != null ? ` · ${latestReading.temp}°F` : ""}
+              </p>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() =>
+              confirmAction(`Close out ${lot.tankId || "this lot"}? It'll move to the vintage archive and drop off this overview.`, () => onCloseOut(lot.id))
+            }
+            className="font-body text-xs text-stone-400 hover:text-ink-800 border border-stone-200 rounded-md px-2 py-1 whitespace-nowrap"
+            title="Close out this ferment"
+          >
+            Close Out
+          </button>
         </div>
-        {latestReading && (
-          <div className="text-right shrink-0">
-            <p className="font-body text-xs text-stone-400">As of {latestReading.date}</p>
-            <p className="font-body text-sm text-stone-700">
-              {latestReading.brix !== "" && latestReading.brix != null ? `${latestReading.brix}° Brix` : ""}
-              {latestReading.temp !== "" && latestReading.temp != null ? ` · ${latestReading.temp}°F` : ""}
-            </p>
-          </div>
-        )}
       </div>
-      <FermentStageStepper stageIndex={stageIndex} />
+      <button type="button" onClick={onClick} className="w-full text-left">
+        <FermentStageStepper stageIndex={stageIndex} />
+      </button>
       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-4 font-body text-xs text-stone-500">
         {lot.startDate && <span>Started {lot.startDate}</span>}
         {lot.dateCompleted && <span>· Primary done {lot.dateCompleted}</span>}
         {lot.mlInoculationDate && <span>· ML started {lot.mlInoculationDate}</span>}
         {lot.mlCompleteDate && <span>· ML done {lot.mlCompleteDate}</span>}
       </div>
-    </button>
+    </div>
   );
 }
 
-function FermentOverview({ lots, onSelectLot }) {
-  const currentLots = lots.filter((lot) => computeStageIndex(lot) < 3);
+function FermentOverview({ lots, onSelectLot, onCloseOut, onCloseOutAll, confirmAction }) {
+  const currentLots = lots.filter((lot) => !lot.archived);
   return (
     <div className="space-y-3 mb-6">
-      <div>
-        <h2 className="font-brand text-xl text-ink-950">Fermentation Overview</h2>
-        <p className="font-body text-xs text-stone-500">
-          Every lot still moving through primary or malolactic fermentation. Tap a card to open its details.
-        </p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="font-brand text-xl text-ink-950">Fermentation Overview</h2>
+          <p className="font-body text-xs text-stone-500">
+            Every lot not yet closed out. Tap a card to open its details.
+          </p>
+        </div>
+        {currentLots.length > 0 && (
+          <button
+            type="button"
+            onClick={() =>
+              confirmAction(
+                `Close out all ${currentLots.length} lot${currentLots.length === 1 ? "" : "s"} shown here? They'll move to the vintage archive — use this once a vintage is fully done and bottled, to start the next one with a clean overview.`,
+                () => onCloseOutAll(currentLots.map((l) => l.id))
+              )
+            }
+            className="font-body text-xs font-medium text-stone-500 hover:text-ink-800 border border-stone-300 rounded-md px-3 py-1.5"
+          >
+            Close Out All
+          </button>
+        )}
       </div>
       {currentLots.length === 0 ? (
         <p className="font-body text-sm text-stone-500 bg-white border border-stone-200 rounded-lg p-6 text-center">
           No ferments currently in progress.
         </p>
       ) : (
-        currentLots.map((lot) => <FermentOverviewCard key={lot.id} lot={lot} onClick={() => onSelectLot(lot.id)} />)
+        currentLots.map((lot) => (
+          <FermentOverviewCard key={lot.id} lot={lot} onClick={() => onSelectLot(lot.id)} onCloseOut={onCloseOut} confirmAction={confirmAction} />
+        ))
       )}
     </div>
   );
@@ -7916,6 +7948,7 @@ function WineryDataTrackerInner() {
   const [fermentPrintFrom, setFermentPrintFrom] = useState("");
   const [fermentPrintTo, setFermentPrintTo] = useState("");
   const [fermentPrintLotIds, setFermentPrintLotIds] = useState([]);
+  const [fermentPrintIncludeArchived, setFermentPrintIncludeArchived] = useState(false);
 
   const activeSection = SIMPLE_SECTIONS.find((s) => s.key === activeKey);
 
@@ -9136,6 +9169,27 @@ function WineryDataTrackerInner() {
     await persist("ferment", updated);
   };
 
+  // Closing out a lot is the explicit "this ferment is done, move it to the vintage archive"
+  // signal — independent of ML status, since not every wine undergoes malolactic fermentation
+  // and relying on "ML Complete" as an implicit done-marker was exactly what left last year's
+  // finished, bottled ferments stuck showing as current.
+  const closeOutLot = async (lotId) => {
+    const updated = data.ferment.map((lot) =>
+      lot.id === lotId ? { ...lot, archived: true, archivedDate: todayISO() } : lot
+    );
+    setData((prev) => ({ ...prev, ferment: updated }));
+    await persist("ferment", updated);
+  };
+
+  const closeOutAllActiveLots = async (lotIds) => {
+    const idSet = new Set(lotIds);
+    const updated = data.ferment.map((lot) =>
+      idSet.has(lot.id) ? { ...lot, archived: true, archivedDate: todayISO() } : lot
+    );
+    setData((prev) => ({ ...prev, ferment: updated }));
+    await persist("ferment", updated);
+  };
+
   const deleteLot = async (lotId) => {
     const updated = data.ferment.filter((lot) => lot.id !== lotId);
     setData((prev) => ({ ...prev, ferment: updated }));
@@ -9292,9 +9346,9 @@ function WineryDataTrackerInner() {
     data.ferment.reduce((sum, lot) => sum + lot.readings.length, 0);
 
   const sortedFermentForDisplay = sortRows(data.ferment, fermentSort.field, fermentSort.direction);
-  const activeLots = sortedFermentForDisplay.filter((l) => l.status === "Active");
+  const activeLots = sortedFermentForDisplay.filter((l) => l.status === "Active" && !l.archived);
   const completeLots = sortedFermentForDisplay.filter((l) => l.status === "Complete" && !l.archived);
-  const archivedLots = sortedFermentForDisplay.filter((l) => l.status === "Complete" && l.archived);
+  const archivedLots = sortedFermentForDisplay.filter((l) => l.archived);
 
   const sortedWorkOrdersForDisplay = sortRows(data.workorders, workOrderSort.field, workOrderSort.direction);
   const openOrders = sortedWorkOrdersForDisplay.filter((o) => o.status !== "Complete");
@@ -9853,7 +9907,13 @@ function WineryDataTrackerInner() {
             </div>
 
             {fermentViewMode === "overview" ? (
-              <FermentOverview lots={data.ferment} onSelectLot={() => setFermentViewMode("detailed")} />
+              <FermentOverview
+                lots={data.ferment}
+                onSelectLot={() => setFermentViewMode("detailed")}
+                onCloseOut={closeOutLot}
+                onCloseOutAll={closeOutAllActiveLots}
+                confirmAction={confirmAction}
+              />
             ) : fermentViewMode === "quick" ? (
               <QuickFermentLog
                 lots={activeLots}
@@ -9881,7 +9941,7 @@ function WineryDataTrackerInner() {
                   Choose one or more lots and/or a date range. Leave lots unchecked to include all; leave dates blank for the full history.
                 </p>
                 <div className="flex flex-wrap gap-2 mb-3">
-                  {data.ferment.map((lot) => {
+                  {(fermentPrintIncludeArchived ? data.ferment : data.ferment.filter((lot) => !lot.archived)).map((lot) => {
                     const selected = fermentPrintLotIds.includes(lot.id);
                     return (
                       <button
@@ -9899,6 +9959,16 @@ function WineryDataTrackerInner() {
                     );
                   })}
                 </div>
+                {data.ferment.some((lot) => lot.archived) && (
+                  <label className="font-body flex items-center gap-2 text-xs text-stone-500 mb-3">
+                    <input
+                      type="checkbox"
+                      checked={fermentPrintIncludeArchived}
+                      onChange={(e) => setFermentPrintIncludeArchived(e.target.checked)}
+                    />
+                    Include closed-out lots from past vintages
+                  </label>
+                )}
                 <div className="flex items-center gap-2 flex-wrap">
                   <input
                     type="date"
