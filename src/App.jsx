@@ -1143,7 +1143,7 @@ const PRIORITY_STYLES = {
 // Color coding used on the master Calendar tab to tell sections apart
 const CATEGORY_META = {
   "Work Orders (Open)": { word: "To-Do", pill: "bg-indigo-50 text-indigo-700" },
-  "Work Orders (Closed)": { word: "Order Done", pill: "bg-emerald-50 text-emerald-800" },
+  "Work Orders (Closed)": { word: "Order Done", pill: "bg-ink-50 text-ink-800" },
   "Harvest": { word: "Harvest", pill: "bg-amber-50 text-amber-700" },
   "Fruit Analysis": { word: "Fruit Check", pill: "bg-lime-50 text-lime-700" },
   "Fermentation": { word: "Ferment", pill: "bg-rose-50 text-rose-700" },
@@ -1298,7 +1298,7 @@ function LotsPickerField({ value, onChange, fermentLots, lotNamesList, onRegiste
             addNewLot();
           }
         }}
-        className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-emerald-800"
+        className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-ink-800"
       />
       <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto border border-stone-200 rounded-md p-2">
         {filtered.length === 0 && !search ? (
@@ -1312,7 +1312,7 @@ function LotsPickerField({ value, onChange, fermentLots, lotNamesList, onRegiste
                 type="button"
                 onClick={() => toggleLot(name)}
                 className={`font-body text-xs px-2 py-1 rounded-full border transition-colors ${
-                  isSelected ? "bg-emerald-800 text-white border-emerald-800" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+                  isSelected ? "bg-ink-800 text-white border-ink-800" : "bg-white text-stone-600 border-stone-300 hover:border-ink-400"
                 }`}
               >
                 {name}
@@ -1324,7 +1324,7 @@ function LotsPickerField({ value, onChange, fermentLots, lotNamesList, onRegiste
           <button
             type="button"
             onClick={addNewLot}
-            className="font-body flex items-center gap-1 text-xs px-2 py-1 rounded-full border border-dashed border-emerald-400 text-emerald-800 hover:bg-emerald-50"
+            className="font-body flex items-center gap-1 text-xs px-2 py-1 rounded-full border border-dashed border-ink-400 text-ink-800 hover:bg-ink-50"
           >
             <Plus size={11} /> Add "{search.trim()}"
           </button>
@@ -1333,7 +1333,7 @@ function LotsPickerField({ value, onChange, fermentLots, lotNamesList, onRegiste
       {selected.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-2">
           {selected.map((lot) => (
-            <span key={lot} className="font-body flex items-center gap-1 text-xs bg-emerald-50 text-emerald-800 px-2 py-1 rounded-full">
+            <span key={lot} className="font-body flex items-center gap-1 text-xs bg-ink-50 text-ink-800 px-2 py-1 rounded-full">
               {lot}
               <button type="button" onClick={() => toggleLot(lot)} className="hover:text-red-700">
                 <X size={12} />
@@ -1367,7 +1367,7 @@ function BarrelsPickerField({ value, onChange, barrelsList }) {
         placeholder="Search barrel #"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-emerald-800"
+        className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-ink-800"
       />
       <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto border border-stone-200 rounded-md p-2">
         {filtered.length === 0 ? (
@@ -1381,7 +1381,7 @@ function BarrelsPickerField({ value, onChange, barrelsList }) {
                 type="button"
                 onClick={() => toggleBarrel(b.id)}
                 className={`font-body text-xs px-2 py-1 rounded-full border transition-colors ${
-                  isSelected ? "bg-emerald-800 text-white border-emerald-800" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+                  isSelected ? "bg-ink-800 text-white border-ink-800" : "bg-white text-stone-600 border-stone-300 hover:border-ink-400"
                 }`}
               >
                 {b.barrelNumber}
@@ -1393,7 +1393,7 @@ function BarrelsPickerField({ value, onChange, barrelsList }) {
       {selectedBarrels.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-2">
           {selectedBarrels.map((b) => (
-            <span key={b.id} className="font-body flex items-center gap-1 text-xs bg-emerald-50 text-emerald-800 px-2 py-1 rounded-full">
+            <span key={b.id} className="font-body flex items-center gap-1 text-xs bg-ink-50 text-ink-800 px-2 py-1 rounded-full">
               {b.barrelNumber}
               <button type="button" onClick={() => toggleBarrel(b.id)} className="hover:text-red-700">
                 <X size={12} />
@@ -1445,12 +1445,12 @@ function AddableSelectField({ value, onChange, options, onAddOption, addLabel })
               saveNewOption();
             }
           }}
-          className="font-body flex-1 border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+          className="font-body flex-1 border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
         />
         <button
           type="button"
           onClick={saveNewOption}
-          className="font-body text-sm font-medium bg-emerald-900 hover:bg-emerald-800 text-white px-3 py-2 rounded-md shrink-0"
+          className="font-body text-sm font-medium bg-ink-900 hover:bg-ink-800 text-white px-3 py-2 rounded-md shrink-0"
         >
           Save
         </button>
@@ -1469,7 +1469,7 @@ function AddableSelectField({ value, onChange, options, onAddOption, addLabel })
     <select
       value={value}
       onChange={handleSelectChange}
-      className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+      className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
     >
       <option value="">Select…</option>
       {options.map((o) => (
@@ -1488,7 +1488,7 @@ function Field({ f, value, onChange, hideLabel, fermentLots, barrelsList, blocks
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
         >
           <option value="">Select…</option>
           {f.options.map((opt) => (
@@ -1500,7 +1500,7 @@ function Field({ f, value, onChange, hideLabel, fermentLots, barrelsList, blocks
           value={value}
           onChange={(e) => onChange(e.target.value)}
           rows={2}
-          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
         />
       ) : f.type === "checkbox-group" ? (
         <div className="flex flex-wrap gap-3 pt-1">
@@ -1515,7 +1515,7 @@ function Field({ f, value, onChange, hideLabel, fermentLots, barrelsList, blocks
                     const current = Array.isArray(value) ? value : [];
                     onChange(checked ? current.filter((v) => v !== opt) : [...current, opt]);
                   }}
-                  className="rounded border-stone-300 text-emerald-800 focus:ring-emerald-800"
+                  className="rounded border-stone-300 text-ink-800 focus:ring-ink-800"
                 />
                 {opt}
               </label>
@@ -1553,7 +1553,7 @@ function Field({ f, value, onChange, hideLabel, fermentLots, barrelsList, blocks
               }
               e.target.value = "";
             }}
-            className="font-body w-full text-xs text-stone-600 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-emerald-900 file:text-white file:text-xs file:font-medium hover:file:bg-emerald-800"
+            className="font-body w-full text-xs text-stone-600 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-ink-900 file:text-white file:text-xs file:font-medium hover:file:bg-ink-800"
           />
           {value && (
             <div className="mt-2 flex items-center gap-2">
@@ -1592,12 +1592,12 @@ function Field({ f, value, onChange, hideLabel, fermentLots, barrelsList, blocks
               }
               e.target.value = "";
             }}
-            className="font-body w-full text-xs text-stone-600 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-emerald-900 file:text-white file:text-xs file:font-medium hover:file:bg-emerald-800"
+            className="font-body w-full text-xs text-stone-600 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-ink-900 file:text-white file:text-xs file:font-medium hover:file:bg-ink-800"
           />
           {value && (
             <div className="mt-2 flex items-center gap-2">
               {value.startsWith("data:application/pdf") ? (
-                <a href={value} target="_blank" rel="noopener noreferrer" className="font-body text-xs text-emerald-800 underline">
+                <a href={value} target="_blank" rel="noopener noreferrer" className="font-body text-xs text-ink-800 underline">
                   View uploaded PDF
                 </a>
               ) : (
@@ -1616,7 +1616,9 @@ function Field({ f, value, onChange, hideLabel, fermentLots, barrelsList, blocks
           type={f.type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+          className={`font-body border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800 ${
+            f.type === "number" || f.type === "date" ? "w-full max-w-[140px]" : "w-full"
+          }`}
         />
       )}
     </div>
@@ -1630,7 +1632,7 @@ function WorkOrderRow({ order, onToggle, onDelete, onDuplicate, onSaveAsTemplate
   if (isEditing) {
     const visibleFields = workOrderFieldsForCategory(WORKORDER_FIELDS, editForm.category).filter((f) => (f.name !== "lots" && f.name !== "barrels") || editForm.taskType);
     return (
-      <li className="px-4 py-3 bg-emerald-50">
+      <li className="px-4 py-3 bg-ink-50">
         {order.orderNumber && (
           <p className="font-body text-xs font-mono text-stone-400 mb-2">{formatOrderNumber(order.orderNumber)}</p>
         )}
@@ -1651,7 +1653,7 @@ function WorkOrderRow({ order, onToggle, onDelete, onDuplicate, onSaveAsTemplate
           ))}
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={onSaveEdit} className="font-body flex items-center gap-1 text-sm font-medium text-emerald-800 hover:text-emerald-900">
+          <button onClick={onSaveEdit} className="font-body flex items-center gap-1 text-sm font-medium text-ink-800 hover:text-ink-900">
             <Check size={15} /> Save
           </button>
           <button onClick={onCancelEdit} className="font-body flex items-center gap-1 text-sm text-stone-500 hover:text-stone-700">
@@ -1666,7 +1668,7 @@ function WorkOrderRow({ order, onToggle, onDelete, onDuplicate, onSaveAsTemplate
     <li className="flex items-start gap-3 px-4 py-3 hover:bg-stone-50">
       <button
         onClick={() => onToggle(order.id)}
-        className="mt-0.5 text-emerald-900 hover:text-emerald-700 shrink-0"
+        className="mt-0.5 text-ink-900 hover:text-ink-700 shrink-0"
         title={isComplete ? "Mark as open" : "Mark complete"}
       >
         {isComplete ? <CheckSquare size={20} /> : <Circle size={20} />}
@@ -1678,7 +1680,7 @@ function WorkOrderRow({ order, onToggle, onDelete, onDuplicate, onSaveAsTemplate
         </p>
         <div className="flex flex-wrap items-center gap-2 mt-1">
           {order.taskType && (
-            <span className="font-body text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+            <span className="font-body text-xs px-1.5 py-0.5 rounded bg-ink-100 text-ink-800">
               {order.taskType}{order.taskType === "Additions" && order.additionType ? ` · ${order.additionType}` : ""}
             </span>
           )}
@@ -1719,19 +1721,19 @@ function WorkOrderRow({ order, onToggle, onDelete, onDuplicate, onSaveAsTemplate
       {isComplete && (
         <button
           onClick={() => onToggle(order.id)}
-          className="font-body flex items-center gap-1 text-xs font-medium text-emerald-700 hover:text-emerald-900 shrink-0"
+          className="font-body flex items-center gap-1 text-xs font-medium text-ink-700 hover:text-ink-900 shrink-0"
           title="Reopen this work order"
         >
           <RotateCcw size={14} /> Reopen
         </button>
       )}
-      <button onClick={() => onDuplicate(order)} className="text-stone-300 hover:text-emerald-800 shrink-0" title="Duplicate for another day">
+      <button onClick={() => onDuplicate(order)} className="text-stone-300 hover:text-ink-800 shrink-0" title="Duplicate for another day">
         <Copy size={14} />
       </button>
-      <button onClick={() => onSaveAsTemplate(order)} className="text-stone-300 hover:text-emerald-800 shrink-0" title="Save as template">
+      <button onClick={() => onSaveAsTemplate(order)} className="text-stone-300 hover:text-ink-800 shrink-0" title="Save as template">
         <BookmarkPlus size={14} />
       </button>
-      <button onClick={() => onStartEdit(order)} className="text-stone-300 hover:text-emerald-800 shrink-0" title="Edit">
+      <button onClick={() => onStartEdit(order)} className="text-stone-300 hover:text-ink-800 shrink-0" title="Edit">
         <Pencil size={14} />
       </button>
       <button onClick={() => onDelete(order.id)} className="text-stone-300 hover:text-red-700 shrink-0" title="Delete">
@@ -1785,7 +1787,7 @@ function TemplateRow({ template, onUse, onDelete }) {
         <p className="font-body text-sm text-stone-900">{template.task || "Untitled template"}</p>
         <div className="flex flex-wrap items-center gap-2 mt-1">
           {template.taskType && (
-            <span className="font-body text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+            <span className="font-body text-xs px-1.5 py-0.5 rounded bg-ink-100 text-ink-800">
               {template.taskType}{template.taskType === "Additions" && template.additionType ? ` · ${template.additionType}` : ""}
             </span>
           )}
@@ -1800,7 +1802,7 @@ function TemplateRow({ template, onUse, onDelete }) {
       </div>
       <button
         onClick={() => onUse(template)}
-        className="font-body flex items-center gap-1 text-xs font-medium text-emerald-700 hover:text-emerald-900 shrink-0"
+        className="font-body flex items-center gap-1 text-xs font-medium text-ink-700 hover:text-ink-900 shrink-0"
         title="Create a work order from this template"
       >
         <Plus size={14} /> Use
@@ -1896,13 +1898,13 @@ function CompletedCalendar({ orders }) {
   return (
     <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-brand text-lg text-emerald-950">Completed — by Date</h2>
+        <h2 className="font-brand text-lg text-ink-950">Completed — by Date</h2>
         <div className="flex items-center gap-2">
-          <button onClick={() => changeMonth(-1)} className="text-stone-400 hover:text-emerald-800">
+          <button onClick={() => changeMonth(-1)} className="text-stone-400 hover:text-ink-800">
             <ChevronLeft size={18} />
           </button>
           <span className="font-body text-sm text-stone-600 w-32 text-center">{monthLabel}</span>
-          <button onClick={() => changeMonth(1)} className="text-stone-400 hover:text-emerald-800">
+          <button onClick={() => changeMonth(1)} className="text-stone-400 hover:text-ink-800">
             <ChevronRight size={18} />
           </button>
         </div>
@@ -1925,14 +1927,14 @@ function CompletedCalendar({ orders }) {
               onClick={() => count > 0 && setSelectedDate(isSelected ? null : iso)}
               className={`font-body aspect-square rounded-md text-xs flex flex-col items-center justify-center gap-0.5 border transition-colors ${
                 isSelected
-                  ? "border-emerald-800 bg-emerald-50"
+                  ? "border-ink-800 bg-ink-50"
                   : count > 0
-                  ? "border-stone-200 hover:border-emerald-300 cursor-pointer"
+                  ? "border-stone-200 hover:border-ink-300 cursor-pointer"
                   : "border-transparent text-stone-300"
               }`}
             >
               <span>{day}</span>
-              {count > 0 && <span className="w-1.5 h-1.5 rounded-full bg-emerald-800" />}
+              {count > 0 && <span className="w-1.5 h-1.5 rounded-full bg-ink-800" />}
             </button>
           );
         })}
@@ -1993,13 +1995,13 @@ function MasterCalendar({ data }) {
   return (
     <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-        <h2 className="font-brand text-lg text-emerald-950">Activity Calendar</h2>
+        <h2 className="font-brand text-lg text-ink-950">Activity Calendar</h2>
         <div className="flex items-center gap-2">
-          <button onClick={() => changeMonth(-1)} className="text-stone-400 hover:text-emerald-800">
+          <button onClick={() => changeMonth(-1)} className="text-stone-400 hover:text-ink-800">
             <ChevronLeft size={18} />
           </button>
           <span className="font-body text-sm text-stone-600 w-32 text-center">{monthLabel}</span>
-          <button onClick={() => changeMonth(1)} className="text-stone-400 hover:text-emerald-800">
+          <button onClick={() => changeMonth(1)} className="text-stone-400 hover:text-ink-800">
             <ChevronRight size={18} />
           </button>
         </div>
@@ -2030,13 +2032,13 @@ function MasterCalendar({ data }) {
               onClick={() => events.length > 0 && setSelectedDate(isSelected ? null : iso)}
               className={`font-body min-h-[64px] rounded-md p-1 flex flex-col items-start gap-0.5 border transition-colors ${
                 isSelected
-                  ? "border-emerald-800 bg-emerald-50"
+                  ? "border-ink-800 bg-ink-50"
                   : events.length > 0
-                  ? "border-stone-200 hover:border-emerald-300 cursor-pointer bg-white"
+                  ? "border-stone-200 hover:border-ink-300 cursor-pointer bg-white"
                   : "border-transparent"
               }`}
             >
-              <span className={`text-xs px-1 rounded-full ${isToday ? "bg-emerald-900 text-white font-semibold" : "text-stone-500"}`}>
+              <span className={`text-xs px-1 rounded-full ${isToday ? "bg-ink-900 text-white font-semibold" : "text-stone-500"}`}>
                 {day}
               </span>
               {shown.length > 0 && (
@@ -2166,7 +2168,7 @@ function FermentChartLegend({ lots, colorFor, hiddenLots, onToggleLot, onShowAll
         );
       })}
       {anyHidden && (
-        <button type="button" onClick={onShowAll} className="font-body text-xs text-emerald-800 hover:text-emerald-900 underline px-1.5">
+        <button type="button" onClick={onShowAll} className="font-body text-xs text-ink-800 hover:text-ink-900 underline px-1.5">
           Show all
         </button>
       )}
@@ -2207,7 +2209,7 @@ function MultiLotFermentChart({ lots }) {
   if (lots.length === 0) {
     return (
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h3 className="font-brand text-lg text-emerald-950 mb-1">Active Fermentations</h3>
+        <h3 className="font-brand text-lg text-ink-950 mb-1">Active Fermentations</h3>
         <p className="font-body text-sm text-stone-400">No active ferments right now.</p>
       </div>
     );
@@ -2245,8 +2247,8 @@ function MultiLotFermentChart({ lots }) {
   return (
     <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
       <div className="flex items-center justify-between mb-1">
-        <h3 className="font-brand text-lg text-emerald-950">Active Fermentations</h3>
-        <span className="font-body text-xs bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full">
+        <h3 className="font-brand text-lg text-ink-950">Active Fermentations</h3>
+        <span className="font-body text-xs bg-ink-50 text-ink-800 px-2 py-0.5 rounded-full">
           {lots.length} active
         </span>
       </div>
@@ -2344,7 +2346,7 @@ function TonnageByVarietyChart({ harvest }) {
   return (
     <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
       <div className="flex items-center justify-between mb-1">
-        <h3 className="font-brand text-lg text-emerald-950">Tonnage by Variety</h3>
+        <h3 className="font-brand text-lg text-ink-950">Tonnage by Variety</h3>
         {grandTotal > 0 && (
           <span className="font-body text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">
             {grandTotal.toFixed(1)} tons total
@@ -2410,12 +2412,13 @@ function groupFruitAnalysisByBlock(entries) {
 // ---------- Visual Brix + pH ripening curve for one vineyard block ----------
 function RipeningChart({ block, entries }) {
   const chartData = entries
-    .filter((r) => (r.brix !== "" && r.brix != null) || (r.ph !== "" && r.ph != null))
+    .filter((r) => (r.brix !== "" && r.brix != null) || (r.ph !== "" && r.ph != null) || (r.ta !== "" && r.ta != null))
     .map((r) => ({
       date: r.date ? r.date.slice(5) : "",
       fullDate: r.date,
       brix: r.brix !== "" && r.brix != null ? parseFloat(r.brix) : null,
       ph: r.ph !== "" && r.ph != null ? parseFloat(r.ph) : null,
+      ta: r.ta !== "" && r.ta != null ? parseFloat(r.ta) : null,
     }));
 
   if (chartData.length < 2) return null;
@@ -2429,6 +2432,7 @@ function RipeningChart({ block, entries }) {
           <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#78716c" }} />
           <YAxis yAxisId="brix" tick={{ fontSize: 11, fill: "#065f46" }} width={34} />
           <YAxis yAxisId="ph" orientation="right" tick={{ fontSize: 11, fill: "#b45309" }} width={34} domain={[2.8, 4.2]} />
+          <YAxis yAxisId="ta" hide domain={["auto", "auto"]} />
           <Tooltip
             contentStyle={{ fontSize: 12, fontFamily: "Inter, sans-serif", borderRadius: 8, border: "1px solid #e7e5e4" }}
             labelFormatter={(label, payload) => payload?.[0]?.payload?.fullDate || label}
@@ -2436,6 +2440,7 @@ function RipeningChart({ block, entries }) {
           <Legend wrapperStyle={{ fontSize: 11 }} />
           <Line yAxisId="brix" type="monotone" dataKey="brix" name="Brix" stroke="#065f46" strokeWidth={2} dot={{ r: 3 }} connectNulls />
           <Line yAxisId="ph" type="monotone" dataKey="ph" name="pH" stroke="#b45309" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+          <Line yAxisId="ta" type="monotone" dataKey="ta" name="TA (g/L)" stroke="#7c3aed" strokeWidth={2} dot={{ r: 3 }} connectNulls />
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -2513,7 +2518,7 @@ function HarvestBatchEntryForm({ fields, onSubmit, saving, vineyardBlocks, onAdd
 
   return (
     <form onSubmit={submit} className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5 mb-6">
-      <h2 className="font-brand text-lg text-emerald-950 mb-1">New Harvest Tonnage Entry</h2>
+      <h2 className="font-brand text-lg text-ink-950 mb-1">New Harvest Tonnage Entry</h2>
       <p className="font-body text-xs text-stone-500 mb-3">
         Fill in the block/variety/date once, then log each bin's weight below — handy when several bins come off the same pick.
       </p>
@@ -2541,7 +2546,7 @@ function HarvestBatchEntryForm({ fields, onSubmit, saving, vineyardBlocks, onAdd
             value={defaultTareWeight}
             onChange={(e) => onUpdateDefaultTareWeight(e.target.value)}
             placeholder="e.g. 25"
-            className="font-body w-20 border border-stone-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+            className="font-body w-20 border border-stone-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
           />
         </div>
       </div>
@@ -2554,7 +2559,7 @@ function HarvestBatchEntryForm({ fields, onSubmit, saving, vineyardBlocks, onAdd
                 type="number"
                 value={bin.tons}
                 onChange={(e) => updateBin(bin.id, "tons", e.target.value)}
-                className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
               />
             </div>
             <div>
@@ -2563,7 +2568,7 @@ function HarvestBatchEntryForm({ fields, onSubmit, saving, vineyardBlocks, onAdd
                 type="number"
                 value={bin.lbs}
                 onChange={(e) => updateBin(bin.id, "lbs", e.target.value)}
-                className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
               />
             </div>
             <div>
@@ -2572,7 +2577,7 @@ function HarvestBatchEntryForm({ fields, onSubmit, saving, vineyardBlocks, onAdd
                 type="number"
                 value={bin.tareWeight}
                 onChange={(e) => updateBin(bin.id, "tareWeight", e.target.value)}
-                className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
               />
             </div>
             <div>
@@ -2597,7 +2602,7 @@ function HarvestBatchEntryForm({ fields, onSubmit, saving, vineyardBlocks, onAdd
       <button
         type="button"
         onClick={addBinRow}
-        className="font-body flex items-center gap-1 text-xs font-medium text-emerald-800 hover:text-emerald-900 mb-3"
+        className="font-body flex items-center gap-1 text-xs font-medium text-ink-800 hover:text-ink-900 mb-3"
       >
         <Plus size={13} /> Add Another Bin
       </button>
@@ -2606,7 +2611,7 @@ function HarvestBatchEntryForm({ fields, onSubmit, saving, vineyardBlocks, onAdd
       <button
         type="submit"
         disabled={saving}
-        className="font-body flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors"
+        className="font-body flex items-center gap-2 bg-ink-900 hover:bg-ink-800 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors"
       >
         {saving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
         Save {bins.length > 1 ? `${bins.length} Bins` : "Entry"}
@@ -2665,7 +2670,7 @@ function BulkImportPanel({ fields, onImport, onClose }) {
   return (
     <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5 mb-6">
       <div className="flex items-center justify-between mb-1">
-        <h2 className="font-brand text-lg text-emerald-950">Import from Paste</h2>
+        <h2 className="font-brand text-lg text-ink-950">Import from Paste</h2>
         <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
           <X size={18} />
         </button>
@@ -2682,13 +2687,13 @@ function BulkImportPanel({ fields, onImport, onClose }) {
         }}
         rows={6}
         placeholder="Paste your data here, including the header row..."
-        className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm font-mono mb-2 focus:outline-none focus:ring-2 focus:ring-emerald-800"
+        className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm font-mono mb-2 focus:outline-none focus:ring-2 focus:ring-ink-800"
       />
       {error && <p className="font-body text-xs text-red-700 mb-2">{error}</p>}
       {!preview ? (
         <button
           onClick={parse}
-          className="font-body text-sm font-medium bg-emerald-900 hover:bg-emerald-800 text-white px-4 py-2 rounded-md"
+          className="font-body text-sm font-medium bg-ink-900 hover:bg-ink-800 text-white px-4 py-2 rounded-md"
         >
           Preview Import
         </button>
@@ -2700,7 +2705,7 @@ function BulkImportPanel({ fields, onImport, onClose }) {
           <div className="flex gap-3">
             <button
               onClick={confirmImport}
-              className="font-body text-sm font-medium bg-emerald-900 hover:bg-emerald-800 text-white px-4 py-2 rounded-md"
+              className="font-body text-sm font-medium bg-ink-900 hover:bg-ink-800 text-white px-4 py-2 rounded-md"
             >
               Import {preview.length} Row{preview.length === 1 ? "" : "s"}
             </button>
@@ -2731,7 +2736,7 @@ function HarvestRefsPicker({ value, onChange, harvestEntries }) {
         placeholder="Search harvest picks by date, block, or variety"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-emerald-800"
+        className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-ink-800"
       />
       <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto border border-stone-200 rounded-md p-2">
         {filtered.length === 0 ? (
@@ -2745,7 +2750,7 @@ function HarvestRefsPicker({ value, onChange, harvestEntries }) {
                 type="button"
                 onClick={() => toggle(h.id)}
                 className={`font-body text-xs px-2 py-1 rounded-full border transition-colors ${
-                  isSelected ? "bg-emerald-800 text-white border-emerald-800" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+                  isSelected ? "bg-ink-800 text-white border-ink-800" : "bg-white text-stone-600 border-stone-300 hover:border-ink-400"
                 }`}
               >
                 {labelFor(h)}
@@ -2757,7 +2762,7 @@ function HarvestRefsPicker({ value, onChange, harvestEntries }) {
       {selectedEntries.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-2">
           {selectedEntries.map((h) => (
-            <span key={h.id} className="font-body flex items-center gap-1 text-xs bg-emerald-50 text-emerald-800 px-2 py-1 rounded-full">
+            <span key={h.id} className="font-body flex items-center gap-1 text-xs bg-ink-50 text-ink-800 px-2 py-1 rounded-full">
               {labelFor(h)}
               <button type="button" onClick={() => toggle(h.id)} className="hover:text-red-700">
                 <X size={12} />
@@ -2810,7 +2815,7 @@ function TechSheetForm({ initial, harvestEntries, onSave, onCancel }) {
 
   return (
     <form onSubmit={submit} className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5 mb-6">
-      <h2 className="font-brand text-lg text-emerald-950 mb-3">{initial ? "Edit Tech Sheet" : "New Tech Sheet"}</h2>
+      <h2 className="font-brand text-lg text-ink-950 mb-3">{initial ? "Edit Tech Sheet" : "New Tech Sheet"}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         <div>
           <label className="font-body block text-xs font-medium text-stone-600 mb-1">Wine Name</label>
@@ -2818,7 +2823,7 @@ function TechSheetForm({ initial, harvestEntries, onSave, onCancel }) {
             type="text"
             value={form.wineName}
             onChange={(e) => setForm((p) => ({ ...p, wineName: e.target.value }))}
-            className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+            className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
           />
         </div>
         <div>
@@ -2826,7 +2831,7 @@ function TechSheetForm({ initial, harvestEntries, onSave, onCancel }) {
           <select
             value={form.vintage}
             onChange={(e) => setForm((p) => ({ ...p, vintage: e.target.value }))}
-            className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+            className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
           >
             <option value="">Select…</option>
             {VINTAGE_YEARS.map((y) => (
@@ -2841,7 +2846,7 @@ function TechSheetForm({ initial, harvestEntries, onSave, onCancel }) {
         <p className="font-body text-xs text-stone-400 mb-1">Link the Harvest Tonnage entries for this wine — the harvest date is pulled from these automatically.</p>
         <HarvestRefsPicker value={form.harvestRefs} onChange={(refs) => setForm((p) => ({ ...p, harvestRefs: refs }))} harvestEntries={harvestEntries} />
         {form.harvestRefs.length > 0 && (
-          <p className="font-body text-xs text-emerald-700 mt-1">
+          <p className="font-body text-xs text-ink-700 mt-1">
             Harvest date{harvestDatesFor(form.harvestRefs, harvestEntries).length > 1 ? "s" : ""}: {harvestDatesFor(form.harvestRefs, harvestEntries).join(", ")}
           </p>
         )}
@@ -2854,7 +2859,7 @@ function TechSheetForm({ initial, harvestEntries, onSave, onCancel }) {
             type="date"
             value={form.budbreakDate}
             onChange={(e) => setForm((p) => ({ ...p, budbreakDate: e.target.value }))}
-            className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+            className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
           />
         </div>
         <div>
@@ -2863,7 +2868,7 @@ function TechSheetForm({ initial, harvestEntries, onSave, onCancel }) {
             type="date"
             value={form.veraisonDate}
             onChange={(e) => setForm((p) => ({ ...p, veraisonDate: e.target.value }))}
-            className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+            className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
           />
         </div>
       </div>
@@ -2875,7 +2880,7 @@ function TechSheetForm({ initial, harvestEntries, onSave, onCancel }) {
           placeholder="e.g. 100% Pinot Noir (clones 114, 115, 777)"
           value={form.varietyCloneBlend}
           onChange={(e) => setForm((p) => ({ ...p, varietyCloneBlend: e.target.value }))}
-          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
         />
       </div>
 
@@ -2886,7 +2891,7 @@ function TechSheetForm({ initial, harvestEntries, onSave, onCancel }) {
             type="number"
             value={form.newOakPercent}
             onChange={(e) => setForm((p) => ({ ...p, newOakPercent: e.target.value }))}
-            className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+            className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
           />
         </div>
         <div>
@@ -2905,7 +2910,7 @@ function TechSheetForm({ initial, harvestEntries, onSave, onCancel }) {
               }
               e.target.value = "";
             }}
-            className="font-body w-full text-xs text-stone-600 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-emerald-900 file:text-white file:text-xs file:font-medium hover:file:bg-emerald-800"
+            className="font-body w-full text-xs text-stone-600 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-ink-900 file:text-white file:text-xs file:font-medium hover:file:bg-ink-800"
           />
           {form.bottleShotImage && (
             <div className="mt-2 flex items-center gap-2">
@@ -2925,7 +2930,7 @@ function TechSheetForm({ initial, harvestEntries, onSave, onCancel }) {
           value={form.elevageDetails}
           onChange={(e) => setForm((p) => ({ ...p, elevageDetails: e.target.value }))}
           rows={2}
-          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
         />
       </div>
 
@@ -2935,13 +2940,13 @@ function TechSheetForm({ initial, harvestEntries, onSave, onCancel }) {
           value={form.vintageNotes}
           onChange={(e) => setForm((p) => ({ ...p, vintageNotes: e.target.value }))}
           rows={3}
-          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
         />
       </div>
 
       {error && <p className="font-body text-sm text-red-700 mb-3">{error}</p>}
       <div className="flex items-center gap-3">
-        <button type="submit" className="font-body flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2 rounded-md">
+        <button type="submit" className="font-body flex items-center gap-2 bg-ink-900 hover:bg-ink-800 text-white text-sm font-medium px-4 py-2 rounded-md">
           <Check size={16} /> Save Tech Sheet
         </button>
         <button type="button" onClick={onCancel} className="font-body text-sm text-stone-500 hover:text-stone-700">
@@ -2963,18 +2968,18 @@ function TechSheetCard({ sheet, harvestEntries, onView, onEdit, onDelete }) {
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="font-brand text-base text-emerald-950 truncate">{sheet.wineName || "Untitled"}</p>
+        <p className="font-brand text-base text-ink-950 truncate">{sheet.wineName || "Untitled"}</p>
         <p className="font-body text-xs text-stone-500">
           {sheet.vintage || "No vintage"}
           {harvestDatesFor(sheet.harvestRefs, harvestEntries).length > 0 && ` · Harvest ${harvestDatesFor(sheet.harvestRefs, harvestEntries)[0]}`}
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <button onClick={onView} className="font-body text-xs font-medium text-emerald-800 hover:text-emerald-900 border border-emerald-200 rounded-md px-2.5 py-1.5">
+        <button onClick={onView} className="font-body text-xs font-medium text-ink-800 hover:text-ink-900 border border-ink-200 rounded-md px-2.5 py-1.5">
           View
         </button>
         {onEdit && (
-          <button onClick={onEdit} className="text-stone-400 hover:text-emerald-800" title="Edit">
+          <button onClick={onEdit} className="text-stone-400 hover:text-ink-800" title="Edit">
             <Pencil size={15} />
           </button>
         )}
@@ -3001,9 +3006,9 @@ function TechSheetDocument({ sheet, harvestEntries, onPrint, onClose }) {
   return (
     <div className="bg-white border border-stone-200 rounded-lg overflow-hidden mb-6">
       <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200">
-        <h2 className="font-brand text-lg text-emerald-950">Tech Sheet</h2>
+        <h2 className="font-brand text-lg text-ink-950">Tech Sheet</h2>
         <div className="flex items-center gap-3">
-          <button onClick={onPrint} className="font-body flex items-center gap-1.5 text-sm font-medium text-emerald-900 hover:text-emerald-700">
+          <button onClick={onPrint} className="font-body flex items-center gap-1.5 text-sm font-medium text-ink-900 hover:text-ink-700">
             <Printer size={15} /> Print / PDF
           </button>
           <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
@@ -3015,7 +3020,7 @@ function TechSheetDocument({ sheet, harvestEntries, onPrint, onClose }) {
         {sheet.bottleShotImage && (
           <img src={sheet.bottleShotImage} alt={sheet.wineName} className="w-32 h-32 object-cover rounded-lg border border-stone-200 mb-4" />
         )}
-        <h1 className="font-brand text-2xl text-emerald-950 mb-1">{sheet.wineName || "Untitled Wine"}</h1>
+        <h1 className="font-brand text-2xl text-ink-950 mb-1">{sheet.wineName || "Untitled Wine"}</h1>
         <p className="font-body text-stone-500 mb-4">{sheet.vintage ? `${sheet.vintage} Vintage` : "Vintage not set"}</p>
 
         <p className="font-body text-xs font-semibold text-stone-600 uppercase tracking-wide mb-1 mt-4">Vineyard</p>
@@ -3154,11 +3159,11 @@ function SimpleDataPanel({ title, fields, rows, onAdd, onUpdate, onDelete, confi
   return (
     <div className="bg-white border border-stone-200 rounded-lg overflow-hidden mb-6">
       <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
-        <h2 className="font-brand text-lg text-emerald-950">{title}</h2>
+        <h2 className="font-brand text-lg text-ink-950">{title}</h2>
         {allowImport && (
           <button
             onClick={() => setShowImport((v) => !v)}
-            className="font-body flex items-center gap-1.5 text-xs font-medium text-emerald-900 hover:text-emerald-700 border border-emerald-200 rounded-md px-2.5 py-1.5"
+            className="font-body flex items-center gap-1.5 text-xs font-medium text-ink-900 hover:text-ink-700 border border-ink-200 rounded-md px-2.5 py-1.5"
           >
             <UploadCloud size={13} /> Import
           </button>
@@ -3181,7 +3186,7 @@ function SimpleDataPanel({ title, fields, rows, onAdd, onUpdate, onDelete, confi
               <Field f={f} value={form[f.name]} onChange={(v) => setForm((p) => ({ ...p, [f.name]: v }))} associatesList={associatesList} onAddAssociate={onAddAssociate} />
             </div>
           ))}
-          <button type="submit" className="font-body flex items-center gap-1.5 bg-emerald-900 hover:bg-emerald-800 text-white text-sm font-medium px-3 py-2 rounded-md h-fit">
+          <button type="submit" className="font-body flex items-center gap-1.5 bg-ink-900 hover:bg-ink-800 text-white text-sm font-medium px-3 py-2 rounded-md h-fit">
             <Plus size={15} /> Add
           </button>
         </form>
@@ -3203,7 +3208,7 @@ function SimpleDataPanel({ title, fields, rows, onAdd, onUpdate, onDelete, confi
                 {rows.map((row) => {
                   const isEditing = editingId === row.id;
                   return (
-                    <tr key={row.id} className={`border-t border-stone-100 ${isEditing ? "bg-emerald-50" : ""}`}>
+                    <tr key={row.id} className={`border-t border-stone-100 ${isEditing ? "bg-ink-50" : ""}`}>
                       {fields.map((f) => (
                         <td key={f.name} className="px-2 py-2 align-top" style={{ minWidth: isEditing ? 120 : undefined }}>
                           {isEditing ? (
@@ -3219,7 +3224,7 @@ function SimpleDataPanel({ title, fields, rows, onAdd, onUpdate, onDelete, confi
                           ) : f.type === "document" ? (
                             row[f.name] ? (
                               row[f.name].startsWith("data:application/pdf") ? (
-                                <a href={row[f.name]} target="_blank" rel="noopener noreferrer" className="font-body text-xs text-emerald-800 underline">
+                                <a href={row[f.name]} target="_blank" rel="noopener noreferrer" className="font-body text-xs text-ink-800 underline">
                                   View PDF
                                 </a>
                               ) : (
@@ -3238,7 +3243,7 @@ function SimpleDataPanel({ title, fields, rows, onAdd, onUpdate, onDelete, confi
                       <td className="px-2 py-2">
                         {isEditing ? (
                           <div className="flex items-center gap-2">
-                            <button onClick={saveEdit} className="text-emerald-700 hover:text-emerald-900" title="Save">
+                            <button onClick={saveEdit} className="text-ink-700 hover:text-ink-900" title="Save">
                               <Check size={15} />
                             </button>
                             <button onClick={() => { setEditingId(null); setEditForm(null); setError(""); }} className="text-stone-400 hover:text-stone-600" title="Cancel">
@@ -3247,7 +3252,7 @@ function SimpleDataPanel({ title, fields, rows, onAdd, onUpdate, onDelete, confi
                           </div>
                         ) : (
                           <div className="flex items-center gap-2">
-                            <button onClick={() => startEdit(row)} className="text-stone-400 hover:text-emerald-800" title="Edit">
+                            <button onClick={() => startEdit(row)} className="text-stone-400 hover:text-ink-800" title="Edit">
                               <Pencil size={14} />
                             </button>
                             <button onClick={() => handleDeleteRow(row.id)} className="text-stone-400 hover:text-red-700" title="Delete">
@@ -3335,12 +3340,12 @@ function TechSheetsPanel({ data, techSheetMode, setTechSheetMode, onSave, onDele
     <>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="font-brand text-xl text-emerald-950">Tech Sheets</h2>
+          <h2 className="font-brand text-xl text-ink-950">Tech Sheets</h2>
           <p className="font-body text-xs text-stone-500">One document per wine and vintage — for your team and for distribution.</p>
         </div>
         <button
           onClick={() => setTechSheetMode({ mode: "form", sheetId: null })}
-          className="font-body flex items-center gap-1.5 text-sm font-medium bg-emerald-900 hover:bg-emerald-800 text-white px-3 py-2 rounded-md"
+          className="font-body flex items-center gap-1.5 text-sm font-medium bg-ink-900 hover:bg-ink-800 text-white px-3 py-2 rounded-md"
         >
           <Plus size={15} /> New Tech Sheet
         </button>
@@ -3385,7 +3390,7 @@ function CaseProductionSummary({ bottling }) {
   return (
     <div className="space-y-3">
       <div>
-        <h2 className="font-brand text-xl text-emerald-950">Case Production by Year</h2>
+        <h2 className="font-brand text-xl text-ink-950">Case Production by Year</h2>
         <p className="font-body text-xs text-stone-500">Computed automatically from Bottling records, grouped by the year each run was bottled.</p>
       </div>
       {years.length === 0 ? (
@@ -3394,7 +3399,7 @@ function CaseProductionSummary({ bottling }) {
         years.map((year) => (
           <div key={year} className="bg-white border border-stone-200 rounded-lg overflow-hidden">
             <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
-              <h3 className="font-brand text-lg text-emerald-950">{year}</h3>
+              <h3 className="font-brand text-lg text-ink-950">{year}</h3>
               <span className="font-body text-sm text-stone-600">{byYear[year].total.toLocaleString()} cases total</span>
             </div>
             <div className="p-4 space-y-1.5">
@@ -3433,17 +3438,17 @@ function HistoryPanel({ alloroStory, onUpdateStory, milestones, onAddThoEntry, o
   return (
     <div className="space-y-4">
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-1">Our Story</h2>
+        <h2 className="font-brand text-lg text-ink-950 mb-1">Our Story</h2>
         <p className="font-body text-xs text-stone-500 mb-3">A narrative about Alloro — the kind of thing you'd put on a website "About" page.</p>
         <textarea
           value={storyDraft}
           onChange={(e) => setStoryDraft(e.target.value)}
           rows={8}
-          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-emerald-800"
+          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-ink-800"
         />
         <button
           onClick={saveStory}
-          className={`font-body text-sm font-medium px-4 py-2 rounded-md text-white ${storySaved ? "bg-emerald-700" : "bg-emerald-900 hover:bg-emerald-800"}`}
+          className={`font-body text-sm font-medium px-4 py-2 rounded-md text-white ${storySaved ? "bg-ink-700" : "bg-ink-900 hover:bg-ink-800"}`}
         >
           {storySaved ? "✓ Saved" : "Save Story"}
         </button>
@@ -3470,7 +3475,7 @@ function VineyardPanel({ vineyardMapImage, onUpdateMapImage, blockDetails, onAdd
   return (
     <div className="space-y-4">
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-1">Vineyard Map</h2>
+        <h2 className="font-brand text-lg text-ink-950 mb-1">Vineyard Map</h2>
         <p className="font-body text-xs text-stone-500 mb-3">Upload a photo or scan of the actual vineyard map for reference.</p>
         {vineyardMapImage && (
           <img src={vineyardMapImage} alt="Vineyard map" className="w-full max-w-lg rounded-lg border border-stone-200 mb-3" />
@@ -3489,7 +3494,7 @@ function VineyardPanel({ vineyardMapImage, onUpdateMapImage, blockDetails, onAdd
             }
             e.target.value = "";
           }}
-          className="font-body w-full text-xs text-stone-600 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-emerald-900 file:text-white file:text-xs file:font-medium hover:file:bg-emerald-800"
+          className="font-body w-full text-xs text-stone-600 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-ink-900 file:text-white file:text-xs file:font-medium hover:file:bg-ink-800"
         />
         {vineyardMapImage && (
           <button onClick={() => onUpdateMapImage("")} className="font-body text-xs text-stone-400 hover:text-red-700 mt-2">
@@ -3534,7 +3539,7 @@ function TechSheetsReadOnlyPanel({ data, viewSheetId, setViewSheetId, onPrint })
   return (
     <>
       <div className="mb-4">
-        <h2 className="font-brand text-xl text-emerald-950">Tech Sheets</h2>
+        <h2 className="font-brand text-xl text-ink-950">Tech Sheets</h2>
         <p className="font-body text-xs text-stone-500">View and print — built and kept up to date under Winery.</p>
       </div>
       {data.techSheets.length === 0 ? (
@@ -3639,7 +3644,7 @@ function AboutAlloroTab({ data, setPrintJob, alloroStory, onUpdateStory, vineyar
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search Team Resources — history, vineyard, accolades, tech sheets, contacts, pricing, wine club…"
-          className="font-body w-full border border-stone-300 rounded-md pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+          className="font-body w-full border border-stone-300 rounded-md pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
         />
       </div>
 
@@ -3672,7 +3677,7 @@ function AboutAlloroTab({ data, setPrintJob, alloroStory, onUpdateStory, vineyar
                 key={t.key}
                 onClick={() => setSubTab(t.key)}
                 className={`font-body text-sm font-medium px-4 py-2 rounded-md border ${
-                  subTab === t.key ? "bg-emerald-900 text-white border-emerald-900" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+                  subTab === t.key ? "bg-ink-900 text-white border-ink-900" : "bg-white text-stone-600 border-stone-300 hover:border-ink-400"
                 }`}
               >
                 {t.label}
@@ -3823,7 +3828,7 @@ function ComplianceOverview({ permits, shipments, setSubTab }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-white border border-stone-200 rounded-lg p-4">
           <p className="font-body text-xs text-stone-500 mb-2">Licensed states</p>
-          <p className="font-brand text-2xl text-emerald-950 mb-2">{licensed.length}</p>
+          <p className="font-brand text-2xl text-ink-950 mb-2">{licensed.length}</p>
           <div className="flex flex-wrap gap-1">
             {licensed.length === 0 ? <span className="font-body text-xs text-stone-400">None yet</span> : licensed.map((s) => <Chip key={s} text={s} color="bg-green-50 text-green-700" />)}
           </div>
@@ -3853,7 +3858,7 @@ function ComplianceOverview({ permits, shipments, setSubTab }) {
 
       <p className="font-body text-xs text-stone-400">
         "Needs attention" flags are worth checking, not proof of an actual violation — a conflict just means shipments were logged to a state without a currently-valid permit on file here.
-        <button onClick={() => setSubTab("reference")} className="text-emerald-700 underline ml-1">Browse all 50 states →</button>
+        <button onClick={() => setSubTab("reference")} className="text-ink-700 underline ml-1">Browse all 50 states →</button>
       </p>
     </div>
   );
@@ -3884,7 +3889,7 @@ function ComplianceTab({ data, onAddThoEntry, onUpdateThoEntry, onDeleteThoEntry
             key={t.key}
             onClick={() => setSubTab(t.key)}
             className={`font-body text-sm font-medium px-4 py-2 rounded-md border ${
-              subTab === t.key ? "bg-emerald-900 text-white border-emerald-900" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+              subTab === t.key ? "bg-ink-900 text-white border-ink-900" : "bg-white text-stone-600 border-stone-300 hover:border-ink-400"
             }`}
           >
             {t.label}
@@ -3999,18 +4004,18 @@ function THOPayoutCalculator({ data }) {
   return (
     <div className="space-y-4">
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-1">Payout Calculator</h2>
+        <h2 className="font-brand text-lg text-ink-950 mb-1">Payout Calculator</h2>
         <p className="font-body text-xs text-stone-500 mb-4">
           Combines Timesheets and Tips for the period below into a payout per associate, split per day so a busy shift's tips don't get evenly blended with a slow one.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           <div>
             <label className="font-body block text-xs font-medium text-stone-600 mb-1">Start Date</label>
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800" />
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800" />
           </div>
           <div>
             <label className="font-body block text-xs font-medium text-stone-600 mb-1">End Date</label>
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800" />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800" />
           </div>
         </div>
 
@@ -4018,13 +4023,13 @@ function THOPayoutCalculator({ data }) {
         <div className="flex gap-2 mb-3">
           <button
             onClick={() => setMethod("hours")}
-            className={`font-body text-sm font-medium px-3 py-2 rounded-md border ${method === "hours" ? "bg-emerald-900 text-white border-emerald-900" : "bg-white text-stone-600 border-stone-300"}`}
+            className={`font-body text-sm font-medium px-3 py-2 rounded-md border ${method === "hours" ? "bg-ink-900 text-white border-ink-900" : "bg-white text-stone-600 border-stone-300"}`}
           >
             By Hours Worked
           </button>
           <button
             onClick={() => setMethod("shares")}
-            className={`font-body text-sm font-medium px-3 py-2 rounded-md border ${method === "shares" ? "bg-emerald-900 text-white border-emerald-900" : "bg-white text-stone-600 border-stone-300"}`}
+            className={`font-body text-sm font-medium px-3 py-2 rounded-md border ${method === "shares" ? "bg-ink-900 text-white border-ink-900" : "bg-white text-stone-600 border-stone-300"}`}
           >
             Half-Day / Full-Day Shares
           </button>
@@ -4057,7 +4062,7 @@ function THOPayoutCalculator({ data }) {
         <button
           onClick={exportPayout}
           disabled={result.rows.length === 0}
-          className="font-body flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 disabled:opacity-40 text-white text-sm font-medium px-4 py-2 rounded-md"
+          className="font-body flex items-center gap-2 bg-ink-900 hover:bg-ink-800 disabled:opacity-40 text-white text-sm font-medium px-4 py-2 rounded-md"
         >
           <Download size={16} /> Export for Accounting
         </button>
@@ -4065,7 +4070,7 @@ function THOPayoutCalculator({ data }) {
 
       <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
         <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
-          <h2 className="font-brand text-lg text-emerald-950">Payout Summary</h2>
+          <h2 className="font-brand text-lg text-ink-950">Payout Summary</h2>
           <span className="font-body text-xs text-stone-500">Total tips: ${result.totalTips.toFixed(2)}</span>
         </div>
         {result.rows.length === 0 ? (
@@ -4115,14 +4120,14 @@ function FermentStageStepper({ stageIndex }) {
           <div className="flex flex-col items-center" style={{ width: 0 }}>
             <div
               className={`w-3 h-3 rounded-full shrink-0 ${
-                i < stageIndex ? "bg-emerald-700" : i === stageIndex ? "bg-emerald-700 ring-4 ring-emerald-100" : "bg-stone-200"
+                i < stageIndex ? "bg-ink-700" : i === stageIndex ? "bg-ink-700 ring-4 ring-ink-100" : "bg-stone-200"
               }`}
             />
-            <span className={`font-body text-[10px] mt-1.5 text-center whitespace-nowrap ${i <= stageIndex ? "text-emerald-800 font-medium" : "text-stone-400"}`}>
+            <span className={`font-body text-[10px] mt-1.5 text-center whitespace-nowrap ${i <= stageIndex ? "text-ink-800 font-medium" : "text-stone-400"}`}>
               {label}
             </span>
           </div>
-          {i < FERMENT_STAGES.length - 1 && <div className={`flex-1 h-0.5 mx-1 mb-4 ${i < stageIndex ? "bg-emerald-700" : "bg-stone-200"}`} />}
+          {i < FERMENT_STAGES.length - 1 && <div className={`flex-1 h-0.5 mx-1 mb-4 ${i < stageIndex ? "bg-ink-700" : "bg-stone-200"}`} />}
         </Fragment>
       ))}
     </div>
@@ -4133,10 +4138,10 @@ function FermentOverviewCard({ lot, onClick }) {
   const stageIndex = computeStageIndex(lot);
   const latestReading = [...lot.readings].sort((a, b) => (a.date < b.date ? 1 : -1))[0];
   return (
-    <button type="button" onClick={onClick} className="bg-white border border-stone-200 rounded-lg p-4 w-full text-left hover:border-emerald-300 transition-colors">
+    <button type="button" onClick={onClick} className="bg-white border border-stone-200 rounded-lg p-4 w-full text-left hover:border-ink-300 transition-colors">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
-          <p className="font-brand text-base text-emerald-950">{lot.tankId || "Untitled"}</p>
+          <p className="font-brand text-base text-ink-950">{lot.tankId || "Untitled"}</p>
           <p className="font-body text-xs text-stone-500">
             {[lot.vessel, lot.variety, lot.vintage].filter(Boolean).join(" · ") || "No details yet"}
           </p>
@@ -4167,7 +4172,7 @@ function FermentOverview({ lots, onSelectLot }) {
   return (
     <div className="space-y-3 mb-6">
       <div>
-        <h2 className="font-brand text-xl text-emerald-950">Fermentation Overview</h2>
+        <h2 className="font-brand text-xl text-ink-950">Fermentation Overview</h2>
         <p className="font-body text-xs text-stone-500">
           Every lot still moving through primary or malolactic fermentation. Tap a card to open its details.
         </p>
@@ -4242,7 +4247,7 @@ function QuickFermentLog({ lots, allLots, onSaveRow, onEndDay, onDeleteLot, onSw
     <div className="bg-white border border-stone-200 rounded-lg overflow-hidden mb-6">
       <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h2 className="font-brand text-lg text-emerald-950">Quick Log</h2>
+          <h2 className="font-brand text-lg text-ink-950">Quick Log</h2>
           <p className="font-body text-xs text-stone-500">
             {isToday ? "Walk down the list, log this round, move to the next." : "Viewing a past day — showing every lot with an entry that day."}
           </p>
@@ -4259,7 +4264,7 @@ function QuickFermentLog({ lots, allLots, onSaveRow, onEndDay, onDeleteLot, onSw
               <button
                 key={s}
                 onClick={() => setSession(s)}
-                className={`font-body text-xs px-2.5 py-1.5 ${session === s ? "bg-emerald-900 text-white" : "bg-white text-stone-600 hover:bg-stone-50"}`}
+                className={`font-body text-xs px-2.5 py-1.5 ${session === s ? "bg-ink-900 text-white" : "bg-white text-stone-600 hover:bg-stone-50"}`}
               >
                 {s}
               </button>
@@ -4268,7 +4273,7 @@ function QuickFermentLog({ lots, allLots, onSaveRow, onEndDay, onDeleteLot, onSw
           {isToday && (
             <button
               onClick={endDay}
-              className="font-body flex items-center gap-1.5 text-xs font-medium bg-emerald-900 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-md"
+              className="font-body flex items-center gap-1.5 text-xs font-medium bg-ink-900 hover:bg-ink-800 text-white px-3 py-1.5 rounded-md"
             >
               <ArchiveRestore size={13} /> End Day
             </button>
@@ -4293,10 +4298,10 @@ function QuickFermentLog({ lots, allLots, onSaveRow, onEndDay, onDeleteLot, onSw
                     {lot.variety && <span className="font-body text-xs text-stone-400 ml-2">· {lot.variety}</span>}
                   </div>
                   <div className="flex items-center gap-2">
-                    {existing && <span className="font-body text-xs text-emerald-700">Already logged this round</span>}
+                    {existing && <span className="font-body text-xs text-ink-700">Already logged this round</span>}
                     <button
                       onClick={() => onSwitchToDetailed(lot.id)}
-                      className="text-stone-400 hover:text-emerald-800"
+                      className="text-stone-400 hover:text-ink-800"
                       title="Edit lot details (opens Detailed View)"
                     >
                       <Pencil size={14} />
@@ -4318,21 +4323,21 @@ function QuickFermentLog({ lots, allLots, onSaveRow, onEndDay, onDeleteLot, onSw
                     placeholder="Temp °F"
                     value={v.temp}
                     onChange={(e) => updateField(lot, "temp", e.target.value)}
-                    className="font-body border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                    className="font-body border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                   />
                   <input
                     type="number"
                     placeholder="Brix"
                     value={v.brix}
                     onChange={(e) => updateField(lot, "brix", e.target.value)}
-                    className="font-body border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                    className="font-body border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                   />
                   <input
                     type="number"
                     placeholder="pH"
                     value={v.ph}
                     onChange={(e) => updateField(lot, "ph", e.target.value)}
-                    className="font-body border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                    className="font-body border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                   />
                 </div>
                 <div className="flex flex-wrap gap-1.5 mb-2">
@@ -4340,7 +4345,7 @@ function QuickFermentLog({ lots, allLots, onSaveRow, onEndDay, onDeleteLot, onSw
                     type="button"
                     onClick={() => toggleWorkDone(lot, "Pump Over")}
                     className={`font-body text-xs px-2.5 py-1.5 rounded-md border ${
-                      v.workDone.includes("Pump Over") ? "bg-emerald-800 text-white border-emerald-800" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+                      v.workDone.includes("Pump Over") ? "bg-ink-800 text-white border-ink-800" : "bg-white text-stone-600 border-stone-300 hover:border-ink-400"
                     }`}
                   >
                     O — Pump Over
@@ -4349,7 +4354,7 @@ function QuickFermentLog({ lots, allLots, onSaveRow, onEndDay, onDeleteLot, onSw
                     type="button"
                     onClick={() => toggleWorkDone(lot, "Punch Down")}
                     className={`font-body text-xs px-2.5 py-1.5 rounded-md border ${
-                      v.workDone.includes("Punch Down") ? "bg-emerald-800 text-white border-emerald-800" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+                      v.workDone.includes("Punch Down") ? "bg-ink-800 text-white border-ink-800" : "bg-white text-stone-600 border-stone-300 hover:border-ink-400"
                     }`}
                   >
                     D — Punch Down
@@ -4358,7 +4363,7 @@ function QuickFermentLog({ lots, allLots, onSaveRow, onEndDay, onDeleteLot, onSw
                     type="button"
                     onClick={() => toggleWorkDone(lot, "Cold Soak")}
                     className={`font-body text-xs px-2.5 py-1.5 rounded-md border ${
-                      v.workDone.includes("Cold Soak") ? "bg-emerald-800 text-white border-emerald-800" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+                      v.workDone.includes("Cold Soak") ? "bg-ink-800 text-white border-ink-800" : "bg-white text-stone-600 border-stone-300 hover:border-ink-400"
                     }`}
                   >
                     Cold Soak
@@ -4384,11 +4389,11 @@ function QuickFermentLog({ lots, allLots, onSaveRow, onEndDay, onDeleteLot, onSw
                     placeholder="Notes"
                     value={v.notes}
                     onChange={(e) => updateField(lot, "notes", e.target.value)}
-                    className="font-body flex-1 border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                    className="font-body flex-1 border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                   />
                   <button
                     onClick={() => saveRow(lot)}
-                    className={`font-body text-sm font-medium px-3 py-1.5 rounded-md text-white shrink-0 ${justSaved[lot.id] ? "bg-emerald-700" : "bg-emerald-900 hover:bg-emerald-800"}`}
+                    className={`font-body text-sm font-medium px-3 py-1.5 rounded-md text-white shrink-0 ${justSaved[lot.id] ? "bg-ink-700" : "bg-ink-900 hover:bg-ink-800"}`}
                   >
                     {justSaved[lot.id] ? "✓ Saved" : "Log"}
                   </button>
@@ -4494,7 +4499,7 @@ function FermentLotCard({ lot, onAddReading, onToggleComplete, onDeleteLot, onUp
             {lot.status}
           </span>
           <div>
-            <p className="font-brand text-emerald-950 leading-tight">
+            <p className="font-brand text-ink-950 leading-tight">
               {lot.tankId || "Untitled Tank"} {lot.variety && `— ${lot.variety}`}
             </p>
             <p className="font-body text-xs text-stone-500">
@@ -4506,7 +4511,7 @@ function FermentLotCard({ lot, onAddReading, onToggleComplete, onDeleteLot, onUp
             {lot.mlStatus && lot.mlStatus !== "Not Started" && (
               <span
                 className={`inline-block font-body text-xs px-1.5 py-0.5 rounded mt-1 ${
-                  lot.mlStatus === "Complete" ? "bg-emerald-100 text-emerald-800" : "bg-purple-100 text-purple-800"
+                  lot.mlStatus === "Complete" ? "bg-ink-100 text-ink-800" : "bg-purple-100 text-purple-800"
                 }`}
               >
                 ML: {lot.mlStatus}
@@ -4537,7 +4542,7 @@ function FermentLotCard({ lot, onAddReading, onToggleComplete, onDeleteLot, onUp
       {expanded && (
         <div className="border-t border-stone-200 px-4 py-4">
           {editingLot ? (
-            <div className="bg-emerald-50 border border-emerald-100 rounded-md p-3 mb-4">
+            <div className="bg-ink-50 border border-ink-100 rounded-md p-3 mb-4">
               <p className="font-body text-xs font-semibold text-stone-600 mb-2">Edit ferment details</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 {FERMENT_LOT_FIELDS.map((f) => (
@@ -4545,7 +4550,7 @@ function FermentLotCard({ lot, onAddReading, onToggleComplete, onDeleteLot, onUp
                 ))}
               </div>
               <div className="flex items-center gap-3">
-                <button onClick={saveEditLot} className="font-body flex items-center gap-1 text-sm font-medium text-emerald-800 hover:text-emerald-900">
+                <button onClick={saveEditLot} className="font-body flex items-center gap-1 text-sm font-medium text-ink-800 hover:text-ink-900">
                   <Check size={15} /> Save
                 </button>
                 <button onClick={() => setEditingLot(false)} className="font-body flex items-center gap-1 text-sm text-stone-500 hover:text-stone-700">
@@ -4583,7 +4588,7 @@ function FermentLotCard({ lot, onAddReading, onToggleComplete, onDeleteLot, onUp
                     <select
                       value={mlForm.mlStatus}
                       onChange={(e) => setMlForm((p) => ({ ...p, mlStatus: e.target.value }))}
-                      className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                      className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                     >
                       {ML_STATUSES.map((s) => (
                         <option key={s} value={s}>{s}</option>
@@ -4596,7 +4601,7 @@ function FermentLotCard({ lot, onAddReading, onToggleComplete, onDeleteLot, onUp
                       type="date"
                       value={mlForm.mlInoculationDate}
                       onChange={(e) => setMlForm((p) => ({ ...p, mlInoculationDate: e.target.value }))}
-                      className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                      className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                     />
                   </div>
                   <div>
@@ -4605,7 +4610,7 @@ function FermentLotCard({ lot, onAddReading, onToggleComplete, onDeleteLot, onUp
                       type="date"
                       value={mlForm.mlCompleteDate}
                       onChange={(e) => setMlForm((p) => ({ ...p, mlCompleteDate: e.target.value }))}
-                      className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                      className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                     />
                   </div>
                 </div>
@@ -4616,7 +4621,7 @@ function FermentLotCard({ lot, onAddReading, onToggleComplete, onDeleteLot, onUp
                   value={mlForm.mlNotes}
                   onChange={(e) => setMlForm((p) => ({ ...p, mlNotes: e.target.value }))}
                   rows={2}
-                  className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                  className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-ink-800"
                 />
                 <div className="flex items-center gap-3">
                   <button onClick={saveEditML} className="font-body flex items-center gap-1 text-sm font-medium text-purple-800 hover:text-purple-900">
@@ -4658,7 +4663,7 @@ function FermentLotCard({ lot, onAddReading, onToggleComplete, onDeleteLot, onUp
               ))}
               <button
                 type="submit"
-                className="font-body flex items-center justify-center gap-1 bg-emerald-900 hover:bg-emerald-800 text-white text-sm font-medium px-3 py-2 rounded-md h-fit"
+                className="font-body flex items-center justify-center gap-1 bg-ink-900 hover:bg-ink-800 text-white text-sm font-medium px-3 py-2 rounded-md h-fit"
               >
                 <Plus size={15} /> Add
               </button>
@@ -4687,7 +4692,7 @@ function FermentLotCard({ lot, onAddReading, onToggleComplete, onDeleteLot, onUp
                 <tbody>
                   {readings.map((r) =>
                     editingReadingId === r.id ? (
-                      <tr key={r.id} className="border-t border-stone-100 bg-emerald-50">
+                      <tr key={r.id} className="border-t border-stone-100 bg-ink-50">
                         {FERMENT_READING_FIELDS.map((f) => (
                           <td key={f.name} className="px-2 py-2 align-top" style={{ minWidth: 110 }}>
                             <Field f={f} value={readingEditForm[f.name]} onChange={(v) => setReadingEditForm((p) => ({ ...p, [f.name]: v }))} hideLabel />
@@ -4695,7 +4700,7 @@ function FermentLotCard({ lot, onAddReading, onToggleComplete, onDeleteLot, onUp
                         ))}
                         <td className="px-2 py-2">
                           <div className="flex items-center gap-2">
-                            <button onClick={saveEditReading} className="text-emerald-700 hover:text-emerald-900" title="Save">
+                            <button onClick={saveEditReading} className="text-ink-700 hover:text-ink-900" title="Save">
                               <Check size={15} />
                             </button>
                             <button onClick={() => setEditingReadingId(null)} className="text-stone-400 hover:text-stone-600" title="Cancel">
@@ -4720,7 +4725,7 @@ function FermentLotCard({ lot, onAddReading, onToggleComplete, onDeleteLot, onUp
                         <td className="px-3 py-2 max-w-xs truncate">{r.notes || "—"}</td>
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-2">
-                            <button onClick={() => startEditReading(r)} className="text-stone-400 hover:text-emerald-800" title="Edit">
+                            <button onClick={() => startEditReading(r)} className="text-stone-400 hover:text-ink-800" title="Edit">
                               <Pencil size={14} />
                             </button>
                             <button onClick={() => handleDeleteReading(r.id)} className="text-stone-400 hover:text-red-700" title="Delete">
@@ -4820,7 +4825,7 @@ function CalcInput({ label, value, onChange, unit }) {
           type="number"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
         />
         {unit && <span className="font-body absolute right-3 top-1/2 -translate-y-1/2 text-xs text-stone-400">{unit}</span>}
       </div>
@@ -4830,9 +4835,9 @@ function CalcInput({ label, value, onChange, unit }) {
 
 function CalcResult({ label, value, unit }) {
   return (
-    <div className="bg-emerald-50 border border-emerald-100 rounded-md px-3 py-2">
-      <p className="font-body text-xs text-emerald-800">{label}</p>
-      <p className="font-brand text-xl text-emerald-950">{value !== "" ? value : "—"}{value !== "" && unit ? ` ${unit}` : ""}</p>
+    <div className="bg-ink-50 border border-ink-100 rounded-md px-3 py-2">
+      <p className="font-body text-xs text-ink-800">{label}</p>
+      <p className="font-brand text-xl text-ink-950">{value !== "" ? value : "—"}{value !== "" && unit ? ` ${unit}` : ""}</p>
     </div>
   );
 }
@@ -4979,7 +4984,7 @@ function FormulasTab() {
   return (
     <div className="space-y-6">
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-1">Quick Calculators</h2>
+        <h2 className="font-brand text-lg text-ink-950 mb-1">Quick Calculators</h2>
         <p className="font-body text-xs text-stone-500 mb-4">
           Enter values below for an instant estimate — these are working estimates, not lab-precise measurements.
         </p>
@@ -5084,12 +5089,12 @@ function FormulasTab() {
       </div>
 
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-3">Reference Formulas</h2>
+        <h2 className="font-brand text-lg text-ink-950 mb-3">Reference Formulas</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {REFERENCE_FORMULAS.map((f) => (
             <div key={f.title} className="border border-stone-200 rounded-lg p-4">
               <h3 className="font-body text-sm font-semibold text-stone-700 mb-1">{f.title}</h3>
-              <p className="font-body text-sm text-emerald-800 mb-1">{f.formula}</p>
+              <p className="font-body text-sm text-ink-800 mb-1">{f.formula}</p>
               <p className="font-body text-xs text-stone-400">{f.note}</p>
             </div>
           ))}
@@ -5097,7 +5102,7 @@ function FormulasTab() {
       </div>
 
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-3">Tom's Formulas</h2>
+        <h2 className="font-brand text-lg text-ink-950 mb-3">Tom's Formulas</h2>
         {TOMS_FORMULAS.length === 0 ? (
           <p className="font-body text-sm text-stone-500 py-4 text-center">No formulas added yet — check back soon.</p>
         ) : (
@@ -5105,7 +5110,7 @@ function FormulasTab() {
             {TOMS_FORMULAS.map((f) => (
               <div key={f.title} className="border border-stone-200 rounded-lg p-4">
                 <h3 className="font-body text-sm font-semibold text-stone-700 mb-1">{f.title}</h3>
-                <p className="font-body text-sm text-emerald-800 mb-1">{f.formula}</p>
+                <p className="font-body text-sm text-ink-800 mb-1">{f.formula}</p>
                 {f.note && <p className="font-body text-xs text-stone-400">{f.note}</p>}
               </div>
             ))}
@@ -5115,7 +5120,7 @@ function FormulasTab() {
 
 
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-3">Molecular SO₂ Reference — Free SO₂ needed for 0.8 ppm molecular SO₂</h2>
+        <h2 className="font-brand text-lg text-ink-950 mb-3">Molecular SO₂ Reference — Free SO₂ needed for 0.8 ppm molecular SO₂</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm font-body">
             <thead>
@@ -5138,7 +5143,7 @@ function FormulasTab() {
       </div>
 
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-3">Brix ↔ Specific Gravity Reference</h2>
+        <h2 className="font-brand text-lg text-ink-950 mb-3">Brix ↔ Specific Gravity Reference</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm font-body">
             <thead>
@@ -5160,7 +5165,7 @@ function FormulasTab() {
       </div>
 
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-3">Unit Conversions</h2>
+        <h2 className="font-brand text-lg text-ink-950 mb-3">Unit Conversions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {UNIT_CONVERSIONS.map((group) => (
             <div key={group.category} className="border border-stone-200 rounded-lg p-4">
@@ -5181,8 +5186,8 @@ function FormulasTab() {
 // ---------- Small presentational helpers for the print-only sheet ----------
 function PrintHeader({ subtitle }) {
   return (
-    <div style={{ borderBottom: "2px solid #022c22", paddingBottom: 12, marginBottom: 16 }}>
-      <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 700, color: "#022c22", margin: 0 }}>
+    <div style={{ borderBottom: "2px solid #1D1915", paddingBottom: 12, marginBottom: 16 }}>
+      <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 700, color: "#1D1915", margin: 0 }}>
         Alloro Winery Tracker
       </h1>
       <p style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#555", margin: "4px 0 0" }}>{subtitle}</p>
@@ -5408,7 +5413,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
           {status === "Empty" && (
             <button
               onClick={() => { setShowFillForm((v) => !v); setShowSellForm(false); setShowRetireForm(false); setFormError(""); }}
-              className="font-body text-xs font-medium text-emerald-800 hover:text-emerald-900 border border-emerald-200 rounded px-2 py-1"
+              className="font-body text-xs font-medium text-ink-800 hover:text-ink-900 border border-ink-200 rounded px-2 py-1"
             >
               Fill
             </button>
@@ -5441,7 +5446,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
       </div>
 
       {showFillForm && (
-        <div className="px-4 pb-3 bg-emerald-50">
+        <div className="px-4 pb-3 bg-ink-50">
           <div className="pt-2 space-y-2">
             <datalist id={`lots-${barrel.id}`}>
               {fermentLots.map((l) => (
@@ -5460,7 +5465,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
                     placeholder="e.g. 114 T5 — type a new lot or pick an existing one"
                     value={row.lotLabel}
                     onChange={(e) => updateFillRow(row.id, { lotLabel: e.target.value })}
-                    className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                    className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                   />
                 </div>
                 <div>
@@ -5469,7 +5474,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
                     type="number"
                     value={row.percentage}
                     onChange={(e) => updateFillRow(row.id, { percentage: e.target.value })}
-                    className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                    className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                   />
                 </div>
                 {fillRows.length > 1 && (
@@ -5481,7 +5486,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
             ))}
             <button
               onClick={addFillRow}
-              className="font-body flex items-center gap-1 text-xs font-medium text-emerald-800 hover:text-emerald-900"
+              className="font-body flex items-center gap-1 text-xs font-medium text-ink-800 hover:text-ink-900"
             >
               <Plus size={13} /> Add another lot (blend)
             </button>
@@ -5497,11 +5502,11 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
                   type="date"
                   value={fillDate}
                   onChange={(e) => setFillDate(e.target.value)}
-                  className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                  className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                 />
               </div>
               <div className="flex items-center gap-2 sm:col-span-2">
-                <button onClick={submitFill} className="font-body text-sm font-medium bg-emerald-900 hover:bg-emerald-800 text-white px-3 py-2 rounded-md">
+                <button onClick={submitFill} className="font-body text-sm font-medium bg-ink-900 hover:bg-ink-800 text-white px-3 py-2 rounded-md">
                   Fill Barrel
                 </button>
                 <button onClick={() => setShowFillForm(false)} className="font-body text-sm text-stone-500 hover:text-stone-700">
@@ -5523,7 +5528,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
                 type="date"
                 value={sellForm.soldDate}
                 onChange={(e) => setSellForm((p) => ({ ...p, soldDate: e.target.value }))}
-                className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
               />
             </div>
             <div>
@@ -5532,7 +5537,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
                 type="text"
                 value={sellForm.soldTo}
                 onChange={(e) => setSellForm((p) => ({ ...p, soldTo: e.target.value }))}
-                className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
               />
             </div>
             <div>
@@ -5542,7 +5547,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
                 placeholder="phone or email"
                 value={sellForm.soldContact}
                 onChange={(e) => setSellForm((p) => ({ ...p, soldContact: e.target.value }))}
-                className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
               />
             </div>
             <div>
@@ -5551,7 +5556,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
                 type="number"
                 value={sellForm.soldPrice}
                 onChange={(e) => setSellForm((p) => ({ ...p, soldPrice: e.target.value }))}
-                className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
               />
             </div>
           </div>
@@ -5561,7 +5566,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
               value={sellForm.saleNotes}
               onChange={(e) => setSellForm((p) => ({ ...p, saleNotes: e.target.value }))}
               rows={2}
-              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
             />
           </div>
           <div className="flex items-center gap-2 mt-2">
@@ -5585,7 +5590,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
                 type="date"
                 value={retireForm.retiredDate}
                 onChange={(e) => setRetireForm((p) => ({ ...p, retiredDate: e.target.value }))}
-                className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
               />
             </div>
             <div>
@@ -5595,7 +5600,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
                 placeholder="e.g. cracked, too old, repurposed"
                 value={retireForm.retiredReason}
                 onChange={(e) => setRetireForm((p) => ({ ...p, retiredReason: e.target.value }))}
-                className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
               />
             </div>
           </div>
@@ -5689,7 +5694,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
               </div>
               {formError && <p className="font-body text-xs text-red-700 mb-2">{formError}</p>}
               <div className="flex items-center gap-3">
-                <button onClick={saveEdit} className="font-body flex items-center gap-1 text-sm font-medium text-emerald-800 hover:text-emerald-900">
+                <button onClick={saveEdit} className="font-body flex items-center gap-1 text-sm font-medium text-ink-800 hover:text-ink-900">
                   <Check size={15} /> Save
                 </button>
                 <button onClick={() => setEditing(false)} className="font-body flex items-center gap-1 text-sm text-stone-500 hover:text-stone-700">
@@ -5703,7 +5708,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
               {barrel.toast && <span>Toast: {barrel.toast}</span>}
               {barrel.wineColor && <span>Wine: {barrel.wineColor}</span>}
               {barrel.forest && <span>Forest: {barrel.forest}</span>}
-              <button onClick={startEdit} className="text-stone-400 hover:text-emerald-800 flex items-center gap-1">
+              <button onClick={startEdit} className="text-stone-400 hover:text-ink-800 flex items-center gap-1">
                 <Pencil size={12} /> Edit
               </button>
               <button
@@ -5785,7 +5790,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
             <p className="font-body text-xs font-semibold text-stone-600">Lab Checks</p>
             <button
               onClick={() => setShowLabForm((v) => !v)}
-              className="font-body flex items-center gap-1 text-xs font-medium text-emerald-800 hover:text-emerald-900"
+              className="font-body flex items-center gap-1 text-xs font-medium text-ink-800 hover:text-ink-900"
             >
               <Plus size={12} /> Log Check
             </button>
@@ -5838,7 +5843,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
                 className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm mb-2"
               />
               <div className="flex items-center gap-3">
-                <button onClick={submitLabCheck} className="font-body text-sm font-medium text-emerald-800 hover:text-emerald-900">
+                <button onClick={submitLabCheck} className="font-body text-sm font-medium text-ink-800 hover:text-ink-900">
                   Save Check
                 </button>
                 <button onClick={() => setShowLabForm(false)} className="font-body text-sm text-stone-500 hover:text-stone-700">
@@ -5864,7 +5869,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
               <tbody>
                 {[...(barrel.labChecks || [])].sort((a, b) => (a.date < b.date ? 1 : -1)).map((c) =>
                   editingLabId === c.id ? (
-                    <tr key={c.id} className="border-t border-stone-200 bg-emerald-50">
+                    <tr key={c.id} className="border-t border-stone-200 bg-ink-50">
                       <td className="py-1 pr-2"><input type="date" value={labEditForm.date} onChange={(e) => setLabEditForm((p) => ({ ...p, date: e.target.value }))} className="w-28 border border-stone-300 rounded px-1 py-0.5" /></td>
                       <td className="py-1 pr-2"><input type="number" value={labEditForm.freeSO2} onChange={(e) => setLabEditForm((p) => ({ ...p, freeSO2: e.target.value }))} className="w-16 border border-stone-300 rounded px-1 py-0.5" /></td>
                       <td className="py-1 pr-2"><input type="number" value={labEditForm.totalSO2} onChange={(e) => setLabEditForm((p) => ({ ...p, totalSO2: e.target.value }))} className="w-16 border border-stone-300 rounded px-1 py-0.5" /></td>
@@ -5872,7 +5877,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
                       <td className="py-1 pr-2"><input type="text" value={labEditForm.notes} onChange={(e) => setLabEditForm((p) => ({ ...p, notes: e.target.value }))} className="w-full border border-stone-300 rounded px-1 py-0.5" /></td>
                       <td className="py-1 pr-2">
                         <div className="flex items-center gap-1.5">
-                          <button onClick={saveEditLab} className="text-emerald-700 hover:text-emerald-900"><Check size={13} /></button>
+                          <button onClick={saveEditLab} className="text-ink-700 hover:text-ink-900"><Check size={13} /></button>
                           <button onClick={() => setEditingLabId(null)} className="text-stone-400 hover:text-stone-600"><X size={13} /></button>
                         </div>
                       </td>
@@ -5886,7 +5891,7 @@ function BarrelRow({ barrel, fermentLots, onFill, onEmpty, onUpdate, onDelete, c
                       <td className="py-1 pr-2">{c.notes || "—"}</td>
                       <td className="py-1 pr-2">
                         <div className="flex items-center gap-1.5">
-                          <button onClick={() => startEditLab(c)} className="text-stone-400 hover:text-emerald-800"><Pencil size={12} /></button>
+                          <button onClick={() => startEditLab(c)} className="text-stone-400 hover:text-ink-800"><Pencil size={12} /></button>
                           <button onClick={() => deleteLabCheck(c.id)} className="text-stone-400 hover:text-red-700"><Trash2 size={13} /></button>
                         </div>
                       </td>
@@ -6039,7 +6044,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
     <div className="space-y-6">
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div className="bg-white border border-stone-200 rounded-lg p-3 text-center">
-          <p className="font-brand text-2xl text-emerald-950">{counts.total}</p>
+          <p className="font-brand text-2xl text-ink-950">{counts.total}</p>
           <p className="font-body text-xs text-stone-500">Total Barrels</p>
         </div>
         <div className="bg-white border border-stone-200 rounded-lg p-3 text-center">
@@ -6062,7 +6067,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
 
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
         <button onClick={() => setShowBulk((v) => !v)} className="w-full flex items-center justify-between">
-          <h2 className="font-brand text-lg text-emerald-950">Bulk Import Barrels</h2>
+          <h2 className="font-brand text-lg text-ink-950">Bulk Import Barrels</h2>
           {showBulk ? <ChevronUp size={18} className="text-stone-400" /> : <ChevronDown size={18} className="text-stone-400" />}
         </button>
         {showBulk && (
@@ -6076,7 +6081,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
               onChange={(e) => setBulkText(e.target.value)}
               rows={6}
               placeholder={"25-C01\n25-C02\n25-D01, Medium+"}
-              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-800"
+              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ink-800"
             />
             {bulkErrors.length > 0 && (
               <div className="font-body text-xs text-red-700 mt-2 space-y-0.5">
@@ -6087,7 +6092,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
             )}
             <button
               onClick={handleBulkImport}
-              className="font-body mt-3 flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2 rounded-md"
+              className="font-body mt-3 flex items-center gap-2 bg-ink-900 hover:bg-ink-800 text-white text-sm font-medium px-4 py-2 rounded-md"
             >
               <Plus size={16} /> Import Barrels
             </button>
@@ -6096,7 +6101,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
       </div>
 
       <form onSubmit={handleAddBarrel} className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-3">Add a Barrel</h2>
+        <h2 className="font-brand text-lg text-ink-950 mb-3">Add a Barrel</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="font-body block text-xs font-medium text-stone-600 mb-1">Barrel Number</label>
@@ -6105,7 +6110,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
               placeholder="25-C01"
               value={newBarrel.barrelNumber}
               onChange={(e) => setNewBarrel((p) => ({ ...p, barrelNumber: e.target.value }))}
-              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
             />
           </div>
           <div>
@@ -6113,7 +6118,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
             <select
               value={newBarrel.cooperage}
               onChange={(e) => setNewBarrel((p) => ({ ...p, cooperage: e.target.value }))}
-              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
             >
               <option value="">— (use barrel # letter code)</option>
               {COOPERAGE_NAMES.map((c) => (
@@ -6126,7 +6131,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
             <select
               value={newBarrel.toast}
               onChange={(e) => setNewBarrel((p) => ({ ...p, toast: e.target.value }))}
-              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
             >
               <option value="">—</option>
               {BARREL_TOAST_LEVELS.map((t) => (
@@ -6139,7 +6144,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
             <select
               value={newBarrel.wineColor}
               onChange={(e) => setNewBarrel((p) => ({ ...p, wineColor: e.target.value }))}
-              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
             >
               <option value="">—</option>
               {BARREL_WINE_COLORS.map((c) => (
@@ -6152,7 +6157,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
             <select
               value={newBarrel.forest}
               onChange={(e) => setNewBarrel((p) => ({ ...p, forest: e.target.value }))}
-              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
             >
               <option value="">—</option>
               {BARREL_FOREST_ORIGINS.map((f) => (
@@ -6166,14 +6171,14 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
               value={newBarrel.notes}
               onChange={(e) => setNewBarrel((p) => ({ ...p, notes: e.target.value }))}
               rows={2}
-              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
             />
           </div>
         </div>
         {addError && <p className="font-body text-sm text-red-700 mt-3">{addError}</p>}
         <button
           type="submit"
-          className="font-body mt-4 flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2 rounded-md"
+          className="font-body mt-4 flex items-center gap-2 bg-ink-900 hover:bg-ink-800 text-white text-sm font-medium px-4 py-2 rounded-md"
         >
           <Plus size={16} /> Add Barrel
         </button>
@@ -6226,8 +6231,8 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
         </div>
 
         {selectedIds.size > 0 && (
-          <div className="px-4 py-3 border-b border-stone-200 bg-emerald-50 flex items-center gap-2 flex-wrap">
-            <span className="font-body text-sm font-medium text-emerald-900">{selectedIds.size} selected</span>
+          <div className="px-4 py-3 border-b border-stone-200 bg-ink-50 flex items-center gap-2 flex-wrap">
+            <span className="font-body text-sm font-medium text-ink-900">{selectedIds.size} selected</span>
             <button
               onClick={handleBulkEmpty}
               disabled={emptyEligible === 0}
@@ -6238,7 +6243,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
             <button
               onClick={() => { setShowBulkFill((v) => !v); setShowBulkSell(false); }}
               disabled={fillEligible === 0}
-              className="font-body text-xs font-medium text-emerald-800 hover:text-emerald-900 border border-emerald-200 rounded px-2 py-1 disabled:opacity-40 disabled:cursor-not-allowed bg-white"
+              className="font-body text-xs font-medium text-ink-800 hover:text-ink-900 border border-ink-200 rounded px-2 py-1 disabled:opacity-40 disabled:cursor-not-allowed bg-white"
             >
               Fill ({fillEligible})
             </button>
@@ -6256,7 +6261,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
         )}
 
         {showBulkFill && (
-          <div className="px-4 py-3 border-b border-stone-200 bg-emerald-50/60">
+          <div className="px-4 py-3 border-b border-stone-200 bg-ink-50/60">
             <p className="font-body text-xs font-semibold text-stone-700 mb-2">
               Fill {fillEligible} empty barrel{fillEligible === 1 ? "" : "s"} with the same lot(s)
             </p>
@@ -6278,7 +6283,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
                       placeholder="e.g. 114 T5 — type a new lot or pick an existing one"
                       value={row.lotLabel}
                       onChange={(e) => updateBulkFillRow(row.id, { lotLabel: e.target.value })}
-                      className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                      className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                     />
                   </div>
                   <div>
@@ -6287,7 +6292,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
                       type="number"
                       value={row.percentage}
                       onChange={(e) => updateBulkFillRow(row.id, { percentage: e.target.value })}
-                      className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                      className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                     />
                   </div>
                   {bulkFillRows.length > 1 && (
@@ -6297,7 +6302,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
                   )}
                 </div>
               ))}
-              <button onClick={addBulkFillRow} className="font-body flex items-center gap-1 text-xs font-medium text-emerald-800 hover:text-emerald-900">
+              <button onClick={addBulkFillRow} className="font-body flex items-center gap-1 text-xs font-medium text-ink-800 hover:text-ink-900">
                 <Plus size={13} /> Add another lot (blend)
               </button>
             </div>
@@ -6308,11 +6313,11 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
                   type="date"
                   value={bulkFillDate}
                   onChange={(e) => setBulkFillDate(e.target.value)}
-                  className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                  className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                 />
               </div>
               <div className="flex items-center gap-2 sm:col-span-2">
-                <button onClick={submitBulkFill} className="font-body text-sm font-medium bg-emerald-900 hover:bg-emerald-800 text-white px-3 py-2 rounded-md">
+                <button onClick={submitBulkFill} className="font-body text-sm font-medium bg-ink-900 hover:bg-ink-800 text-white px-3 py-2 rounded-md">
                   Fill Barrels
                 </button>
                 <button onClick={() => setShowBulkFill(false)} className="font-body text-sm text-stone-500 hover:text-stone-700">
@@ -6335,7 +6340,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
                   type="date"
                   value={bulkSellForm.soldDate}
                   onChange={(e) => setBulkSellForm((p) => ({ ...p, soldDate: e.target.value }))}
-                  className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                  className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                 />
               </div>
               <div>
@@ -6344,7 +6349,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
                   type="text"
                   value={bulkSellForm.soldTo}
                   onChange={(e) => setBulkSellForm((p) => ({ ...p, soldTo: e.target.value }))}
-                  className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                  className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                 />
               </div>
               <div>
@@ -6353,7 +6358,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
                   type="text"
                   value={bulkSellForm.soldContact}
                   onChange={(e) => setBulkSellForm((p) => ({ ...p, soldContact: e.target.value }))}
-                  className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                  className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                 />
               </div>
               <div>
@@ -6362,7 +6367,7 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
                   type="number"
                   value={bulkSellForm.soldPrice}
                   onChange={(e) => setBulkSellForm((p) => ({ ...p, soldPrice: e.target.value }))}
-                  className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                  className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                 />
               </div>
               <div className="sm:col-span-2">
@@ -6371,12 +6376,12 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
                   value={bulkSellForm.saleNotes}
                   onChange={(e) => setBulkSellForm((p) => ({ ...p, saleNotes: e.target.value }))}
                   rows={2}
-                  className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                  className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                 />
               </div>
             </div>
             <div className="flex items-center gap-2 mt-2">
-              <button onClick={submitBulkSell} className="font-body text-sm font-medium bg-emerald-900 hover:bg-emerald-800 text-white px-3 py-2 rounded-md">
+              <button onClick={submitBulkSell} className="font-body text-sm font-medium bg-ink-900 hover:bg-ink-800 text-white px-3 py-2 rounded-md">
                 Mark Sold
               </button>
               <button onClick={() => setShowBulkSell(false)} className="font-body text-sm text-stone-500 hover:text-stone-700">
@@ -6579,7 +6584,7 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="font-brand text-2xl text-emerald-950">
+        <h2 className="font-brand text-2xl text-ink-950">
           {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
         </h2>
         <p className="font-body text-sm text-stone-500">Estate overview · Weather from McMinnville Airport (KMMV)</p>
@@ -6587,7 +6592,7 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
 
       {/* Weather + GDD */}
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h3 className="font-brand text-lg text-emerald-950 mb-3">Weather</h3>
+        <h3 className="font-brand text-lg text-ink-950 mb-3">Weather</h3>
         {weatherLoading ? (
           <div className="flex items-center gap-2 text-stone-500 font-body text-sm py-6 justify-center">
             <Loader2 size={18} className="animate-spin" /> Loading weather…
@@ -6597,7 +6602,7 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
             <p className="font-body text-sm text-stone-500 mb-2">{weatherError}</p>
             <button
               onClick={() => setRetryCount((n) => n + 1)}
-              className="font-body text-sm font-medium text-emerald-800 hover:text-emerald-900 underline"
+              className="font-body text-sm font-medium text-ink-800 hover:text-ink-900 underline"
             >
               Try again
             </button>
@@ -6608,7 +6613,7 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
               <div className="flex items-center gap-3">
                 <span className="text-4xl">{weatherInfo(current?.weather_code).icon}</span>
                 <div>
-                  <p className="font-brand text-3xl text-emerald-950 leading-none">
+                  <p className="font-brand text-3xl text-ink-950 leading-none">
                     {current?.temperature_2m != null ? Math.round(current.temperature_2m) : "—"}°F
                   </p>
                   <p className="font-body text-xs text-stone-500 mt-1">{weatherInfo(current?.weather_code).label}</p>
@@ -6648,7 +6653,7 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
 
             <div className="flex items-center justify-between mt-4 pt-3 border-t border-stone-100">
               {todaysWeatherLog ? (
-                <p className="font-body text-xs text-emerald-700">
+                <p className="font-body text-xs text-ink-700">
                   ✓ Logged to Calendar for today ({todaysWeatherLog.high != null ? Math.round(todaysWeatherLog.high) : "—"}° / {todaysWeatherLog.low != null ? Math.round(todaysWeatherLog.low) : "—"}°)
                 </p>
               ) : (
@@ -6656,7 +6661,7 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
               )}
               <button
                 onClick={logToday}
-                className="font-body flex items-center gap-1.5 text-xs font-medium text-emerald-900 hover:text-emerald-700 border border-emerald-200 rounded-md px-3 py-1.5"
+                className="font-body flex items-center gap-1.5 text-xs font-medium text-ink-900 hover:text-ink-700 border border-ink-200 rounded-md px-3 py-1.5"
               >
                 <CalendarPlus size={13} /> {todaysWeatherLog ? "Update Log" : "Log Today's Weather"}
               </button>
@@ -6667,13 +6672,13 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
 
       {/* Growing Degree Days */}
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h3 className="font-brand text-lg text-emerald-950 mb-1">Growing Degree Days</h3>
+        <h3 className="font-brand text-lg text-ink-950 mb-1">Growing Degree Days</h3>
         <p className="font-body text-xs text-stone-500 mb-3">Base 50°F, accumulated April 1 – today (Winkler Index method)</p>
         {weatherLoading ? (
           <p className="font-body text-sm text-stone-400">Calculating…</p>
         ) : gdd ? (
           <div className="flex items-baseline gap-3">
-            <p className="font-brand text-4xl text-emerald-950">{gdd.total.toLocaleString()}</p>
+            <p className="font-brand text-4xl text-ink-950">{gdd.total.toLocaleString()}</p>
             <p className="font-body text-sm text-stone-500">GDD over {gdd.daysCounted} days</p>
           </div>
         ) : (
@@ -6688,7 +6693,7 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
           <select
             value={gddCompareVariety}
             onChange={(e) => setGddCompareVariety(e.target.value)}
-            className="font-body w-full sm:w-64 border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+            className="font-body w-full sm:w-64 border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
           >
             <option value="">Select a variety…</option>
             {GRAPE_VARIETIES.map((v) => (
@@ -6730,20 +6735,20 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
 
       {/* Soil Moisture */}
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h3 className="font-brand text-lg text-emerald-950 mb-1">Soil Moisture</h3>
+        <h3 className="font-brand text-lg text-ink-950 mb-1">Soil Moisture</h3>
         <p className="font-body text-xs text-stone-500 mb-3">
           Modeled from regional weather data — not a sensor in your actual vineyard. Useful for spotting broad trends, especially for dry-farming decisions, but treat as a rough regional estimate, not ground-truth for a specific block.
         </p>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="font-body text-xs text-stone-500">Surface (0–1 cm)</p>
-            <p className="font-brand text-2xl text-emerald-950">
+            <p className="font-brand text-2xl text-ink-950">
               {soilMoistureSurface != null ? `${Math.round(soilMoistureSurface * 100)}%` : "—"}
             </p>
           </div>
           <div>
             <p className="font-body text-xs text-stone-500">Root Zone (9–27 cm)</p>
-            <p className="font-brand text-2xl text-emerald-950">
+            <p className="font-brand text-2xl text-ink-950">
               {soilMoistureRootZone != null ? `${Math.round(soilMoistureRootZone * 100)}%` : "—"}
             </p>
           </div>
@@ -6762,7 +6767,7 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
       {/* Today's Work Orders */}
       <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
         <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
-          <h3 className="font-brand text-lg text-emerald-950">Today's Work Orders</h3>
+          <h3 className="font-brand text-lg text-ink-950">Today's Work Orders</h3>
           <span className="font-body text-xs text-stone-500">
             {todaysOrders.length} open{completedToday.length > 0 ? ` · ${completedToday.length} completed today` : ""}
           </span>
@@ -6812,7 +6817,7 @@ function SingleBarrelPicker({ value, onChange, barrelsList }) {
   if (selectedBarrel) {
     return (
       <div className="flex items-center gap-2">
-        <span className="font-body text-sm bg-emerald-50 text-emerald-800 px-2.5 py-1.5 rounded-md">{selectedBarrel.barrelNumber}</span>
+        <span className="font-body text-sm bg-ink-50 text-ink-800 px-2.5 py-1.5 rounded-md">{selectedBarrel.barrelNumber}</span>
         <button type="button" onClick={() => onChange("")} className="font-body text-xs text-stone-400 hover:text-red-700">
           Change
         </button>
@@ -6826,7 +6831,7 @@ function SingleBarrelPicker({ value, onChange, barrelsList }) {
         placeholder="Search barrel #"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-emerald-800"
+        className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-ink-800"
       />
       <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto border border-stone-200 rounded-md p-2">
         {filtered.length === 0 ? (
@@ -6837,7 +6842,7 @@ function SingleBarrelPicker({ value, onChange, barrelsList }) {
               key={b.id}
               type="button"
               onClick={() => onChange(b.id)}
-              className="font-body text-xs px-2 py-1 rounded-full border bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+              className="font-body text-xs px-2 py-1 rounded-full border bg-white text-stone-600 border-stone-300 hover:border-ink-400"
             >
               {b.barrelNumber}
             </button>
@@ -6862,7 +6867,7 @@ function TastingFormFields({ form, setForm, barrelsList }) {
           type="date"
           value={form.date}
           onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
-          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
         />
       </div>
       <div />
@@ -6876,7 +6881,7 @@ function TastingFormFields({ form, setForm, barrelsList }) {
             step="0.5"
             value={form[d.key]}
             onChange={(e) => setForm((p) => ({ ...p, [d.key]: e.target.value }))}
-            className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+            className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
           />
         </div>
       ))}
@@ -6890,7 +6895,7 @@ function TastingFormFields({ form, setForm, barrelsList }) {
           value={form.notes}
           onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
           rows={2}
-          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+          className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
         />
       </div>
     </div>
@@ -6960,12 +6965,12 @@ function TastingsSection({ data, onAdd, onUpdate, onDelete }) {
   return (
     <div className="space-y-6">
       <form onSubmit={submit} className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-3">Log a Tasting</h2>
+        <h2 className="font-brand text-lg text-ink-950 mb-3">Log a Tasting</h2>
         <TastingFormFields form={form} setForm={setForm} barrelsList={data.barrels} />
         {error && <p className="font-body text-sm text-red-700 mt-3">{error}</p>}
         <button
           type="submit"
-          className="font-body mt-4 flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2 rounded-md"
+          className="font-body mt-4 flex items-center gap-2 bg-ink-900 hover:bg-ink-800 text-white text-sm font-medium px-4 py-2 rounded-md"
         >
           <Plus size={16} /> Save Tasting
         </button>
@@ -6973,7 +6978,7 @@ function TastingsSection({ data, onAdd, onUpdate, onDelete }) {
 
       <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
         <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between flex-wrap gap-2">
-          <h2 className="font-brand text-lg text-emerald-950">Tasting Notes</h2>
+          <h2 className="font-brand text-lg text-ink-950">Tasting Notes</h2>
           <select
             value={barrelFilter}
             onChange={(e) => setBarrelFilter(e.target.value)}
@@ -6991,10 +6996,10 @@ function TastingsSection({ data, onAdd, onUpdate, onDelete }) {
           <ul className="divide-y divide-stone-100">
             {filtered.map((t) =>
               editingId === t.id ? (
-                <li key={t.id} className="p-4 bg-emerald-50">
+                <li key={t.id} className="p-4 bg-ink-50">
                   <TastingFormFields form={editForm} setForm={setEditForm} barrelsList={data.barrels} />
                   <div className="flex items-center gap-3 mt-3">
-                    <button onClick={saveEdit} className="font-body flex items-center gap-1 text-sm font-medium text-emerald-800 hover:text-emerald-900">
+                    <button onClick={saveEdit} className="font-body flex items-center gap-1 text-sm font-medium text-ink-800 hover:text-ink-900">
                       <Check size={15} /> Save
                     </button>
                     <button onClick={() => setEditingId(null)} className="font-body flex items-center gap-1 text-sm text-stone-500 hover:text-stone-700">
@@ -7022,7 +7027,7 @@ function TastingsSection({ data, onAdd, onUpdate, onDelete }) {
                     </div>
                     {t.notes && <p className="font-body text-xs text-stone-500 mt-1">{t.notes}</p>}
                   </div>
-                  <button onClick={() => startEdit(t)} className="text-stone-300 hover:text-emerald-800 shrink-0" title="Edit">
+                  <button onClick={() => startEdit(t)} className="text-stone-300 hover:text-ink-800 shrink-0" title="Edit">
                     <Pencil size={14} />
                   </button>
                   <button onClick={() => onDelete(t.id)} className="text-stone-300 hover:text-red-700 shrink-0" title="Delete">
@@ -7060,7 +7065,7 @@ function BlendComponentsPicker({ value, onChange, barrelsList }) {
         placeholder="Search barrel # to add"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-emerald-800"
+        className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-ink-800"
       />
       <div className="bg-stone-50 border border-stone-200 rounded-lg p-2.5">
         <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
@@ -7072,7 +7077,7 @@ function BlendComponentsPicker({ value, onChange, barrelsList }) {
                 key={b.id}
                 type="button"
                 onClick={() => addComponent(b.id)}
-                className="font-body flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-full bg-white text-stone-700 border border-stone-200 shadow-sm hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-800 transition-colors"
+                className="font-body flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-full bg-white text-stone-700 border border-stone-200 shadow-sm hover:bg-ink-50 hover:border-ink-300 hover:text-ink-800 transition-colors"
               >
                 <Plus size={11} className="text-stone-400" />
                 {b.barrelNumber}
@@ -7093,7 +7098,7 @@ function BlendComponentsPicker({ value, onChange, barrelsList }) {
                   placeholder="%"
                   value={c.percentage}
                   onChange={(e) => updatePercentage(c.id, e.target.value)}
-                  className="font-body w-20 border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                  className="font-body w-20 border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                 />
                 <span className="font-body text-xs text-stone-400">%</span>
                 <button type="button" onClick={() => removeComponent(c.id)} className="text-stone-400 hover:text-red-700 ml-auto">
@@ -7122,7 +7127,7 @@ function BlendCard({ blend, barrelsList, tastings, checked, onToggleCompare, onD
         <input type="checkbox" checked={checked} onChange={onToggleCompare} className="mt-1.5 rounded border-stone-300 shrink-0" />
         <div className="flex-1 min-w-0">
           <button onClick={() => setExpanded((v) => !v)} className="text-left w-full">
-            <p className="font-brand text-emerald-950">{blend.name || "Untitled blend"}</p>
+            <p className="font-brand text-ink-950">{blend.name || "Untitled blend"}</p>
             <p className="font-body text-xs text-stone-500 mt-0.5">
               {blend.tier ? `${blend.tier} · ` : ""}{blend.dateCreated} · {(blend.components || []).length} barrel{(blend.components || []).length === 1 ? "" : "s"}
             </p>
@@ -7136,7 +7141,7 @@ function BlendCard({ blend, barrelsList, tastings, checked, onToggleCompare, onD
                     <span>{result.profile[d.key].toFixed(1)}</span>
                   </div>
                   <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden mt-0.5">
-                    <div className="h-full bg-emerald-700" style={{ width: `${result.profile[d.key] * 20}%` }} />
+                    <div className="h-full bg-ink-700" style={{ width: `${result.profile[d.key] * 20}%` }} />
                   </div>
                 </div>
               ))}
@@ -7163,7 +7168,7 @@ function BlendCard({ blend, barrelsList, tastings, checked, onToggleCompare, onD
           )}
         </div>
         <div className="flex flex-col gap-1.5 shrink-0">
-          <button onClick={() => onEdit(blend)} className="text-stone-300 hover:text-emerald-800" title="Edit blend">
+          <button onClick={() => onEdit(blend)} className="text-stone-300 hover:text-ink-800" title="Edit blend">
             <Pencil size={15} />
           </button>
           <button onClick={() => onDelete(blend.id)} className="text-stone-300 hover:text-red-700" title="Delete blend">
@@ -7179,7 +7184,7 @@ function BlendCard({ blend, barrelsList, tastings, checked, onToggleCompare, onD
 function BlendComparisonTable({ blends, tastings }) {
   return (
     <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-      <h2 className="font-brand text-lg text-emerald-950 mb-3 flex items-center gap-2">
+      <h2 className="font-brand text-lg text-ink-950 mb-3 flex items-center gap-2">
         <GitCompare size={18} /> Comparing {blends.length} Blends
       </h2>
       <div className="overflow-x-auto">
@@ -7205,7 +7210,7 @@ function BlendComparisonTable({ blends, tastings }) {
                         <div className="flex items-center gap-2">
                           <span className="w-8 shrink-0">{val.toFixed(1)}</span>
                           <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden min-w-[60px]">
-                            <div className="h-full bg-emerald-700" style={{ width: `${val * 20}%` }} />
+                            <div className="h-full bg-ink-700" style={{ width: `${val * 20}%` }} />
                           </div>
                         </div>
                       ) : (
@@ -7274,7 +7279,7 @@ function BlendsSection({ data, onAdd, onUpdate, onDelete }) {
   return (
     <div className="space-y-6">
       <form onSubmit={submit} className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-3">{editingBlendId ? "Edit Blend Trial" : "Create a Blend Trial"}</h2>
+        <h2 className="font-brand text-lg text-ink-950 mb-3">{editingBlendId ? "Edit Blend Trial" : "Create a Blend Trial"}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
           <div>
             <label className="font-body block text-xs font-medium text-stone-600 mb-1">Blend Name</label>
@@ -7283,7 +7288,7 @@ function BlendsSection({ data, onAdd, onUpdate, onDelete }) {
               placeholder='e.g. "2025 Estate Trial 1"'
               value={form.name}
               onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
             />
           </div>
           <div>
@@ -7293,7 +7298,7 @@ function BlendsSection({ data, onAdd, onUpdate, onDelete }) {
               placeholder="e.g. Estate, Reserve"
               value={form.tier}
               onChange={(e) => setForm((p) => ({ ...p, tier: e.target.value }))}
-              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+              className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
             />
           </div>
         </div>
@@ -7305,14 +7310,14 @@ function BlendsSection({ data, onAdd, onUpdate, onDelete }) {
             value={form.notes}
             onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
             rows={2}
-            className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+            className="font-body w-full border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
           />
         </div>
         {error && <p className="font-body text-sm text-red-700 mt-3">{error}</p>}
         <div className="flex items-center gap-3 mt-4">
           <button
             type="submit"
-            className="font-body flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2 rounded-md"
+            className="font-body flex items-center gap-2 bg-ink-900 hover:bg-ink-800 text-white text-sm font-medium px-4 py-2 rounded-md"
           >
             {editingBlendId ? <Check size={16} /> : <Plus size={16} />}
             {editingBlendId ? "Update Blend" : "Save Blend"}
@@ -7329,7 +7334,7 @@ function BlendsSection({ data, onAdd, onUpdate, onDelete }) {
 
       <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
         <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
-          <h2 className="font-brand text-lg text-emerald-950">Blend Trials</h2>
+          <h2 className="font-brand text-lg text-ink-950">Blend Trials</h2>
           <span className="font-body text-xs text-stone-500">Check 2 or more to compare</span>
         </div>
         {data.blends.length === 0 ? (
@@ -7364,7 +7369,7 @@ function BlendingTab({ data, onAddTasting, onUpdateTasting, onDeleteTasting, onA
         <button
           onClick={() => setSubTab("tastings")}
           className={`font-body text-sm font-medium px-4 py-2 rounded-md border ${
-            subTab === "tastings" ? "bg-emerald-900 text-white border-emerald-900" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+            subTab === "tastings" ? "bg-ink-900 text-white border-ink-900" : "bg-white text-stone-600 border-stone-300 hover:border-ink-400"
           }`}
         >
           Barrel Tastings
@@ -7372,7 +7377,7 @@ function BlendingTab({ data, onAddTasting, onUpdateTasting, onDeleteTasting, onA
         <button
           onClick={() => setSubTab("blends")}
           className={`font-body text-sm font-medium px-4 py-2 rounded-md border ${
-            subTab === "blends" ? "bg-emerald-900 text-white border-emerald-900" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+            subTab === "blends" ? "bg-ink-900 text-white border-ink-900" : "bg-white text-stone-600 border-stone-300 hover:border-ink-400"
           }`}
         >
           Blends &amp; Comparison
@@ -7424,7 +7429,7 @@ function ManageListPanel({ title, description, items, onAdd, onRename, onDelete,
 
   return (
     <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-      <h2 className="font-brand text-lg text-emerald-950 mb-1">{title}</h2>
+      <h2 className="font-brand text-lg text-ink-950 mb-1">{title}</h2>
       <p className="font-body text-xs text-stone-500 mb-3">{description}</p>
       <div className="flex gap-2 mb-3">
         <input
@@ -7438,11 +7443,11 @@ function ManageListPanel({ title, description, items, onAdd, onRename, onDelete,
               submitAdd();
             }
           }}
-          className="font-body flex-1 border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+          className="font-body flex-1 border border-stone-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
         />
         <button
           onClick={submitAdd}
-          className="font-body flex items-center gap-1 text-sm font-medium bg-emerald-900 hover:bg-emerald-800 text-white px-3 py-2 rounded-md shrink-0"
+          className="font-body flex items-center gap-1 text-sm font-medium bg-ink-900 hover:bg-ink-800 text-white px-3 py-2 rounded-md shrink-0"
         >
           <Plus size={14} /> Add
         </button>
@@ -7466,9 +7471,9 @@ function ManageListPanel({ title, description, items, onAdd, onRename, onDelete,
                         saveEdit();
                       }
                     }}
-                    className="font-body flex-1 border border-stone-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                    className="font-body flex-1 border border-stone-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                   />
-                  <button onClick={saveEdit} className="text-emerald-700 hover:text-emerald-900" title="Save">
+                  <button onClick={saveEdit} className="text-ink-700 hover:text-ink-900" title="Save">
                     <Check size={15} />
                   </button>
                   <button onClick={() => setEditingItem(null)} className="text-stone-400 hover:text-stone-600" title="Cancel">
@@ -7478,7 +7483,7 @@ function ManageListPanel({ title, description, items, onAdd, onRename, onDelete,
               ) : (
                 <>
                   <span className="font-body text-sm text-stone-700 flex-1">{item}</span>
-                  <button onClick={() => startEdit(item)} className="text-stone-400 hover:text-emerald-800" title="Rename">
+                  <button onClick={() => startEdit(item)} className="text-stone-400 hover:text-ink-800" title="Rename">
                     <Pencil size={13} />
                   </button>
                   <button onClick={() => handleDelete(item)} className="text-stone-400 hover:text-red-700" title="Remove">
@@ -7551,7 +7556,7 @@ function BackupTab({ data, woCounter, onRestore, confirmAction, vineyardBlocks, 
   return (
     <div className="space-y-6">
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-1">Download a Local Backup</h2>
+        <h2 className="font-brand text-lg text-ink-950 mb-1">Download a Local Backup</h2>
         <p className="font-body text-xs text-stone-500 mb-4">
           Saves everything in the app — work orders, harvest, fermentation, barrels, blending, mileage, expenses, and
           templates — into one file on your device. This is a raw data backup for safekeeping, separate from the
@@ -7559,20 +7564,20 @@ function BackupTab({ data, woCounter, onRestore, confirmAction, vineyardBlocks, 
         </p>
         <button
           onClick={downloadBackup}
-          className="font-body flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2 rounded-md"
+          className="font-body flex items-center gap-2 bg-ink-900 hover:bg-ink-800 text-white text-sm font-medium px-4 py-2 rounded-md"
         >
           <HardDrive size={16} /> Download Full Backup (.json)
         </button>
       </div>
 
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-1">Restore from a Backup</h2>
+        <h2 className="font-brand text-lg text-ink-950 mb-1">Restore from a Backup</h2>
         <p className="font-body text-xs text-stone-500 mb-4">
           Upload a backup file downloaded from this app to restore its data.{" "}
           <span className="font-semibold text-red-700">This replaces everything currently in the app.</span> Use this
           to recover from a data loss or move data between deployments — not casually.
         </p>
-        <label className="font-body inline-flex items-center gap-2 bg-white border border-stone-300 hover:border-emerald-400 text-stone-700 text-sm font-medium px-4 py-2 rounded-md cursor-pointer">
+        <label className="font-body inline-flex items-center gap-2 bg-white border border-stone-300 hover:border-ink-400 text-stone-700 text-sm font-medium px-4 py-2 rounded-md cursor-pointer">
           <UploadCloud size={16} />
           Choose Backup File
           <input type="file" accept="application/json,.json" onChange={handleFileChange} className="hidden" />
@@ -7581,7 +7586,7 @@ function BackupTab({ data, woCounter, onRestore, confirmAction, vineyardBlocks, 
       </div>
 
       <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="font-brand text-lg text-emerald-950 mb-2">Cloud + Local, Together</h2>
+        <h2 className="font-brand text-lg text-ink-950 mb-2">Cloud + Local, Together</h2>
         <p className="font-body text-xs text-stone-500">
           Day-to-day, this app's data already lives in the cloud — everyone on the crew sees the same live data the
           moment it's entered, from any device. The backup above is a local safety net on top of that: an independent
@@ -7590,7 +7595,7 @@ function BackupTab({ data, woCounter, onRestore, confirmAction, vineyardBlocks, 
       </div>
 
       <div>
-        <h2 className="font-brand text-xl text-emerald-950 mb-1">Manage Lists</h2>
+        <h2 className="font-brand text-xl text-ink-950 mb-1">Manage Lists</h2>
         <p className="font-body text-xs text-stone-500 mb-3">
           Add, rename, or remove the options that show up in dropdowns across the app. Renaming updates every existing
           record that uses it; removing only takes it out of the picker going forward — nothing already entered is touched.
@@ -7671,6 +7676,8 @@ function BackupTab({ data, woCounter, onRestore, confirmAction, vineyardBlocks, 
 // system (admin/tho) is still here underneath, just collapsed to one login for now — every
 // successful login grants "admin", so re-adding a second, view-only password later is a small
 // change, not a rebuild.
+const GDS_LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAIAAAD2HxkiAAA5p0lEQVR42u2dZXgUVxeA597R3U2yEeIJEAOCu0Nxd6e4u/RD2iKFtlAoUqRocS+uQUJxp1ggBLeQBIhBkt3s7Nj9fiykKUE2OPS8P/q029mZnZt551w9F5kex1EAAHw8MBQBAICEAAASAgAAEgIASAgAAEgIACAhAAAgIQCAhAAAgIQAABICAAASAgBICAAASAgAICEAACAhAICEAACAhAAAEgIAABICAEgIAABICAAgIQAAICEAgIQAAICEAAASAgAAEgIASAgAAEgIACAhAAAgIQCAhAAAgIQAABICAAASAgBICAAASAgAICEAACAhAICEAACAhAAAEgIAABICAEgIAIB9MFAEn9+LE2OGYWgaq6pGUYQQSpZlKBaQEPgQ0DTNsezjJ08iLkb+feb87Tt3JUlu1qRBrZrVFEWB8gEJgfcb/TiOi4mNW7dh87r1m6Pvxzg7G91cXaOj7z9JSalZowpCiBACBQUSAu8FjmPT08XFS1f+PvuP1LS0enVqfjtscKkSxdzdc/TsMyghMUlVNYQQFBRICLwXBEGIirr6/aifjp041bRJgyGD+7m5ufXqO5jj2Ib166ZbRL1eT2OsQRj8fKs5UASfLAghQRC2h+1q3OLr6Pv3ly2es2j+TG8vr05de1MUVbZ0yfT09ISEBFcXZ5phoC4KEgLv3kCe51euWtuj96DixYpu27SmUcP6yclPOnfvS1HUH3Onu7m5PnoUHxP7IDRfXhrD3xGqo8C7hue5Fav+HDJ8VMvmTX79Zayjo0PK4yd9BwxJSUlZtWyBi7MzRaiIS5Emk6lkiaKqpkGJgYTAO24Hbg/bNfTbH1q1aDp54k88z5vN6YOGfHcv+v7qFQs9PT0kSUIcu3lLWEBA7iKFCsI4IVRHgXcbA/lz5yMGDxlRtUqlX38Zy/Ocoijfjhgbceny0kVzcvr7SpLEcdyFiMjwv/a3adnUyegEDcLPu+lhehwHpfDpQNO0yWRq0aaTKFo3rl3u4eGuadqoMeN279m3atkf+fPns1qtCCGMcZfu/S5djtqzY6Obm6uqqlB0UB0F3g0sw8yYNS/q6vX1q5d4e3spivLLr1O3h+1esWRegQL5RNFKUZROJyxeumrXnr9mTpvo5eUpiiKUG0gIvBs4lj13IWLB4uW9uneuXLG8pmm/zZi9cvX6JQtmFy9W1CabThCOHD3xw48Tmjau37J5E6vVCuUGbULgHTUMENIImfH7PE939z69uiGMZ89bOO+PJbNnTq5YoYzNQEEQzl242LPP4KDA3ON+Go0xhtYgSAi8y4ro2fMR4X8d6NWzi0/OnAsWLZs6fdb0qRNq1ahqsYgIIb1Od+r0mfadehocDH/MmebhngMmbYOEwDuNhBiv/nO9h7t729Yt1q7+c9yEKRN/GduoQV2LRaRpmuO4DZu3tu3Q3dXVZeXS+cHBgZIkQaGBhMA7g6bp2Ni4PeH727Rudvr02eHfjxkz+tvWzZtarVadIDxJSRn1w889+wwuWaLYmpWLgoMCrVYw8MsBOmY+jbooyxw/edpqtQqCMPCbb78fNrhrt06aJCmKsm37rsm//R4dfX/QgN7fDOyr0wlvEAMRoliWU1UVBjNAQuDFaBo5fOSYqqqLlqzo07tbwwZ1D+47+Cg+YeHiFX+fOVe+XOnfJo8vX660LMuyrGTfQCTJ8qnTZ3Pm9M/p74cQkmVZg5luICHwT5MA47S0tIiLlzmOy50r540bt2rVaxob9wBjunCh/LNnTm7UoK5OJ7zxaARN04kPHvbsO1hV1KpVKjVpVL9ihXJGo6MkyRAYP4nuAJgx89Fbg4JOOHXqTMu2nTHGZnO6aBV9fbzLlyvTpFG9yhUrODo6WK3WtxyKQAhdjLy8afP2nbv3xsY+yB+a9+s2LZs2ru/l5QEqgoT/4aJHSOD5R/EJq/9cv3jZqsTEpIDcuQoXKlC1SqWypUv6+vpgjGVJelerdVmWpWkcn5B45OiJP9dtOnj4qK+PT+eObb9u08LT3V18a88BkPAzg+M4q1XcsGn7jFlz7967X7N61e5dO5QoVsTJyQljJMvKe4pONMYsx8myfOzEqXl/LN6371Du3DkHDejTvGlDnudh2AMk/G+0ABHieP78hYs//zL54KEj1ap+NaBvj3JlS7Ms+8H6SxBCHMfKsnL8xOlZc//Yf+Bw1SqVR38/tGjRwlYIiSDhlw3LMrKsLFyyYtKUGQ4Gw3fDv2ndsinHcZIkffhHHyFku/TadZsmTJ5uNpu/Gza4a+f2LMPIMBcHJPwiEQQ++n7s96N+3L1nX/Omjb4fPjgwIPdHb4zZmqa37tydOGnaxs3b6tapOXHcGD9fHxGmhoOEX5yBwvETpwcP+e7hw/jxP4/6uk1LipBPJ+CwLENR1MrV60eNGefj7TV96oRyZUvDIqkP1EKBIvgQoUbg123Y3KZdV4TQutVLOrZvoyjKJ1Xlk2VFUdTOHduuW72EUFTrdl03bNoqCAKkMwUJvwQDOY77Y+Gy/oOGVahQZsPa5WXLlrRYxE+w84MQYrGI5cqW2rh2WflyZfoOHLJg0TKO48DD9w094rshUArv1cC58xeN/GFcx/ZtZkyd4OJslKRPOimToqjORqcG9WonJCRNnT7b0dGhbJlSMMftvQLT1t6vgfMWLBk9dny3rh3HjR2JEHqDmZ8fpWrKsuyvv4xlWXb02PEY4949ulg/Rv8tSAi8FYLAr/5zw+gx47t2aj9u7EiKoj6j2WGqqtIYj/txhKqqo8eOd3Y2tm3d3GKBfpr3876G3tH3ZOD+A0c6dO1dt1b136dPYhjmc5yfSdO0oij9Bg0LD9+/Yum8qlUq2TJNASDhpw7Hsbdu323Son1A7pwrlsx3dHT4fPNQMAyTmpbWoXOv6OiYzRtWBgbk+sTbtJ8j0Dv6rgsUY5MpfcjwUQihGVMnGo1On3UmGEVRnI3GGVMnEooMGT7KZErHsO8FSPiph0GWnTZzzum/z/42aVxQUMAXMCVakqTg4MDfJo0/dfrMtJlzOI6FvzJI+OnC8/zBI8fmzls0sH+v2jWrfTEzTkRRrF2z2oC+PefOX3To8HGe5+FvDW3CT7MbA6eZzE1btOM5fsPaZYIgfEnDaxhji8XSvHUnWZG3rF/lYNDDVlAQCT+9iijHLV22+uq1Gz+MGu7o6PiFDXBrmubk5DRm1PCrV68vXbGa4zj4i4OEnxYMw9y4cXvO/EVtWzevUL7MF5md3mq1Vixftk2r5nPmLbpx6zbDwCAzSPhp1UXpBYuXURQZ0K+Xqn6x9TRN0wb066lp2sJFyxmahr87SPipwLLs1avX167f1LFd2+DAgLcfk0AIMQzD87xOJ+gEgeM4jmNt/8nzHE3T9kyqZhmG4zie53SCIAg8y7JvP7ogK0pIUGCHdq3/XL/p6vWbtgVQwNtWo6AI3kkYXLF6LctyHdu3kRX5LX2maTotLS027sHNW3du3LiVlJSUlPxYVVW9Xpcrp3+B/KGh+fJ4eXna0mG8bCIOyzI7doaH7dzD87yHe47g4MDQfHkDcucyGp00TZVl5Y0ngsqK0ql921Vr1q9c9ee4n0Z/FrNhQcIv38DY2LjNW3Y0a9IgIHdOy5sOS7AsixB1Oerqlm07w/fuj74fo2ma0ejkYDA4ODggRJnN6bv37EszmQwGQ8ECoY0a1q1do6ptD0NFUbPG0p27wrds2xkcFGAym1NT0xRF8fPzqfpVpSaN6pcoXgRj+s3GMBVFCQjI1bRx/Y1bdvTp3c3D3R0yJoKEHxmOZbeH7UlNS2vTqrnyRo8jxpjj2IiLkbPmLti9Z59er6tcsXzvHl1CQ/P6+/nyAm9rfamqmpqadj8m5sTJM4eOHB31w7hJk2e0bNGke5cO/v6+VuvzqxwIoQoXKrBx7TJFURMSEiOjog4cOha2c8/SFWuqflVpQN8eZcuUerPUUpqqtmnVfNWa9TvCwnv36GwBCd+y9QHjhG/ZeNM0rXHzr41Gp9XLF2qalt1qHsuyZnP6rLl/zPtjSQ43125dOjZuWNfHxxtj/HTriExnxBjTNE3T2GqVLkddWbVmw4ZNWw0G/cjvhrZq3phkWqjBcWzvfkPu3L23bdNqhmEQQgxDE0IlJCTuCNs9e97CuAcPe/Xo8r9B/QwGvSzL2b1rjFHb9t1T00xbN66CbRKhY+bjdskwlyKjLkVGNW5Qj2XZ7D6LPM/FxMZ16tZn+sy5XTq12xO2qX/fHp6eHpIkiaJoC1Ma+QdVVSVJsi3ML1Ko4NRff961fX3JEsUGDB424JtvU1JSWfb5OWWEEE3TFEURRavVanVxce7WtePObet7dO04e97Cdp163Iu+z/PZG/QjhLAs16hhvUuRlyMvX2FhrAIk/JjFh+nwv/YbDIZKFcsp2eyS4Tnu2vWbbTt0i7x8ZcnC2T/+8L2zs9FisdjTxCKESLJsEcU8IcEL5s4Y9+OozVt3dO7eNy7uQVYPM6OqqsVicXV1+WnsyGWL5t64ebtdxx5Xr93IroeKolSuVN5gMITv3Y9hrAIk/Ih1UYvFcvjI8RLFi/j6+mTtHXlVS5Ljbt2526FLb7M5/c9VixrUqyOK4hv0cMiyTAjp17v7ovm/X4qM6tZrYFJS8muH0VVVFUWxQb1af65cJFqtnbr1vX3nXrZmZiuK4ufrU6xo4UNHjlssFshDAxJ+pE4thr537/7VazcqV6yQrREzmqafPEnpP2iYKc20fPG8EsWKWiyWN/4ZhJB0i6VhgzrzZv0WeTlq2HejZUVG6PV/2fR0S9EihZYunGMymfoNHPokJZXOTkxjGearyhWuXb9x734MDNyDhB8HmmbOnrugKErZsqWyFQYZhp7828wLFyNnzZhUtHDBd7LYIj3dUr9urfE/j962Y/fCxSsY++Z2iqJYtEjB2TMmR1yMHD9xarZG8xVVLVemlCzLZ89eoKFZCBJ+LM6cu+Dn5xsUmNv+miTP8/sPHFm0ZOX/BvatUb2K5d0td7KIYsd2rVu3bDrlt9+jLkfZGZwtFrFa1crfDhu8fMWavfsO2L9MSVXVoMDcvr4+585dgCcBJPw4DULRIkZduZY3JNjRwcHO0TZbM3LqjNkFC4T26dX13W49TwihKDRsyECOZWf8Pk/TNDtbalar1L1Lh2JFi0ycND01Lc3OeKhpmqOjQ56QoMtXroqiCM1CkPCDFxzGiUlJd+9FFyyY3/4WEcdx+w4c+vvvc4P693ofy51kWQ4KDOjXp8eDh4/S7e4v0TTNwcHhm0F9Lkdd2bPnL/t7aBiGKVQw/9170UlJyZD2AiT88A1CHPfgYWpqWv58eezcxxMhSlGVNX9uzB+at3q1r6T3s9zJarX26NZpxZJ5Ai9oGrH/W19VqlC0SOE16zZJkmynvUQj+fPlTU1Ni3vwkKbhWQIJP3R1FD96FI8Q5eXtSewLaDTN3Llz79iJU02bNHB0dNDezywTQgjD0A4OhmzNHCCEGAz6po3qnzl7/uat2wxjV2zXiObt7UkI9Sg+3p7+WAAkfKcFh1Bs3AO9Tufq4mKnTgxDnzl7XpblyhXLq8p7nG9pmyWT3W8pilq5cgWKos6eu0DTdnXqaBpxcXHR63WxsQ8wtAlBwg8eCqm4Bw/1Br2z0Wj/E3/2fISfr09gQG5F+eQmPauq6u/v6+vjffZchJ1RVNM0Z2ejQa978OAhBRKChB8YTSNpaSaDXs9xLEW9/pFFCEmSfOPGrcDA3A4OBkJ9irsyGfT63Llz3r5zV5btbBYSjuX0en1qmgk2jXljYIz1zR9ZURQFQcAY2xM2EEIWUYyPT6hQvgzDMG+z+h5j/No8SzTH0tmcxUIIYRjG18f72PFTFlHUCcJr4yEhFE1jQRBE2OkeJPwoElpEUacT7O8VlKyS1SoZnZze5ro0TcfExK7fuFVWlFfEKp7jrt24yWc/Ua+jo6NVkiRJ0gmCnW8EQRBEiwUkBAk/hoWEIIQoyq62EEJIURVFVXiBf0sJ79yNXrlmHUVR6GWXRlRS0mPRKpYrUyrbDwTDEI0QzX6jEI2xphEKJAQJPzAIY71eb7HEqKpqT/I/QgjPcTzHpaWZ3ua6kiSVL1d6356t2stzutE03Xfg0L/2HXyD86enp7MsY/98dE1T0y0WvV6HYLAeJPzAYIQMer3FIqqqxjKv72YhhOj1emdn5wcPH5G37sMwOjm9oi5K0zTLsm/Q90MISUxMMhgMPM/bU71EzxYoGgx6jKF3FCT84JFQp9dZRFHTVAoh6vV9GIRlWX8/n+jo+6JoxfRbpYR4XVckeoOTI4SsVmv0/Vh/f1+e5+3KeYGQqmoWUdTp9TBY/+YvdCiCN24UOhudLBZLmsls5yQvhqaLFS18+869R/Hxn+AkL4xxYlLynbt3C+YPtbNnFSFkMpksFtHF6ERR0CYECT+wghrJldPfZDInJiTaOXdZ1bTixYqYTOYLEZfeaw55WyKmN+iSuXgx8smTlFIlixOi2eltQmKi2WzOldNf00BCkPDDohHNz9dHIyTu4UM7JVQUuWCB0MCAXFu373x/jyxCSBTF+ITEN1hbFLYr3NfXp3DhAnam9MUYxz14qGnE19fHTm8BkPDdSahqHh7uep0uOjrGzrCjacTF2blhw7oHDh25fuN95ZDnOe74idNXrlzz9HC3v2XIMMydO3f37N1Xv26tHG5udk5/wRjduxej1+s8PNy/4B04QMJPNxK6ubq4ubpev3nL/rAmK0rr5k0Yhl20dCVDv3sJEUKi1Tpn/qLgoIASxYvan6OeZZilK1bLstK2dQtVtfdbmkZu3rrl5ubq6uoCkRAk/OASasTBwSFf3pBLkVH2rytXFCUoKLBj+zar16w/feZcdhMNvhZBELbt2HXk6ImB/Xq7urjYGdB4nv/77PlFS1Z26tA2NF8eO9W11XsvRUaF5s3jaDBAmxAk/AjQNF2saOG7d+49ehRvf+5NWZZ79ejs5+c7euz4tDQT/e7ylHEse/PW7R/H/VqjepWGDeta7dtqgmHoJ09SRoz+2dvbq2+vbvZPasU0/fBR/J270cWKFobUoyDhxwqGWsmSxczp6Zcio+zPcKGqqqeH+7ixI89fuDj2518xRu8kMQTDMGkm85BhI1VF/XnMCI7j7Jl6RtNY1cjoseMjLkVOHDfGy9PD/oxVLE1funQ5PT29ZMlisIQCJPw4qKqSL0+Ih7v7keMns9UVKYrWmtWr/DBy+JLlq36dPIOm8VvGQ5ZhRNE6fMSYk6fPTJ08Pk+eYEWW7DCQ1jQy9scJq9du+HnMiBrVq4jZyriB0JFjJz09PPLlCVEV2CDtLV6gUARvIaHm5uZasmSxw0eOp6Sk6HQ6+wOCVZJ69ejyJCV1yrRZqWlpI78b4mAwWLO/VxlCSBD4Bw8ffTNkxN59BydNGFu/bk1RFF+brInnuNQ008gxP6/5c8Po74d179oxW1t8Y4yfpKQcPnq8ZMlirq4ub7bLGgCR8F0UH0b1ate4feduxMXIbI2/E0I0Tf1u2OBRI4YuWrLy6449LkZe1glCtk7CsizLMPv2H2rRpvPR4ydnTpvYpVP716ZRpGlapxMio662ad9t/catv074cdCA3rZ0+tmq/V68GHn37r16tWvArFGQ8GMiy0rZsqXdXF3DdoZn91nUNKIoyjcD+y5eMOvOnXsNm7b9afyk2Ng4QRB4jntZQxEhiqYxz3M8z1+/cXPAN9+2+rqrpqlrVy3+uk1L68sX19qWAusEISkpeeLk6Q2btnn48NHKJfO7de6QXQNtb58dO/e4ubmWLVsKNuuF6ujHrZGqPt6etWtW27Frz+BBfXK4uWVrUxdCiNVqbVi/duGC+adOnz173sKVa9Y1aVS/ft3aBQvkc3Y20jRDiEYRikJPW52SJCcnP74cdWXz1rBtO3YhhPr37dG3dzf3HDmyptO3rbhlaFpW5NTUtOs3bu3YuWfz1h2PHz9p06r54IF9/P18RDHbmRdpmo578GjHzvDatap7e3lZ30/uRpAQsF8kqmWLJmvWbti956+undtbLNnO4CSKVl9fn2lTfunQrvXSFas3bdm+ZNlqP1/vIoULFSwQ6uPjRdO01SqZTKak5OQLFy5duXY9KSnZw929Q7vW7b9ulS9PiKwoLzThUXzCoiUrHj6Kv3L12vXrN2PjHjo6GGrXqt61c/sihQtqmvYGBlIUxXHsrt17k5KSWjZvDAvq3x7YqfetSxAhiqLatO+WnJy8Y8tanuffuL/e1ptyPybu5Km/z5w5f/nK1ZjYuPT0pzsW0hhzPBccFFiyRLFSJYsXL1rY08NdVVX5RT2THMeNHjt+xap1gsA7OBg83N3z5Q0pX7Z02bKl/Hx9CCHZ3Z03c3QVRWv9Jq3cc+RYs2IhRVHgIUj48REEfkfYns7d+82f/VvzZo3fcpclmqZZlqEoJIqiyWROTU0VRSvCSKfT6XU6o9FJEHhNI4oiv2K6JkIoNTUtMSnZ0cFgMOh1Op0g8LZGrPp2W8wLgrB+45Y+/YcsWzSnfr1abxZLAZDw3QdDRVVbtO5oEcVtG9cIAv9OBq8RQs8WJSHqaVKbp9gZsmy7yWfrW3aEQbFh07YGg2HDn0tpmoYw+A5KFYrgXTQLiUGnG9S/d2TklQ2bttq/u9hrT6tpmqKoiqIoiqKqqm0Hezu/btuqPrvfejU8z6/fuPVy1JWB/XvpdDowECLhpxUMEUJdevSPuHhp17b13t5eyhc3iYRhmLi4B3UbtSxerMii+bMI0UBCiISfVjCkafrboYNSU9N+mzHni9wnDGP824w5JpN5+JBB9NvlyAFAwveCLMuFCxXo37fHitVrd4fvE+xLnvsGIZdhGJZhnvMcY8wyDMMw72mzTkEQdu/5a+Wadf379ChUMP8bd64CUB1977HCarW27dD94aP4bZtWe7i7v9tKKceyVkmKiY2TJMnL08PV1UWSZIqiOI5NTn788FE8x3F+vj48x0nvVBKGYeLjExo1a+vt5bV6xUKe52DZBEj46cJx3OWoq01atKtcqfz82dOo16cnzMaZz52PGDdhyvkLFzVNc3fP0bdXt04d2lIUtXT56rl/LE5ISMQYFytaePSIocWKFnlXk6oxxhRFevX95sixE1s2rMofmg+ma79b6BHfDYFSeIeoqurn4+3l5TltxhyW4ypVKKuo72AXNJZlL0RcbNephyhae/XoUr9urZSUlHkLlnAsd/L0mbE/TyxXumSPbp2LFi105NiJNWs3VShXxtfH+534z3PctJlzFy9dOW3yhGpVKsEkNYiEn0OZIsSy7M/jJ/0+d8GcGVPatGqWbrG85Qkxxp269rl85erm9StCgoOJpsmKMvz7Mav/XE9RVLu2LX/95UeWYRDGN27cbNqqQ8H8oUsXzXn7wQmdTvfnuo39Bg0b2LfnqBHD3mCqNwAdMx8BQoiiKN8OG9ykYb0h347ad+CQTvdWnTQY44SExHMXIpo1bhASHGQ2m9MtFoxRh3atOY7lea5DuzYYo3SLxWw2h4QENW1U/+z5iAS7E6K+3EBh34FDQ78d3aRR/eFDBymKAgaChJ8NmqYxDDNpwo/FixXp3nvQkWMndDrd25xQVhRVVR0dHTIs0DSi1+sYhmUYVqcTMvIsEUI5Ojm+bE5ptmLgkaMnevQeVKJ40Um//MgwNHTGgISfGYqiGI3G+XOm58kT1Llb3/0HDr2xh5qmuedwy50rV/hfB1JTUwVB4DiW4/m9+w5aLJb09PR9+w9xPMdxrE4QUlJTw/fuD8idyz2H2xtro9Pp9h041Klb33x5QubPmWY0On2C+3tDxwxglzxOTg41qlY5eerMvAVLgoMCCuYPfbP50wLPG52NCxYtu3z5ipeX55MnqStXr50+c66Xl6eTo8PefQdVRTUYDDdu3v5h7PgTp86M/3FkgdB8b9AnhBDSCcK2Hbt69hlcpFCBBfNmeuTIAaOC0DHzecOy7JMnTwYPGbF334EfRg7v1aOLpmlvoCLLsus3bhk3YUpCYpJepzOb0wlFjI6OqqaZzGaEkEGvT7dY3HO4jfp+aMvmTd7AHIamEUbzFiz5efzkmjWqTp8ywdnZCAaChF8CDMNIkjRuwpT5C5a2/7rV6JHD3Fxd36Cvn+e5mNgHUVeuzZm38PTfZ7t16dC6ZVNV1dZv3LJ46coypUv26dWtQGheX1/v12aaedHJ+aSk5J/GT1r15/rePbqM/G4Ix3EKpFH7AI8HFMGHaR+yLPPz2JEhQYFjfp544eKlSb/8WKZ0SVmWsrWFg9Uq+fp4Czx/587dFs0aj/9ptC2iFitSKCUl9fDR48WLFXZzdc2ugTSNWZY7eervb0eMvXP33pSJP3ds30bTVDAQOma+KFRVUxSla5f2m9atoDFu1qrDhEm/mUxmQRCyO9vz6vUb8QmJdevUIIRIkiRJEqGoenVqxscnXLt2I7stQEEQ0kzmXyZObdaqI0PTm9ev6Nq5naIosMELSPgFQgixWMQSxYtsXLe8d48us+YsaNCkzdZtYQghnuftVZEQjmUpihJFa0Z+N9taW1u7kbJvKC/jopu37mjQuPXseQv79Oq6Yd3y4sWKWCwijAdCm/ALh6ZplmFOnz03acrMQ4ePVa5Yvm/vbpUqluNYVpLlV48rYIzT0kz1G7dyd8+xYul8VxcXhKiExKSOXXonJiXt3LrOwcHhtWewXejI0RNz5i08fOxElUoVhg8dWKpkcVmWIQCChP8hOI6TZWnHzvDZcxdcjrpaqWL5rp3bV6xQ1ujkaMsE87JwxHFc2K49ffoPyZ8/X9tWzSwW64ZNW65dvzl/9rR6dWu9bHY1QsiWvSYlJe3osROLl648cuxEgfz5+vXp0aBebZZlYVo2SPifLH2EeJ43mUy7dv81f+GSS5FReUKCW7dqVqtG1YDcuTiOVRTVlp8iq4eHjxyb8tvvl69cQxQVEhI0fMigqlUq2lY2PRf3aJpmGFqS5Dt37+3Zu3/d+k3Xb9wqVDB/rx5d6tau4eDg8IqUwQBI+N9ol2PEcbzZZDp28vSatRsPHDxCEapEiaK1a1YrVbJ4YEAuJydHjLBtdFF7lrWJ4zir1RoTE0fT2MvLUxAE24CebbY3TWOMsEa01FTT7Tt3T/99ds9f+8+evYAQqlqlUtvWzSuULWNwMEiSBJPRQELgn6jIcZymaTdv3d63/1DY7r2RkVGKouT09ytWtHDhQgXy5g3JndPfaDQKAs/zPMYYIUQzNEUoVVUJ0RRFFUVRtFqTkpKjo2Nu3LwVGXXlwoVL96Lv0zRdtEihunVqVq9aOTgoEGMsSRJEP5AQeDEMw7AsY7GI96LvX7x4+cTpv8+evXDn7j1JkvR6vbOz0c3V1cXZ6Ojo4ODgYNDrJVk2mc1mszk1Ne3xkyePk5+kpaVZRFEQhJz+foUK5S9ZvFjpUiVCggMFgZdlBUb/QELA3sBoa8tRFGUypcfExt67d/9e9P07d6NjY+NSUlMtFlvYs9IMLfCCThD0Bp2rq4u/n5+/n6+fr4+/n4+3j7eDQY8QVlVFUVQIfSAh8FZC0vTTZL6aqmmEKIoiy7KiKBhjlmVZln1aQcWYUBTRNFXTXtHFCoCEwDswM+OfNtPAt8+1AQJF8JkC4n0xwLQ1AAAJAQAkBAAAJAQAkBAAAJAQAEBCAABAQgAACQEAAAkBACQEAAAkBACQEAAAkBAAQEIAAEBCAAAJAQAACQEAJAQAACQEAJAQAACQEABAQgAAQEIAAAkBAAAJAQAkBAAAJAQAkBAAAJAQAEBCAABAQgAACQEAAAkB4PPmP7FdNsMwNE0jhChCVFVVVPVlu0xzLItwxouJaKr2ioNtIIQ4jlNVVVGUlx3DsizOfFqNKIqS9bS2Uz33oaapsqzYc5tZr6Kpqqpp9nyX4ziKIpIkv+wAmqYZ5p+nhRBNVTVN015WOBhjlmUzHU80TVNfUpi2G1cURVXVLJ+ziqI+9/kXBjI9jvuy9UMI3bx5++q16/EJiU5OjgXyh4YEB7IMI8kveOAuRFxKfvyYaISiKIZlvD09g4MDBYF/2dOJELJaraf+Puvn6xMcFPjCZwUhFHk56lF8wtPTMrS7u3tISJBBr5ckKfNhqWlpFyIuyZJMCKEQRVGUpmre3l6FCxXQXucSQuhS5OX4hCSiabYf7+Ls7O/v5+meQyPkFS8I23fPnY9AFCpWrPALJaFpfPfe/Zs3b2tEowiFMXZ0cvT19vL19WEYJvNdZBiYlJR88dJlm3UIIYNB7+Xl6e/nq9PpJEnKfBWEULrFcvr02Xz58vh4e2WUIUJIUdSTp//28/UJzJ3LzrcJRMJPC47j7t6L/uXX344dP6nX6x0dHEwmc5rJVCB/vhHf/q9E8aJWqzXzo0AIGfPTxOjo+7ly+WsaURTZbE53dXUdNWJouTKlsj5qtkvsP3ikZdtOdWvXWLVsge0kWV8Ek6bOPHsuIjgoQNOIqipmc7qDg+HbYYOrV62coTfDMHfu3OvSvV9A7lx6vc52HkmSq1WtXKxo4ddKSNP0xMnTIy5eDgrMbQtQomgVrWLJEsX/N6hvcFCA1Sq95D1Fx8U97NytL8L4r12bPT09sr5KOI7bHrZ70pSZhQqGIoRtMdNsNvv5+Q7s36tK5QqS7cWRKSZHXIzs1K1v/tC8HMcSQhRFMZnTjU5O3bt0aNa0oS0wZj5+2sy5nh7uixfMyrg6z3H7D/zVs+/gtasWhwQFgoSfpYEXIi516zXA39d33uxphQvm53lekuSr165Pmzm3dbuuC+bOqFqlUmYPKYrSNO3rNi1Gfj9UFK2EaCmpaRMmTu3Vd/CW9aty5/ZXlOefTkLI9rDduXPljLpy7fqNm6H58sovCrCapjVqUHfKrz+JokRRxGw2T5s5t++AIZvWrcgfmjdzbVOv182aMTl/6D/nQQi98Jwvugpp0qj+r7+MEUUrRVEWi+Xa9Zt/LFrWonWnmdMmVq5U4bmbfSoAwx44eISiKFVVDx4+2v7r1i+M54SQvHmCN65dzrIsIUSWlZjY2A2btvXu+02/vj369+nx3EuKUMTNzXXxglm24KaqWnxCQvje/eMmTDn199lffh6d8cIihBj0+qHf9O/ea+CZs+dLlSwuSRJCyCpJc+Yvql+3VtmXvAGhY+bTviuMk5OTB/3vu8KFCvy5atFXlcobDAaapvV6XZnSJZcvnlu5Yvl+g4bevRdN03SW7yKapmkaMwzj5ekxeuRwilDbduxkGTZr8ImNizt85Nh3w77xcHfftecvhqFfUeWznZamaVdX1++GDTYajRs3b3vRD8B0JjI18+xoXTy9Ck3TtKOjY7mypRf/MatB/doDv/n2zt17mRt1GUiytHlbWNMmDRrWr715645XC59xcp2Oz5c3z09jvp804cep02bt3BXO89wLjn92LxzH5srp379vz+VL5obt2jNn/iIuU4tRkqSvKlcoU7rE3PmLbWZyHHfw8NErV6/17d2demWbHCT8dMPg5q074hMSfhozgud5UbTaamiaplmtVoamfxzzXc9unU0mE0IoyyufIs+QZdnZ2cnPz+fho4Ss9UyWZQ8cPEJjumGDOjWqfRW2M9xkMmc9YeZgknFaBweHXP5+Dx48ynpakoVs3XvGt2w3q6rq8CEDdXr9wsXLmSzCMwxz/fqty5evNG5Uv3HDehEXL9+8dfuFrmY5OZFlOd1sadK4fqMGdX+bMcdstryoMP9BURSz2VyyRLHBA/r8sXDp/ZjYjBcQIYSm6YEDeh09duLsufM8z8myPHf+4gb1ahcqmF+yryIAEn5KfU0ISZIUtmtv9aqVc+X0t73aEUI8zwuCIAg8TdMBuXIN/fZ/hQsVfGGPBXoGyzJpJvODB4/8fL2ff8IQkmV567adX1Wq4OrmWqd2jej7MREXIzN3Cb78tGx6uiU27oGXlydCz/8JeI7jBEEQeEHgBZ5/hdX2oKqqi4tz08b1Dx0+lmYyPXc5lmF27t7r6elRqEBo0SKFXV1d9oTvY1l7GymEIpqmtW7Z9O7d6Ffbm4HVam1QrzYh1Okz59hMx0uSVK50qUoVy8/9YwnDcoePHL967Xrvnl01TaW+dL7ANiGiKNsjXqN6FdsDjBCyWMTtO3aJVunZM00wpl1djJUqlqdpnDnYZKhCUVRSUvL4iVNlRa5Tu4b8b10Zmr5x89bFyMt9e3dXZTl/aL6Q4KBtO3aVL1fm1WFEUdTEpOQ58xYmP37comkjVVWeaz3u2BV+PuKSqqoURWiarlHtKycnJ+0tuiU0TQsJDkpKTn7yJNXLyyOjxYcQMpnNYbv21Kldw9HBgaKoOjWrbQ/b07N7Z5qm7YzAqqr6+foyLHM/JqZI4YJ2HK+5uDi753C7ffsuylLTHtCvZ7tOPU+ePL1g8fKmjRrky5tHFEWQ8LMMhaqqypKkEwTbg4QQslrFrdt3PUlJoWlMURTG9M2bt41Gp7CtZRjmnweO57n1m7aeOXfBNg6WmJTEc/zc36cGBwU8N0rBsuyuPftyuLmVKFFUkmS9XmhYv87S5auShiQ7Ojg85wzP89t27Dx3/gIhRCOU2Ww26PVzZk4tUCD0uVEKTSN7wvcZDHpCNE0jgiCUKVXSaDS+TXkQQul1OlXVFFXOHFZZlj1z9sL9mNj6dWsqqooQ1aB+7ZVr1l+KjCpVopidlUBCKI7nWJYRRaudMRtjWhAESxa7JFkuWrRQnVrV+g8eThEycdwPrx5ZAQk/XQghgiA4Ozs/fBSPMbKFAqPRuGTh7H+sEPg+/f4XExun0wmZhVEUtWD+0GZNGpjTLRN+/a1smZKzZ07hef653jmEkNlsDtu5p1HDem6enpooYppp3KjerLkLTp76u16dWs/1QyqKUrBA/vZft5IlWdAJvj7eIcFBTk6Oz/coEsIw9PQpvxQoEJrRQaKqbztUjRB6/CSF5znh2Vspowtq2/adBQvkL1GsKKEohKhSJUvkyxOyPWx3mdIlKfsktBWF1Wo1OjnZEzwRRSmKnGYyuTg7Z+1xIRrp0a3T+k3benXrFBiY22IRQcLPVUK9XleqVPFjx09aLGJGV3jGaxVj/Pjxk7PnI5o0qseybOYKj6qqBQuEtmzbitI0WZYnTpp2+869fHlDsnTJMBciLl27fqNY0cJzZ81TFIVCFEUhlmV37AyvW6dm1jpbSHBQq7YtVdGaMXfkZd3uiqoqivJug8CJk6dz5fR3dXHJeONgjJOSHu87eDinv9/8hUttzrMsy7DMvv2Hhn7TX6/X21MHZlkmIuISRjg4KEBVX388wzK3rlx79CihUMHQrEN/qqp6e3l5ursHBeYmX3qn6BfeO0o0rWWzxpcvX92yLUyv16N/v7l1et3GTVsTE5OaNWmY9VlXFEUVRYsprXXLpgEBuSdM+k3TyHO9IzSmw3aFOxuNSUlJh48cP37i9PHjp0+e+jsgd84TJ07HxT3IOvCgqqoqiqIoWq1WWZa1DzX0rBOEa9dvhO0Kb960EcdxGU82y7InT/+dnPxYr9cdOnLs+InTx0+cPnzkmKOjw6P4+NNnzr2ihylz56rFIi5curJSpXI5c/q/9sWBMaZpZsmyVbly+hUvXlRRXjymSgj5gofm/xttQoqSZLlkiWI9u3f6ftRPRqOxTq3qtgiJMZJlZfWa9T+Om/T98G+CAwOsLwlHmkb0ev33wwe369Rz5+7wxg3rZQRMjHHS48e7du/t2b3zN0MGKOLTmidN03FxD6rVbnTw4NH27Vq/cR2SZRmO455ZjzRNsz8qYoxpjuM0jaIQxhghFBV1te/AoWVLl2zTqlnm2EsI2bxlR+lSJVYvX6CpGnn2hqIoqlnL9lu2htWsXjVrzZNjWZZjCaEwQpjGCYlJY3+a+OhR/OwZk19yLyzHsapKI4Qwxunm9MmzZobtCl+yYJajg8OXPQT/X5fQFtC+GdRP07RB//uufNlSVb6q6OzsHH0/Zt/+QxcvXR48oE/Xzu2z9j2oqpoRoySrVLlShYb164yfMLVcmVLOzkbb/2JZ9vjxU4lJyTVrVJHM6Zl7TT093SuUK7Nh87ZWLZtmnsKm2jeR2jaEeCHiUmpqmk08jRA3V5egwAB76maEkNi4ByePn5JlWRTF2NgHZ89HhP91oGKFsuPHjuRYVnn2XqBpOvp+zKEjx3/84XtNI2KmFqxOEBo2qPvrlOmxcXGeHv9MYSOEpKamnTx9hmEYRVHiExKvXL0WtivcwcFh8R+zAnLnytq+FUXr2XMXou/HKIqSlPz4xs3be/bue/z4yazpkypVLPeyaXS2v50GkfALQNM0hqFHfj+0YYM6Gzdv37w1LCk52cXZOX9o3lEjhpYoWkSS5axPtq+vj6uLy9PpVBQhRPvfoH7deg3YuSu8U4e2trBJiHbm3IUa1b4KCgxQsoS7Fs0aT5wyPS7uga+vj+0JJoR4e3m553B7tUi2/iR/P7/Zcxdm1H6tklSrZrUfR3/32plrhJCcOf1OnPj7f8NGEorwHOfq6hIUGDD39ynlypbGCGX+qQxDR1yMzJXT76tK5Z87syTL1apUWrHqz0uRUT41vTNuIYebG8Z45A/jCEUYmjYajb4+3kMG969Zo6qT4wt6mBwMDh7ubpOmzrAN+jg5OXp6uLdp2axunRreXl4vnECXEW9z5fR3dHT877QJv/BVFLbARdO0JEmSJLEsy/O8qqove6ZlWbbNGstcwbNaJVVVBYHP+NBqlRiGyTy2kbn3T7RabYunMp8WIfTasWxbJMx8TkJR9L/XBL0CWVE0mzMUxdA0z/Msy2qaJr/odWMrgcytxMwa2KTKfF1VVRVFpShCKAojxPO8bdXVy9q3mqbJikIRQigKUYjnOY7jMMayLL+2oi5JMs3QNMYg4Zd1n89iy2sXB2Y9JuuHLzwsk7dI08hrT/uy71IUoqiMI5H9M9eezTEgtm+9+oqv/kkvvGX7T57x/rIdbzvU/shmf3GBhAAAvAMgvQUAgIQAABICAAASAgBICAAASAgAICEAACDhF8ELE1K8ZZaKN7jim53nff5MCsHDARK+9OHAiKIojLEttVnWdDLPfYIxtq3QRy/KbWS1Wp9LjogQUhRZ1chz6dgIRWH8dC7Kq6eH0DRNEaIRynbdTL8cMwwtyzLCmKFxVqde6tnzN0VkWVZUVZJk7UUThjL/N8syqqoQCrFZssvRNI0RyvothDGNkaJqr0hI95+FHvHdkP/0SwjTqfH3dh+5VKRwvvANKy89kIvm9dm6abubX6CBpwlF0Qx7N+rvS/dNQTk9bZMkOZbesHxxvOoUGuC1PzxMNXi6O+o0QhDCxJqyePHK+w8T02XKz8fDtnKcYdnLpw8s3xgeFXkpTRUCc3raUnGzDH18X3gycfTQyRt3HArJl5d5iYk0zdy/EbluS9jRYyc5o5efp4ttWhxCWLGkbtm8+djpc+cirji5+7g7G2wKYcwkx908ePZmvpDc/yzkpZlHt6JORcXmyxMQfeXCuZvxIbl9NE2jECKK9dSxI+s2botNNnt5+zjpOUIojHFaYuxfRy/mzRtkS+xNIYQ1KTwsbN/hU+fOX0R6l39+DMaaOWnG7KXBhYsbqPTtOw8G5Amx3RHC2Pz40dr1m44cPZFgQfmC/Ml/aZHEa2H+4/evEeJgdH5w78CT1NRbd2PSHLiUZP+YJLPRQSBEsb3R09OeJJn+iRsIEXNaWuS+/SULBT5OjHe1/pO4RZVFhdU3aNSAp1SSKZ37kycpparUrRHqNPmPzWVLFOApilCUSqg8eQO2HjmR6sE7evrrWfSylRIMTZ08fjK4RJUyQc4Pkq0ZE1NZBm3fvt0xV7HmrQomxtxYuWWrZ4/ODixFCEUhJInmh4mPM0ckhJCYbkpIMmOMLaaUxORnN0UIYvgq1avdvhddtVpVbyOnaE+T86iS+PBREvXsJCzDHA0PS0auvXo2FlPiF6/Y6OHR0d9Vp2qEopCmKYmP7u/Zd+zrOiUePHhEnlU/GYa5cfGcrPft/3XF67djZEWFChhURzPXwjTe4OKfw+HcufNeoSUCXfGZC1HeuYJ0LPpnDjXCtlw1z76h6Zw9q5XLv3fvIcz9KyUhTTPJcdFbt+64evdhplUUiMHUuROHFq/eXrBESR39NN5pquqdO9SPSw0/G1OtXGHl5bu+yAqpWqvGg6hTW8NP6p2cnlVdkSalxz5OL1UsP9FUn4A8OfTawyQTjTNeFijrQgREIdsPw/hpvTFTPZpgjEmW2euZK8CYUm9Hx5coUZRBxNnDL8TP5V5sYsYBqqrmKVLKizWfiLiZedGJIssFSlVwwykr123XGB1LQ9sQJHwuGFJ0vhC/vXsP5s5TINjbaff+k3nyBmmZltsQQp5rJkmSNTB/cXecevTsNTpTI0dVlRx+AS1bNC0Q6JNpwQ7RCBUUHCyJloDAAERlyiuloZC8eUNC8hg4/Mo2oZZmUho0b102r9vmsH3oaS5wglldDh2OvHaX4/knj2LiU5QczoaMOEkIoRBiGOZfGdZ4NjUlFdNMWkoKZrPuAKW94C2V6UOCaF93Y+Tla5jlRFPyrZgEbw+XTKlliCipVWpUvXbm6P0EU4bkCKOUJyklK1VvVbf8ru07TTKFQEOojmZGVVW/XLkxOe7v44mFFExfyumdQ9X+WVHOC3pHImRECEIoJ6ORUKhi1SoHT19iaDrDH5rh5bTk7dt2+OYMKFEoD9GerogV9I4+brkr5nXdc+J0SPPaVIaHROMEvZsz8+qF5BjTYmr8siUHENGKV6hOPfttiobqNqy3Ycvuq+eOSFapUq26bgbmWZ8Q4QVdwv2bW8P2lipV0s1JsO1F4x2Yz/Vs5MwZsxUVNW1VWc2UFoBQlNFopPG/u6BozujkmJEWTZbVitVrbtq0ffa8KFWWQkp8FeRtzDgJwqzR0cDqXapXLr18VwTGiHpWJaeJvHXDWoxwQL78ehYTFdqEmWobsJQpIwjYukYz/iVTJNQIQZlrpJqmIYQxxoSohPyrJ9AqiqJVYjlerxMylgUSTSMIMTSWrBLNsujflUBCKIxfExpomk43pSkU7eSgz7woFmMaEfVJapqgd9DzjPyvXlliSU+XFM3g4MBkqqMiiqSkpOocHHmGfi7phqZp6LmfQohGSOYCQRjTiEpJSaU5wdEg/HvvRKJqhMYYY6woSuZvYZpWrBaTKDs7ORFNJfDAgYQvKIhnKWFeuL1Z5mW2rz746XgDeW5N6tMTvPjkyK4tT16x1PVl/8vW8aJl/Rwjirz4ePs/fNkVX1UyL/oxAEgIANAxAwAgIQAAICEAgIQAAICEAAASAgAAEgIASAgAAEgIACAhAAAgIQCAhAAAgIQAABICAAASAgBICAAASAgAICEAACAhAICEAACAhAAAEgIAABICAEgIAABICAAgIQAAICEAgIQAAICEAAASAgAAEgIASAgAAEgIACAhAAAgIQCAhAAAgIQAABICAAASAgBICAAASAgAICEAACAhAICEAACAhAAAEgIAABICAEgIAABICAAgIQAAICEAgIQAAICEAAASAgAAEgIASAgAAEgIACAhAAAgIQCAhAAAgIQAABICAAASAgBICAAgIRQBAICEAAASAgAAEgIASAgAAEgIACAhAAAgIQCAhAAAgIQAABICAAASAsB/hv8Dbus6Vdj/UQkAAAAASUVORK5CYII=";
+
 let ADMIN_PASSWORD = "AlloroCrew2026";
 try {
   if (import.meta && import.meta.env && import.meta.env.VITE_ADMIN_PASSWORD) {
@@ -7722,22 +7729,22 @@ function PasswordGate({ onUnlock }) {
   };
 
   return (
-    <div className="min-h-screen bg-emerald-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-ink-950 flex items-center justify-center p-4">
       <form onSubmit={submit} className="bg-white rounded-lg p-6 sm:p-8 max-w-sm w-full">
-        <h1 className="font-brand text-2xl text-emerald-950 mb-1">Alloro Winery Tracker</h1>
-        <p className="font-body text-sm text-stone-500 mb-5">Enter your password to continue.</p>
+        <img src={GDS_LOGO} alt="Grape Daddy Winery Solutions" className="w-24 h-24 mx-auto mb-2" />
+        <p className="font-body text-sm text-stone-500 mb-5 text-center">Enter your password to continue.</p>
         <input
           type="password"
           autoFocus
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="Password"
-          className="font-body w-full border border-stone-300 rounded-md px-3 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-emerald-800"
+          className="font-body w-full border border-stone-300 rounded-md px-3 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-ink-800"
         />
         {error && <p className="font-body text-sm text-red-700 mb-3">{error}</p>}
         <button
           type="submit"
-          className="font-body w-full bg-emerald-900 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2.5 rounded-md"
+          className="font-body w-full bg-ink-900 hover:bg-ink-800 text-white text-sm font-medium px-4 py-2.5 rounded-md"
         >
           Unlock
         </button>
@@ -7774,7 +7781,7 @@ class AppErrorBoundary extends Component {
             </pre>
             <button
               onClick={() => window.location.reload()}
-              className="font-body bg-emerald-900 hover:bg-emerald-800 text-white text-sm font-medium px-4 py-2 rounded-md"
+              className="font-body bg-ink-900 hover:bg-ink-800 text-white text-sm font-medium px-4 py-2 rounded-md"
             >
               Reload the page
             </button>
@@ -9183,7 +9190,7 @@ function WineryDataTrackerInner() {
   }, [data, workOrderSort, tableSort, fermentSort]);
 
   const exportToWord = useCallback(() => {
-    let bodyHtml = `<h1 style="font-family:Georgia,serif;color:#022c22;">Alloro Winery Tracker</h1><p style="font-family:Arial,sans-serif;color:#555;">Exported ${todayISO()}</p>`;
+    let bodyHtml = `<h1 style="font-family:Georgia,serif;color:#1D1915;">Alloro Winery Tracker</h1><p style="font-family:Arial,sans-serif;color:#555;">Exported ${todayISO()}</p>`;
     buildExportSections(getSortedData()).forEach((section) => {
       bodyHtml += `<h2 style="font-family:Georgia,serif;color:#065f46;margin-top:24px;">${escapeHtml(section.title)}</h2>`;
       if (section.rows.length === 0) {
@@ -9232,7 +9239,7 @@ function WineryDataTrackerInner() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900">
+    <div className="min-h-screen bg-ink-50 text-ink-900">
       {saveError && (
         <div className="bg-red-700 text-white px-4 py-2 flex items-center justify-between gap-3 text-sm font-body">
           <span>⚠️ {saveError}</span>
@@ -9254,19 +9261,23 @@ function WineryDataTrackerInner() {
         }
       `}</style>
 
-      <header className="bg-emerald-950 text-stone-50 px-4 py-4 sm:px-6">
+      <header className="bg-ink-950 text-stone-50 px-4 py-4 sm:px-6">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-3 flex-wrap">
-          <div>
-            <h1 className="font-brand text-xl sm:text-2xl tracking-tight">Alloro Winery Tracker</h1>
-            <p className="font-body text-emerald-200 text-xs sm:text-sm mt-0.5">
-              Work Orders · Harvest · Fermentation · Mileage · Expenses
-            </p>
+          <div className="flex items-center gap-3">
+            <img src={GDS_LOGO} alt="Grape Daddy Winery Solutions" className="w-11 h-11 sm:w-12 sm:h-12 rounded-md shrink-0" />
+            <div>
+              <h1 className="font-brand text-lg sm:text-xl tracking-tight">Grape Daddy Winery Solutions</h1>
+              <p className="font-body text-ink-200 text-xs sm:text-sm mt-0.5">
+                Vineyard · Winery · THO · Data
+              </p>
+            </div>
           </div>
+
           <div className="relative">
             <button
               onClick={() => setExportMenuOpen((v) => !v)}
               disabled={loading}
-              className="font-body flex items-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-emerald-950 font-semibold text-sm px-4 py-2 rounded-md transition-colors"
+              className="font-body flex items-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-ink-950 font-semibold text-sm px-4 py-2 rounded-md transition-colors"
             >
               <Download size={16} /> Export Data <ChevronDown size={14} />
             </button>
@@ -9309,7 +9320,7 @@ function WineryDataTrackerInner() {
         </div>
       </header>
 
-      <nav className="bg-emerald-900 px-2 sm:px-6">
+      <nav className="bg-ink-900 px-2 sm:px-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-1 overflow-x-auto">
             {PERSISTENT_NAV_KEYS.filter((key) => role === "admin" || key !== "workorders").map((key) => {
@@ -9323,13 +9334,13 @@ function WineryDataTrackerInner() {
                   key={s.key}
                   onClick={() => setActiveKey(s.key)}
                   className={`font-body flex items-center gap-1.5 whitespace-nowrap text-sm px-3 py-3 border-b-2 transition-colors ${
-                    isActive ? "border-amber-400 text-white" : "border-transparent text-emerald-200 hover:text-white"
+                    isActive ? "border-amber-400 text-white" : "border-transparent text-ink-200 hover:text-white"
                   }`}
                 >
                   <Icon size={16} />
                   {s.label}
                   {count !== null && (
-                    <span className={`ml-1 text-xs rounded-full px-1.5 ${isActive ? "bg-amber-400 text-emerald-950" : "bg-emerald-800 text-emerald-200"}`}>
+                    <span className={`ml-1 text-xs rounded-full px-1.5 ${isActive ? "bg-amber-400 text-ink-950" : "bg-ink-800 text-ink-200"}`}>
                       {count}
                     </span>
                   )}
@@ -9337,7 +9348,7 @@ function WineryDataTrackerInner() {
               );
             })}
 
-            <div className="w-px h-5 bg-emerald-700 mx-1 shrink-0" />
+            <div className="w-px h-5 bg-ink-700 mx-1 shrink-0" />
 
             {Object.entries(NAV_CATEGORIES).map(([catKey, cat]) => {
               const isActiveCategory = categoryOfKey(activeKey) === catKey;
@@ -9346,7 +9357,7 @@ function WineryDataTrackerInner() {
                   key={catKey}
                   onClick={() => goToCategory(catKey)}
                   className={`font-body flex items-center gap-1.5 whitespace-nowrap text-sm px-3 py-3 border-b-2 transition-colors ${
-                    isActiveCategory ? "border-amber-400 text-white" : "border-transparent text-emerald-200 hover:text-white"
+                    isActiveCategory ? "border-amber-400 text-white" : "border-transparent text-ink-200 hover:text-white"
                   }`}
                 >
                   <span className={`w-2 h-2 rounded-full shrink-0 ${cat.dotColor}`} />
@@ -9360,7 +9371,7 @@ function WineryDataTrackerInner() {
                 setRole(null);
                 writeStoredRole(null);
               }}
-              className="font-body flex items-center gap-1.5 whitespace-nowrap text-xs px-3 py-3 text-emerald-300 hover:text-white ml-auto"
+              className="font-body flex items-center gap-1.5 whitespace-nowrap text-xs px-3 py-3 text-ink-300 hover:text-white ml-auto"
               title="Log out"
             >
               <LogOut size={14} />
@@ -9373,7 +9384,7 @@ function WineryDataTrackerInner() {
               const cat = NAV_CATEGORIES[catKey];
               const visibleKeys = cat.keys.filter((key) => role === "admin" || key !== "backup");
               return (
-                <div className="flex items-center gap-1 overflow-x-auto border-t border-emerald-800 -mt-px">
+                <div className="flex items-center gap-1 overflow-x-auto border-t border-ink-800 -mt-px">
                   {visibleKeys.map((key) => {
                     const s = ALL_TABS.find((t) => t.key === key);
                     if (!s) return null;
@@ -9386,13 +9397,13 @@ function WineryDataTrackerInner() {
                         key={s.key}
                         onClick={() => setActiveKey(s.key)}
                         className={`font-body flex items-center gap-1.5 whitespace-nowrap text-xs sm:text-sm px-3 py-2 border-b-2 transition-colors ${
-                          isActive ? "border-amber-400 text-white" : "border-transparent text-emerald-300 hover:text-white"
+                          isActive ? "border-amber-400 text-white" : "border-transparent text-ink-300 hover:text-white"
                         }`}
                       >
                         <Icon size={14} />
                         {s.label}
                         {showCount && count !== null && (
-                          <span className={`ml-0.5 text-[10px] rounded-full px-1.5 ${isActive ? "bg-amber-400 text-emerald-950" : "bg-emerald-800 text-emerald-300"}`}>
+                          <span className={`ml-0.5 text-[10px] rounded-full px-1.5 ${isActive ? "bg-amber-400 text-ink-950" : "bg-ink-800 text-ink-300"}`}>
                             {count}
                           </span>
                         )}
@@ -9446,7 +9457,7 @@ function WineryDataTrackerInner() {
                     setNewWorkOrderForm((p) => ({ ...p, category: cat, taskType: "" }));
                   }}
                   className={`font-body text-sm font-medium px-4 py-2 rounded-md border ${
-                    workOrderFilterCategory === cat ? "bg-emerald-900 text-white border-emerald-900" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+                    workOrderFilterCategory === cat ? "bg-ink-900 text-white border-ink-900" : "bg-white text-stone-600 border-stone-300 hover:border-ink-400"
                   }`}
                 >
                   {cat}
@@ -9455,7 +9466,7 @@ function WineryDataTrackerInner() {
             </div>
 
             <form onSubmit={addWorkOrder} className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5 mb-6">
-              <h2 className="font-brand text-lg text-emerald-950 mb-3">Add a {workOrderFilterCategory} Work Order</h2>
+              <h2 className="font-brand text-lg text-ink-950 mb-3">Add a {workOrderFilterCategory} Work Order</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {workOrderFieldsForCategory(WORKORDER_FIELDS, newWorkOrderForm.category).filter((f) => (f.name !== "lots" && f.name !== "barrels") || newWorkOrderForm.taskType).map((f) => (
                   <Field
@@ -9483,7 +9494,7 @@ function WineryDataTrackerInner() {
                           type="number"
                           value={so2Calc.volume}
                           onChange={(e) => updateSO2Calc({ volume: e.target.value })}
-                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                         />
                       </div>
                       <div>
@@ -9492,7 +9503,7 @@ function WineryDataTrackerInner() {
                           type="number"
                           value={so2Calc.current}
                           onChange={(e) => updateSO2Calc({ current: e.target.value })}
-                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                         />
                       </div>
                       <div>
@@ -9501,7 +9512,7 @@ function WineryDataTrackerInner() {
                           type="number"
                           value={so2Calc.target}
                           onChange={(e) => updateSO2Calc({ target: e.target.value })}
-                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                         />
                       </div>
                     </div>
@@ -9521,7 +9532,7 @@ function WineryDataTrackerInner() {
                           type="number"
                           value={acidCalc.volume}
                           onChange={(e) => updateAcidCalc({ volume: e.target.value })}
-                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                         />
                       </div>
                       <div>
@@ -9530,7 +9541,7 @@ function WineryDataTrackerInner() {
                           type="number"
                           value={acidCalc.current}
                           onChange={(e) => updateAcidCalc({ current: e.target.value })}
-                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                         />
                       </div>
                       <div>
@@ -9539,7 +9550,7 @@ function WineryDataTrackerInner() {
                           type="number"
                           value={acidCalc.target}
                           onChange={(e) => updateAcidCalc({ target: e.target.value })}
-                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                         />
                       </div>
                     </div>
@@ -9559,7 +9570,7 @@ function WineryDataTrackerInner() {
                           type="number"
                           value={waterCalc.volume}
                           onChange={(e) => updateWaterCalc({ volume: e.target.value })}
-                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                         />
                       </div>
                       <div>
@@ -9568,7 +9579,7 @@ function WineryDataTrackerInner() {
                           type="number"
                           value={waterCalc.current}
                           onChange={(e) => updateWaterCalc({ current: e.target.value })}
-                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                         />
                       </div>
                       <div>
@@ -9577,7 +9588,7 @@ function WineryDataTrackerInner() {
                           type="number"
                           value={waterCalc.target}
                           onChange={(e) => updateWaterCalc({ target: e.target.value })}
-                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-800"
+                          className="font-body w-full border border-stone-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800"
                         />
                       </div>
                     </div>
@@ -9591,7 +9602,7 @@ function WineryDataTrackerInner() {
               <button
                 type="submit"
                 disabled={saving}
-                className="font-body mt-4 flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors"
+                className="font-body mt-4 flex items-center gap-2 bg-ink-900 hover:bg-ink-800 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors"
               >
                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
                 Add Work Order
@@ -9601,7 +9612,7 @@ function WineryDataTrackerInner() {
             <div className="bg-white border border-stone-200 rounded-lg overflow-hidden mb-6">
               <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
                 <div>
-                  <h2 className="font-brand text-lg text-emerald-950">Work Order Templates</h2>
+                  <h2 className="font-brand text-lg text-ink-950">Work Order Templates</h2>
                   <p className="font-body text-xs text-stone-500 mt-0.5">
                     Save a work order you'll reuse every vintage, then create a fresh one from it in one click.
                   </p>
@@ -9623,7 +9634,7 @@ function WineryDataTrackerInner() {
 
             <div className="bg-white border border-stone-200 rounded-lg overflow-hidden mb-6">
               <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between flex-wrap gap-2">
-                <h2 className="font-brand text-lg text-emerald-950">Work Orders</h2>
+                <h2 className="font-brand text-lg text-ink-950">Work Orders</h2>
                 <div className="flex items-center gap-2">
                   <span className="font-body text-xs text-stone-500">Sort by</span>
                   <select
@@ -9638,14 +9649,14 @@ function WineryDataTrackerInner() {
                   </select>
                   <button
                     onClick={() => setWorkOrderSort((p) => ({ ...p, direction: p.direction === "asc" ? "desc" : "asc" }))}
-                    className="text-stone-500 hover:text-emerald-800 border border-stone-300 rounded p-1.5"
+                    className="text-stone-500 hover:text-ink-800 border border-stone-300 rounded p-1.5"
                     title={workOrderSort.direction === "asc" ? "Ascending" : "Descending"}
                   >
                     {workOrderSort.direction === "asc" ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
                   </button>
                   <button
                     onClick={() => setPrintJob({ type: "workorders" })}
-                    className="font-body flex items-center gap-1.5 text-sm font-medium text-emerald-900 hover:text-emerald-700"
+                    className="font-body flex items-center gap-1.5 text-sm font-medium text-ink-900 hover:text-ink-700"
                   >
                     <Printer size={16} /> Print
                   </button>
@@ -9718,7 +9729,7 @@ function WineryDataTrackerInner() {
         ) : activeKey === "ferment" ? (
           <>
             <form onSubmit={addFermentLot} className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5 mb-6">
-              <h2 className="font-brand text-lg text-emerald-950 mb-1">Start a New Ferment</h2>
+              <h2 className="font-brand text-lg text-ink-950 mb-1">Start a New Ferment</h2>
               <p className="font-body text-xs text-stone-500 mb-3">
                 Add it once here — then log daily readings on the card below until it's done.
               </p>
@@ -9731,7 +9742,7 @@ function WineryDataTrackerInner() {
               <button
                 type="submit"
                 disabled={saving}
-                className="font-body mt-4 flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors"
+                className="font-body mt-4 flex items-center gap-2 bg-ink-900 hover:bg-ink-800 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors"
               >
                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
                 Start Ferment
@@ -9742,7 +9753,7 @@ function WineryDataTrackerInner() {
               <button
                 onClick={() => setFermentViewMode("overview")}
                 className={`font-body text-sm font-medium px-4 py-2 rounded-md border ${
-                  fermentViewMode === "overview" ? "bg-emerald-900 text-white border-emerald-900" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+                  fermentViewMode === "overview" ? "bg-ink-900 text-white border-ink-900" : "bg-white text-stone-600 border-stone-300 hover:border-ink-400"
                 }`}
               >
                 Overview
@@ -9750,7 +9761,7 @@ function WineryDataTrackerInner() {
               <button
                 onClick={() => setFermentViewMode("quick")}
                 className={`font-body text-sm font-medium px-4 py-2 rounded-md border ${
-                  fermentViewMode === "quick" ? "bg-emerald-900 text-white border-emerald-900" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+                  fermentViewMode === "quick" ? "bg-ink-900 text-white border-ink-900" : "bg-white text-stone-600 border-stone-300 hover:border-ink-400"
                 }`}
               >
                 Quick Log
@@ -9758,7 +9769,7 @@ function WineryDataTrackerInner() {
               <button
                 onClick={() => setFermentViewMode("detailed")}
                 className={`font-body text-sm font-medium px-4 py-2 rounded-md border ${
-                  fermentViewMode === "detailed" ? "bg-emerald-900 text-white border-emerald-900" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+                  fermentViewMode === "detailed" ? "bg-ink-900 text-white border-ink-900" : "bg-white text-stone-600 border-stone-300 hover:border-ink-400"
                 }`}
               >
                 Detailed View
@@ -9782,10 +9793,10 @@ function WineryDataTrackerInner() {
             {data.ferment.length > 0 && (
               <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5 mb-6">
                 <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
-                  <h2 className="font-brand text-lg text-emerald-950">Print Fermentation Log</h2>
+                  <h2 className="font-brand text-lg text-ink-950">Print Fermentation Log</h2>
                   <button
                     onClick={() => setPrintJob({ type: "ferment", from: fermentPrintFrom, to: fermentPrintTo, lotIds: fermentPrintLotIds })}
-                    className="font-body flex items-center gap-1.5 text-sm font-medium text-emerald-900 hover:text-emerald-700"
+                    className="font-body flex items-center gap-1.5 text-sm font-medium text-ink-900 hover:text-ink-700"
                   >
                     <Printer size={16} /> Print
                   </button>
@@ -9804,7 +9815,7 @@ function WineryDataTrackerInner() {
                           setFermentPrintLotIds((prev) => (selected ? prev.filter((id) => id !== lot.id) : [...prev, lot.id]))
                         }
                         className={`font-body text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                          selected ? "bg-emerald-800 text-white border-emerald-800" : "bg-white text-stone-600 border-stone-300 hover:border-emerald-400"
+                          selected ? "bg-ink-800 text-white border-ink-800" : "bg-white text-stone-600 border-stone-300 hover:border-ink-400"
                         }`}
                       >
                         {lot.tankId || "Untitled Tank"}
@@ -9831,7 +9842,7 @@ function WineryDataTrackerInner() {
             )}
 
             <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
-              <h2 className="font-brand text-lg text-emerald-950">Active Ferments</h2>
+              <h2 className="font-brand text-lg text-ink-950">Active Ferments</h2>
               <div className="flex items-center gap-2">
                 <span className="font-body text-xs text-stone-500">Sort by</span>
                 <select
@@ -9846,7 +9857,7 @@ function WineryDataTrackerInner() {
                 </select>
                 <button
                   onClick={() => setFermentSort((p) => ({ ...p, direction: p.direction === "asc" ? "desc" : "asc" }))}
-                  className="text-stone-500 hover:text-emerald-800 border border-stone-300 rounded p-1.5"
+                  className="text-stone-500 hover:text-ink-800 border border-stone-300 rounded p-1.5"
                   title={fermentSort.direction === "asc" ? "Ascending" : "Descending"}
                 >
                   {fermentSort.direction === "asc" ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
@@ -10033,7 +10044,7 @@ function WineryDataTrackerInner() {
               <div className="flex justify-end mb-3">
                 <button
                   onClick={() => setShowBulkImport((v) => !v)}
-                  className="font-body flex items-center gap-1.5 text-sm font-medium text-emerald-900 hover:text-emerald-700 border border-emerald-200 rounded-md px-3 py-1.5"
+                  className="font-body flex items-center gap-1.5 text-sm font-medium text-ink-900 hover:text-ink-700 border border-ink-200 rounded-md px-3 py-1.5"
                 >
                   <UploadCloud size={15} /> Import
                 </button>
@@ -10058,7 +10069,7 @@ function WineryDataTrackerInner() {
               />
             ) : (
               <form onSubmit={handleSubmit} className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5 mb-6">
-                <h2 className="font-brand text-lg text-emerald-950 mb-3">New {activeSection.label} Entry</h2>
+                <h2 className="font-brand text-lg text-ink-950 mb-3">New {activeSection.label} Entry</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {activeSection.fields.map((f) => (
                     <Field key={f.name} f={f} value={form[f.name]} onChange={(v) => handleChange(f.name, v)} blocksList={vineyardBlocks} onAddBlock={addVineyardBlock} clonesList={clones} onAddClone={addClone} associatesList={tastingAssociates} onAddAssociate={addAssociate} />
@@ -10068,7 +10079,7 @@ function WineryDataTrackerInner() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="font-body mt-4 flex items-center gap-2 bg-emerald-900 hover:bg-emerald-800 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors"
+                  className="font-body mt-4 flex items-center gap-2 bg-ink-900 hover:bg-ink-800 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors"
                 >
                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
                   Add Entry
@@ -10082,7 +10093,7 @@ function WineryDataTrackerInner() {
                 if (blockGroups.length === 0) return null;
                 return (
                   <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5 mb-4">
-                    <h2 className="font-brand text-lg text-emerald-950 mb-1">Ripening Curves</h2>
+                    <h2 className="font-brand text-lg text-ink-950 mb-1">Ripening Curves</h2>
                     <p className="font-body text-xs text-stone-500 mb-3">
                       Brix and pH over time, by block — shows up automatically once a block has 2 or more sample dates.
                     </p>
@@ -10114,7 +10125,7 @@ function WineryDataTrackerInner() {
                 onClick={() =>
                   setPrintJob({ type: "generic", key: activeKey, from: printRanges[activeKey]?.from || "", to: printRanges[activeKey]?.to || "" })
                 }
-                className="font-body flex items-center gap-1.5 text-sm font-medium text-emerald-900 hover:text-emerald-700"
+                className="font-body flex items-center gap-1.5 text-sm font-medium text-ink-900 hover:text-ink-700"
               >
                 <Printer size={16} /> Print
               </button>
@@ -10123,7 +10134,7 @@ function WineryDataTrackerInner() {
 
             <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
               <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
-                <h2 className="font-brand text-lg text-emerald-950">{activeSection.label} Log</h2>
+                <h2 className="font-brand text-lg text-ink-950">{activeSection.label} Log</h2>
                 <span className="font-body text-xs text-stone-500">
                   {(data[activeKey]?.length ?? 0)} entr{(data[activeKey]?.length ?? 0) === 1 ? "y" : "ies"}
                 </span>
@@ -10142,7 +10153,7 @@ function WineryDataTrackerInner() {
                             <th
                               key={f.name}
                               onClick={sortable ? () => toggleTableSort(activeKey, f.name) : undefined}
-                              className={`px-3 py-2 font-medium whitespace-nowrap ${sortable ? "cursor-pointer select-none hover:text-emerald-800" : ""}`}
+                              className={`px-3 py-2 font-medium whitespace-nowrap ${sortable ? "cursor-pointer select-none hover:text-ink-800" : ""}`}
                             >
                               <span className="inline-flex items-center gap-1">
                                 {f.label}
@@ -10164,7 +10175,7 @@ function WineryDataTrackerInner() {
                       {(tableSort[activeKey] ? sortRows(data[activeKey], tableSort[activeKey].field, tableSort[activeKey].direction) : data[activeKey]).map((row) => {
                         const isEditing = editingRow && editingRow.key === activeKey && editingRow.id === row.id;
                         return (
-                          <tr key={row.id} className={`border-t border-stone-100 ${isEditing ? "bg-emerald-50" : "hover:bg-stone-50"}`}>
+                          <tr key={row.id} className={`border-t border-stone-100 ${isEditing ? "bg-ink-50" : "hover:bg-stone-50"}`}>
                             {activeSection.fields.map((f) => (
                               <td key={f.name} className="px-2 py-2 align-top" style={{ minWidth: isEditing ? 130 : undefined }}>
                                 {isEditing ? (
@@ -10185,7 +10196,7 @@ function WineryDataTrackerInner() {
                             <td className="px-3 py-2">
                               {isEditing ? (
                                 <div className="flex items-center gap-2">
-                                  <button onClick={saveEditRow} className="text-emerald-700 hover:text-emerald-900" title="Save">
+                                  <button onClick={saveEditRow} className="text-ink-700 hover:text-ink-900" title="Save">
                                     <Check size={15} />
                                   </button>
                                   <button onClick={cancelEditRow} className="text-stone-400 hover:text-stone-600" title="Cancel">
@@ -10194,7 +10205,7 @@ function WineryDataTrackerInner() {
                                 </div>
                               ) : (
                                 <div className="flex items-center gap-2">
-                                  <button onClick={() => startEditRow(activeKey, row)} className="text-stone-400 hover:text-emerald-800" title="Edit">
+                                  <button onClick={() => startEditRow(activeKey, row)} className="text-stone-400 hover:text-ink-800" title="Edit">
                                     <Pencil size={14} />
                                   </button>
                                   <button onClick={() => handleDelete(row.id)} className="text-stone-400 hover:text-red-700" title="Delete entry">
@@ -10237,7 +10248,7 @@ function WineryDataTrackerInner() {
                   setConfirmRequest(null);
                 }}
                 className={`font-body text-sm px-3 py-1.5 rounded-md text-white font-medium ${
-                  confirmRequest.tone === "danger" ? "bg-red-700 hover:bg-red-800" : "bg-emerald-800 hover:bg-emerald-900"
+                  confirmRequest.tone === "danger" ? "bg-red-700 hover:bg-red-800" : "bg-ink-800 hover:bg-ink-900"
                 }`}
               >
                 {confirmRequest.confirmLabel}
@@ -10356,7 +10367,7 @@ function WineryDataTrackerInner() {
                 {sheet.bottleShotImage && (
                   <img src={sheet.bottleShotImage} alt={sheet.wineName} style={{ width: 140, height: 140, objectFit: "cover", borderRadius: 8, marginBottom: 12 }} />
                 )}
-                <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 26, fontWeight: 700, color: "#022c22", margin: "0 0 2px" }}>
+                <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 26, fontWeight: 700, color: "#1D1915", margin: "0 0 2px" }}>
                   {sheet.wineName || "Untitled Wine"}
                 </h1>
                 <p style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#78716c", margin: "0 0 16px" }}>
