@@ -480,6 +480,67 @@ const SIMPLE_SECTIONS = [
       { name: "notes", label: "Notes", type: "textarea", optional: true },
     ],
   },
+  {
+    key: "grapePricing",
+    label: "Grape Pricing",
+    icon: Grape,
+    sheetName: "Grape Pricing",
+    fields: [
+      { name: "variety", label: "Variety", type: "select", options: GRAPE_VARIETIES },
+      { name: "vintage", label: "Vintage", type: "text" },
+      { name: "pricePerTon", label: "Price per Ton ($)", type: "number" },
+      { name: "notes", label: "Notes", type: "textarea", optional: true },
+    ],
+  },
+  {
+    key: "packagingComponents",
+    label: "Packaging Components",
+    icon: Package,
+    sheetName: "Packaging Components",
+    fields: [
+      { name: "componentType", label: "Component Type", type: "select", options: ["Bottle", "Cork", "Wax", "Label", "Mussule"] },
+      { name: "name", label: "Name / Description", type: "text" },
+      { name: "costPerUnit", label: "Cost per Unit ($)", type: "number" },
+      { name: "notes", label: "Notes", type: "textarea", optional: true },
+    ],
+  },
+  {
+    key: "yearlySharedCosts",
+    label: "Yearly Shared Costs",
+    icon: DollarSign,
+    sheetName: "Yearly Shared Costs",
+    fields: [
+      { name: "year", label: "Year", type: "text" },
+      { name: "mathesonSpend", label: "Total Matheson Spend ($, gas & dry ice)", type: "number" },
+      { name: "newOakSpend", label: "Total New Oak Barrel Spend ($)", type: "number", optional: true },
+      { name: "notes", label: "Notes", type: "textarea", optional: true },
+    ],
+  },
+  {
+    // Summary fields only, for the table/export view — the granular inputs that produce these
+    // numbers (grape lines, packaging component picks, service rates) are saved on the same
+    // record too, just not listed here, since a table cell can't usefully show an array of
+    // grape varieties. The custom CogsCalculatorForm reads/writes the full record directly.
+    key: "cogsCalculations",
+    label: "Cost of Goods",
+    icon: Calculator,
+    sheetName: "Cost of Goods",
+    fields: [
+      { name: "wineName", label: "Wine Name", type: "text" },
+      { name: "vintage", label: "Vintage", type: "text" },
+      { name: "wineType", label: "Wine Type", type: "select", options: ["Still", "Sparkling"] },
+      { name: "totalCases", label: "Total Cases", type: "number" },
+      { name: "grapeCost", label: "Grape Cost ($)", type: "number" },
+      { name: "packagingCost", label: "Packaging Cost ($)", type: "number" },
+      { name: "bottlingCost", label: "Bottling Cost ($)", type: "number" },
+      { name: "filteringCost", label: "Filtering Cost ($)", type: "number" },
+      { name: "sharedAllocationCost", label: "Gas/Oak Allocation ($)", type: "number" },
+      { name: "totalCost", label: "Total Cost ($)", type: "number" },
+      { name: "costPerCase", label: "Cost per Case ($)", type: "number" },
+      { name: "costPerBottle", label: "Cost per Bottle ($)", type: "number" },
+      { name: "notes", label: "Notes", type: "textarea", optional: true },
+    ],
+  },
 ];
 
 // Work order fields shown when adding a new to-do
@@ -978,6 +1039,7 @@ const ALL_TABS = [
   SIMPLE_SECTIONS.find((s) => s.key === "labResults"),
   { key: "compliance", label: "Compliance", icon: Shield },
   { key: "aboutAlloro", label: "Team Resources", icon: BookOpen },
+  { key: "costOfGoods", label: "Cost of Goods", icon: Calculator },
   { key: "thoPayroll", label: "Payroll", icon: DollarSign },
   SIMPLE_SECTIONS.find((s) => s.key === "thoMileage"),
   SIMPLE_SECTIONS.find((s) => s.key === "thoExpenses"),
@@ -997,7 +1059,7 @@ const PERSISTENT_NAV_KEYS = ["home", "workorders"];
 const NAV_CATEGORIES = {
   vineyard: { label: "Vineyard", dotColor: "bg-lime-400", keys: ["fruitAnalysis", "harvest", "vineHealth"] },
   winery: { label: "Winery", dotColor: "bg-amber-400", keys: ["ferment", "barrels", "blending", "tanks", "bottling", "techSheetBuilder"] },
-  tho: { label: "Sales", dotColor: "bg-rose-400", keys: ["thoPayroll", "thoMileage", "thoExpenses", "aboutAlloro"] },
+  tho: { label: "Sales", dotColor: "bg-rose-400", keys: ["thoPayroll", "thoMileage", "thoExpenses", "aboutAlloro", "costOfGoods"] },
   data: { label: "Data", dotColor: "bg-sky-300", keys: ["labResults", "compliance", "calendar", "formulas", "backup"] },
 };
 
@@ -2579,9 +2641,307 @@ function RipeningChart({ block, entries }) {
   );
 }
 
-// ---------- Generic paste-to-import panel: paste CSV/tab-separated text with a header row,
-// matches columns to a section's fields by name or label (case/spacing insensitive), and shows
-// a preview before actually adding anything. ----------
+// ---------- Cost of Goods calculator: grape lines (supports blends), packaging picked from a
+// reusable component catalog, Still/Sparkling-specific bottling costs, and a live breakdown
+// computed with the same pure functions covered by the tests above — no separate, divergent
+// math lives in this component. ----------
+function CogsCalculatorForm({ grapePricing, packagingComponents, bottlingRecords, yearlySharedCosts, winePricing, onSubmit, saving }) {
+  const [wineName, setWineName] = useState("");
+  const [vintage, setVintage] = useState("");
+  const [wineType, setWineType] = useState("Still");
+  const [allocationYear, setAllocationYear] = useState("");
+  const emptyGrapeLine = () => ({ id: genId(), variety: "", tons: "", pricePerTon: "" });
+  const [grapeLines, setGrapeLines] = useState([emptyGrapeLine()]);
+  const [totalCases, setTotalCases] = useState("");
+  const [casesAutoFilled, setCasesAutoFilled] = useState(false);
+  const [bottleComponentId, setBottleComponentId] = useState("");
+  const [corkComponentId, setCorkComponentId] = useState("");
+  const [waxComponentId, setWaxComponentId] = useState("");
+  const [labelComponentId, setLabelComponentId] = useState("");
+  const [mussuleComponentId, setMussuleComponentId] = useState("");
+  const [bottlingRatePerCase, setBottlingRatePerCase] = useState("");
+  const [radiantRatePerCase, setRadiantRatePerCase] = useState("");
+  const [gallonsFiltered, setGallonsFiltered] = useState("");
+  const [crossflowRatePerGallon, setCrossflowRatePerGallon] = useState("");
+  const [notes, setNotes] = useState("");
+  const [error, setError] = useState("");
+
+  const pullBottledCases = () => {
+    if (!wineName.trim() || !vintage.trim()) return;
+    const found = lookupBottledCases(bottlingRecords, wineName, vintage);
+    if (found > 0) {
+      setTotalCases(String(found));
+      setCasesAutoFilled(true);
+    }
+  };
+
+  const updateGrapeLine = (id, field, value) => {
+    setGrapeLines((prev) =>
+      prev.map((line) => {
+        if (line.id !== id) return line;
+        const next = { ...line, [field]: value };
+        if (field === "variety" && vintage.trim()) {
+          const price = lookupGrapePrice(grapePricing, value, vintage);
+          next.pricePerTon = price != null ? String(price) : "";
+        }
+        return next;
+      })
+    );
+  };
+  const addGrapeLine = () => setGrapeLines((prev) => [...prev, emptyGrapeLine()]);
+  const removeGrapeLine = (id) => setGrapeLines((prev) => (prev.length > 1 ? prev.filter((l) => l.id !== id) : prev));
+
+  const switchWineType = (type) => {
+    setWineType(type);
+    // Clear whichever fields don't apply to the new type, so a leftover rate from before the
+    // switch can't silently sneak into a total it was never meant to be part of.
+    if (type === "Still") {
+      setRadiantRatePerCase("");
+      setMussuleComponentId("");
+    } else {
+      setBottlingRatePerCase("");
+    }
+  };
+
+  const bottleOptions = packagingComponents.filter((p) => p.componentType === "Bottle");
+  const corkOptions = packagingComponents.filter((p) => p.componentType === "Cork");
+  const waxOptions = packagingComponents.filter((p) => p.componentType === "Wax");
+  const labelOptions = packagingComponents.filter((p) => p.componentType === "Label");
+  const mussuleOptions = packagingComponents.filter((p) => p.componentType === "Mussule");
+
+  const mathesonAllocation = allocationYear ? computeYearlyPerCaseAllocation(yearlySharedCosts, bottlingRecords, allocationYear, "mathesonSpend") : 0;
+  const newOakAllocation = allocationYear ? computeYearlyPerCaseAllocation(yearlySharedCosts, bottlingRecords, allocationYear, "newOakSpend") : 0;
+
+  const preview = computeCogsBreakdown({
+    grapeLines, totalCases, wineType, packagingComponents,
+    bottleComponentId, corkComponentId, waxComponentId, labelComponentId, mussuleComponentId,
+    bottlingRatePerCase, radiantRatePerCase, gallonsFiltered, crossflowRatePerGallon,
+    mathesonPerCaseAllocation: mathesonAllocation, newOakPerCaseAllocation: newOakAllocation,
+  });
+
+  const matchingPrice = winePricing.find(
+    (w) => (w.wineName || "").trim().toLowerCase() === wineName.trim().toLowerCase() && String(w.vintage) === String(vintage)
+  );
+
+  const fmt = (n) => (n == null ? "—" : `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (!wineName.trim() || !vintage.trim()) {
+      setError('Please fill in "Wine Name" and "Vintage"');
+      return;
+    }
+    const validLines = grapeLines.filter((l) => l.variety && parseFloat(l.tons) > 0);
+    if (validLines.length === 0) {
+      setError("Add at least one grape line with a variety and tons");
+      return;
+    }
+    setError("");
+    onSubmit({
+      wineName: wineName.trim(),
+      vintage: vintage.trim(),
+      wineType,
+      grapeLines: validLines,
+      totalCases: preview.totalCases,
+      bottleComponentId, corkComponentId, waxComponentId, labelComponentId, mussuleComponentId,
+      bottlingRatePerCase, radiantRatePerCase, gallonsFiltered, crossflowRatePerGallon,
+      allocationYear,
+      grapeCost: preview.grapeCost,
+      packagingCost: preview.packagingCost,
+      bottlingCost: preview.bottlingCost,
+      filteringCost: preview.filteringCost,
+      sharedAllocationCost: preview.sharedAllocationCost,
+      totalCost: preview.totalCost,
+      costPerCase: preview.costPerCase,
+      costPerBottle: preview.costPerBottle,
+      notes,
+    });
+    // Reset for the next wine, rather than leaving this one's numbers sitting there inviting a
+    // half-edited duplicate.
+    setWineName(""); setVintage(""); setWineType("Still"); setAllocationYear("");
+    setGrapeLines([emptyGrapeLine()]); setTotalCases(""); setCasesAutoFilled(false);
+    setBottleComponentId(""); setCorkComponentId(""); setWaxComponentId(""); setLabelComponentId(""); setMussuleComponentId("");
+    setBottlingRatePerCase(""); setRadiantRatePerCase(""); setGallonsFiltered(""); setCrossflowRatePerGallon("");
+    setNotes("");
+  };
+
+  return (
+    <form onSubmit={submit} className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5 mb-6 space-y-5">
+      <div>
+        <h2 className="font-brand text-lg text-ink-950 mb-1">New Cost of Goods Calculation</h2>
+        <p className="font-body text-xs text-stone-500">Every field feeds the breakdown below live — see exactly where the cost comes from before you save it.</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label className="font-body block text-xs font-medium text-stone-600 mb-1">Wine Name</label>
+          <input type="text" value={wineName} onChange={(e) => setWineName(e.target.value)} onBlur={pullBottledCases}
+            className="font-body w-full border border-stone-300 rounded-md px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-800" />
+        </div>
+        <div>
+          <label className="font-body block text-xs font-medium text-stone-600 mb-1">Vintage</label>
+          <input type="text" value={vintage} onChange={(e) => setVintage(e.target.value)} onBlur={pullBottledCases}
+            className="font-body border border-stone-300 rounded-md px-2.5 py-1.5 text-sm w-full max-w-[140px] focus:outline-none focus:ring-2 focus:ring-ink-800" />
+        </div>
+        <div>
+          <label className="font-body block text-xs font-medium text-stone-600 mb-1">Wine Type</label>
+          <div className="flex gap-2">
+            {["Still", "Sparkling"].map((t) => (
+              <button key={t} type="button" onClick={() => switchWineType(t)}
+                className={`font-body text-sm px-3 py-1.5 rounded-md border ${wineType === t ? "bg-ink-900 text-white border-ink-900" : "bg-white text-stone-600 border-stone-300"}`}>
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <p className="font-body text-xs font-semibold text-stone-600">Grapes (Alloro Vineyard → Alloro Winery)</p>
+          <button type="button" onClick={addGrapeLine} className="font-body text-xs text-ink-700 underline">+ Add variety</button>
+        </div>
+        <div className="space-y-2">
+          {grapeLines.map((line) => (
+            <div key={line.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center">
+              <select value={line.variety} onChange={(e) => updateGrapeLine(line.id, "variety", e.target.value)}
+                className="font-body border border-stone-300 rounded-md px-2.5 py-1.5 text-sm">
+                <option value="">Variety…</option>
+                {GRAPE_VARIETIES.map((v) => <option key={v} value={v}>{v}</option>)}
+              </select>
+              <input type="number" placeholder="Tons" value={line.tons} onChange={(e) => updateGrapeLine(line.id, "tons", e.target.value)}
+                className="font-body border border-stone-300 rounded-md px-2.5 py-1.5 text-sm w-24" />
+              <input type="number" placeholder="$/ton" value={line.pricePerTon} onChange={(e) => updateGrapeLine(line.id, "pricePerTon", e.target.value)}
+                className="font-body border border-stone-300 rounded-md px-2.5 py-1.5 text-sm w-24" title={line.pricePerTon === "" && line.variety ? "No Grape Pricing entry found for this variety/vintage — enter manually" : ""} />
+              <button type="button" onClick={() => removeGrapeLine(line.id)} className="text-stone-400 hover:text-red-700"><X size={16} /></button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="font-body block text-xs font-medium text-stone-600 mb-1">Total Cases</label>
+          <input type="number" value={totalCases} onChange={(e) => { setTotalCases(e.target.value); setCasesAutoFilled(false); }}
+            className="font-body border border-stone-300 rounded-md px-2.5 py-1.5 text-sm w-full max-w-[140px] focus:outline-none focus:ring-2 focus:ring-ink-800" />
+          {casesAutoFilled && <p className="font-body text-xs text-stone-400 mt-1">Pulled from Bottling records — edit if this needs adjusting.</p>}
+        </div>
+        <div>
+          <label className="font-body block text-xs font-medium text-stone-600 mb-1">Year (for Matheson / new oak allocation)</label>
+          <select value={allocationYear} onChange={(e) => setAllocationYear(e.target.value)}
+            className="font-body w-full max-w-[160px] border border-stone-300 rounded-md px-2.5 py-1.5 text-sm">
+            <option value="">None</option>
+            {yearlySharedCosts.map((y) => <option key={y.id} value={y.year}>{y.year}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-stone-100">
+        <div>
+          <label className="font-body block text-xs font-medium text-stone-600 mb-1">Bottle</label>
+          <select value={bottleComponentId} onChange={(e) => setBottleComponentId(e.target.value)} className="font-body w-full border border-stone-300 rounded-md px-2.5 py-1.5 text-sm">
+            <option value="">None</option>
+            {bottleOptions.map((c) => <option key={c.id} value={c.id}>{c.name} (${c.costPerUnit})</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="font-body block text-xs font-medium text-stone-600 mb-1">Cork</label>
+          <select value={corkComponentId} onChange={(e) => setCorkComponentId(e.target.value)} className="font-body w-full border border-stone-300 rounded-md px-2.5 py-1.5 text-sm">
+            <option value="">None</option>
+            {corkOptions.map((c) => <option key={c.id} value={c.id}>{c.name} (${c.costPerUnit})</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="font-body block text-xs font-medium text-stone-600 mb-1">Wax</label>
+          <select value={waxComponentId} onChange={(e) => setWaxComponentId(e.target.value)} className="font-body w-full border border-stone-300 rounded-md px-2.5 py-1.5 text-sm">
+            <option value="">None</option>
+            {waxOptions.map((c) => <option key={c.id} value={c.id}>{c.name} (${c.costPerUnit})</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="font-body block text-xs font-medium text-stone-600 mb-1">Label</label>
+          <select value={labelComponentId} onChange={(e) => setLabelComponentId(e.target.value)} className="font-body w-full border border-stone-300 rounded-md px-2.5 py-1.5 text-sm">
+            <option value="">None</option>
+            {labelOptions.map((c) => <option key={c.id} value={c.id}>{c.name} (${c.costPerUnit})</option>)}
+          </select>
+        </div>
+        {wineType === "Sparkling" && (
+          <div>
+            <label className="font-body block text-xs font-medium text-stone-600 mb-1">Mussule</label>
+            <select value={mussuleComponentId} onChange={(e) => setMussuleComponentId(e.target.value)} className="font-body w-full border border-stone-300 rounded-md px-2.5 py-1.5 text-sm">
+              <option value="">None</option>
+              {mussuleOptions.map((c) => <option key={c.id} value={c.id}>{c.name} (${c.costPerUnit})</option>)}
+            </select>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-stone-100">
+        {wineType === "Still" ? (
+          <div>
+            <label className="font-body block text-xs font-medium text-stone-600 mb-1">Casteel Bottling Rate ($/case)</label>
+            <input type="number" value={bottlingRatePerCase} onChange={(e) => setBottlingRatePerCase(e.target.value)}
+              className="font-body border border-stone-300 rounded-md px-2.5 py-1.5 text-sm w-full max-w-[140px]" />
+          </div>
+        ) : (
+          <div>
+            <label className="font-body block text-xs font-medium text-stone-600 mb-1">Radiant Sparkling Rate ($/case, disgorgement + bottling)</label>
+            <input type="number" value={radiantRatePerCase} onChange={(e) => setRadiantRatePerCase(e.target.value)}
+              className="font-body border border-stone-300 rounded-md px-2.5 py-1.5 text-sm w-full max-w-[140px]" />
+          </div>
+        )}
+        <div className="flex gap-3">
+          <div>
+            <label className="font-body block text-xs font-medium text-stone-600 mb-1">Gallons Filtered</label>
+            <input type="number" value={gallonsFiltered} onChange={(e) => setGallonsFiltered(e.target.value)}
+              className="font-body border border-stone-300 rounded-md px-2.5 py-1.5 text-sm w-full max-w-[120px]" />
+          </div>
+          <div>
+            <label className="font-body block text-xs font-medium text-stone-600 mb-1">Willamette Crossflow ($/gal)</label>
+            <input type="number" value={crossflowRatePerGallon} onChange={(e) => setCrossflowRatePerGallon(e.target.value)}
+              className="font-body border border-stone-300 rounded-md px-2.5 py-1.5 text-sm w-full max-w-[120px]" />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label className="font-body block text-xs font-medium text-stone-600 mb-1">Notes</label>
+        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
+          className="font-body w-full border border-stone-300 rounded-md px-2.5 py-1.5 text-sm" />
+      </div>
+
+      <div className="bg-stone-50 rounded-lg p-4 space-y-1.5">
+        <p className="font-body text-xs font-semibold text-stone-600 mb-2">Live Breakdown</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 font-body text-sm text-stone-700">
+          <p>Grapes: {fmt(preview.grapeCost)}</p>
+          <p>Packaging: {fmt(preview.packagingCost)}</p>
+          <p>Bottling: {fmt(preview.bottlingCost)}</p>
+          <p>Filtering: {fmt(preview.filteringCost)}</p>
+          <p>Gas/Oak allocation: {fmt(preview.sharedAllocationCost)}</p>
+        </div>
+        <div className="pt-2 mt-2 border-t border-stone-200 flex flex-wrap items-baseline gap-x-6 gap-y-1">
+          <p className="font-brand text-xl text-ink-950">{fmt(preview.totalCost)} <span className="font-body text-xs text-stone-500 font-normal">total</span></p>
+          <p className="font-body text-sm text-stone-700">{fmt(preview.costPerCase)} <span className="text-xs text-stone-500">/ case</span></p>
+          <p className="font-body text-sm text-stone-700">{fmt(preview.costPerBottle)} <span className="text-xs text-stone-500">/ bottle</span></p>
+        </div>
+        {matchingPrice && preview.costPerBottle != null && (
+          <p className="font-body text-xs text-stone-500 pt-1">
+            Wine Pricing lists this at ${matchingPrice.retailPrice || matchingPrice.wholesalePrice} — that's a margin of{" "}
+            {fmt((parseFloat(matchingPrice.retailPrice || matchingPrice.wholesalePrice) || 0) - preview.costPerBottle)} per bottle.
+          </p>
+        )}
+      </div>
+
+      {error && <p className="font-body text-sm text-red-700">{error}</p>}
+      <button type="submit" disabled={saving}
+        className="font-body flex items-center gap-2 bg-ink-900 hover:bg-ink-800 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors">
+        {saving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+        Save Calculation
+      </button>
+    </form>
+  );
+}
+
 // ---------- Harvest Tonnage batch entry: shared block/variety/date/clone/weigh master once,
 // then as many bin weights as needed — matches weighing multiple bins from the same pick. ----------
 function HarvestBatchEntryForm({ fields, onSubmit, saving, vineyardBlocks, onAddBlock, clones, onAddClone, defaultTareWeight, onUpdateDefaultTareWeight, currentGDD }) {
@@ -3988,6 +4348,84 @@ function ttbFilingFrequencyHint(frequency) {
   return "Annual filers: due January 15 of the year following the filing year.";
 }
 
+// ---------- Cost of Goods calculator — pure computation functions, kept separate from the UI
+// so the actual math can be tested directly with real numbers before anything touches a screen.
+// ----------
+
+// A shared yearly cost (Matheson gas/dry-ice, new oak barrels) divided across actual cases
+// bottled that year — computed live from real Bottling records every time, never stored, so it
+// can't go stale as more bottling records get added throughout the year.
+function computeYearlyPerCaseAllocation(yearlySharedCosts, bottlingRecords, year, spendField) {
+  const yearRecord = yearlySharedCosts.find((y) => String(y.year) === String(year));
+  const totalSpend = parseFloat(yearRecord?.[spendField]) || 0;
+  if (totalSpend === 0) return 0;
+  const totalCasesThatYear = bottlingRecords
+    .filter((b) => b.date && b.date.slice(0, 4) === String(year))
+    .reduce((sum, b) => sum + (parseFloat(b.cases) || 0), 0);
+  if (totalCasesThatYear === 0) return 0;
+  return totalSpend / totalCasesThatYear;
+}
+
+// Total cases already bottled for a specific wine + vintage, summing across multiple bottling
+// batches if there's more than one (e.g. bottled in two separate runs).
+function lookupBottledCases(bottlingRecords, wineName, vintage) {
+  return bottlingRecords
+    .filter((b) => (b.wineName || "").trim().toLowerCase() === (wineName || "").trim().toLowerCase() && String(b.vintage) === String(vintage))
+    .reduce((sum, b) => sum + (parseFloat(b.cases) || 0), 0);
+}
+
+// Price/ton for a variety + vintage from Grape Pricing. Returns null (not 0) when there's no
+// match, so the caller can tell "no data entered yet" apart from "genuinely free grapes" — a
+// silent $0 here would quietly understate every wine using that variety.
+function lookupGrapePrice(grapePricing, variety, vintage) {
+  const match = grapePricing.find((g) => g.variety === variety && String(g.vintage) === String(vintage));
+  return match ? parseFloat(match.pricePerTon) || 0 : null;
+}
+
+// The core calculation. Never rounds internally — only the caller displaying the result rounds,
+// so small per-line rounding can't compound across grape lines, packaging, and bottling into a
+// meaningfully wrong total.
+function computeCogsBreakdown({
+  grapeLines, totalCases, wineType, packagingComponents,
+  bottleComponentId, corkComponentId, waxComponentId, labelComponentId, mussuleComponentId,
+  bottlingRatePerCase, radiantRatePerCase, gallonsFiltered, crossflowRatePerGallon,
+  mathesonPerCaseAllocation, newOakPerCaseAllocation,
+}) {
+  const cases = parseFloat(totalCases) || 0;
+  const totalBottles = cases * 12;
+
+  const grapeCost = (grapeLines || []).reduce((sum, line) => {
+    const tons = parseFloat(line.tons) || 0;
+    const price = parseFloat(line.pricePerTon) || 0;
+    return sum + tons * price;
+  }, 0);
+
+  const findComponentCost = (id) => {
+    if (!id) return 0;
+    const c = (packagingComponents || []).find((p) => p.id === id);
+    return c ? parseFloat(c.costPerUnit) || 0 : 0;
+  };
+  const perBottlePackaging =
+    findComponentCost(bottleComponentId) +
+    findComponentCost(corkComponentId) +
+    findComponentCost(waxComponentId) +
+    findComponentCost(labelComponentId) +
+    (wineType === "Sparkling" ? findComponentCost(mussuleComponentId) : 0);
+  const packagingCost = perBottlePackaging * totalBottles;
+
+  const bottlingCost = cases * (wineType === "Sparkling" ? (parseFloat(radiantRatePerCase) || 0) : (parseFloat(bottlingRatePerCase) || 0));
+
+  const filteringCost = (parseFloat(gallonsFiltered) || 0) * (parseFloat(crossflowRatePerGallon) || 0);
+
+  const sharedAllocationCost = cases * ((mathesonPerCaseAllocation || 0) + (newOakPerCaseAllocation || 0));
+
+  const totalCost = grapeCost + packagingCost + bottlingCost + filteringCost + sharedAllocationCost;
+  const costPerCase = cases > 0 ? totalCost / cases : null;
+  const costPerBottle = totalBottles > 0 ? totalCost / totalBottles : null;
+
+  return { grapeCost, packagingCost, bottlingCost, filteringCost, sharedAllocationCost, totalCost, costPerCase, costPerBottle, totalBottles, totalCases: cases };
+}
+
 // Flags states with shipments logged but no currently-valid permit on file — a flag to
 // investigate, not proof of an actual violation.
 function complianceConflicts(shipments, permits) {
@@ -4212,6 +4650,142 @@ function ComplianceTab({ data, onAddThoEntry, onUpdateThoEntry, onDeleteThoEntry
             confirmAction={confirmAction}
           />
         </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- Cost of Goods: the calculator itself plus its three supporting reference lists,
+// as internal sub-tabs on one page — same organizing pattern as Compliance. ----------
+function CostOfGoodsTab({ data, onAddThoEntry, onUpdateThoEntry, onDeleteThoEntry, confirmAction }) {
+  const [subTab, setSubTab] = useState("calculator");
+  const grapePricingFields = SIMPLE_SECTIONS.find((s) => s.key === "grapePricing").fields;
+  const packagingFields = SIMPLE_SECTIONS.find((s) => s.key === "packagingComponents").fields;
+  const yearlyFields = SIMPLE_SECTIONS.find((s) => s.key === "yearlySharedCosts").fields;
+
+  const sortedCalculations = [...data.cogsCalculations].sort((a, b) => {
+    const byName = (a.wineName || "").localeCompare(b.wineName || "");
+    if (byName !== 0) return byName;
+    return (b.vintage || "").localeCompare(a.vintage || "");
+  });
+  const sortedGrapePricing = [...data.grapePricing].sort((a, b) => (b.vintage || "").localeCompare(a.vintage || "") || a.variety.localeCompare(b.variety));
+  const sortedPackaging = [...data.packagingComponents].sort((a, b) => a.componentType.localeCompare(b.componentType));
+  const sortedYearly = [...data.yearlySharedCosts].sort((a, b) => (b.year || "").localeCompare(a.year || ""));
+
+  const SUB_TABS = [
+    { key: "calculator", label: "Calculator" },
+    { key: "grapePricing", label: "Grape Pricing" },
+    { key: "packaging", label: "Packaging Components" },
+    { key: "yearly", label: "Yearly Shared Costs" },
+  ];
+
+  const fmt = (n) => (n == null || n === "" ? "—" : `$${parseFloat(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-6 flex-wrap">
+        {SUB_TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setSubTab(t.key)}
+            className={`font-body text-sm font-medium px-4 py-2 rounded-md border ${
+              subTab === t.key ? "bg-ink-900 text-white border-ink-900" : "bg-white text-stone-600 border-stone-300 hover:border-ink-400"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {subTab === "calculator" ? (
+        <div>
+          <CogsCalculatorForm
+            grapePricing={data.grapePricing}
+            packagingComponents={data.packagingComponents}
+            bottlingRecords={data.bottling}
+            yearlySharedCosts={data.yearlySharedCosts}
+            winePricing={data.winePricing}
+            saving={false}
+            onSubmit={(entry) => onAddThoEntry("cogsCalculations", entry)}
+          />
+
+          <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
+            <div className="px-4 py-3 border-b border-stone-100">
+              <p className="font-body text-sm font-medium text-stone-700">Saved Calculations ({sortedCalculations.length})</p>
+            </div>
+            {sortedCalculations.length === 0 ? (
+              <p className="font-body text-sm text-stone-500 p-6 text-center">No calculations saved yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm font-body">
+                  <thead>
+                    <tr className="border-b border-stone-200 text-left text-xs text-stone-500">
+                      <th className="px-4 py-2">Wine</th>
+                      <th className="px-4 py-2">Vintage</th>
+                      <th className="px-4 py-2">Type</th>
+                      <th className="px-4 py-2">Cases</th>
+                      <th className="px-4 py-2">Total Cost</th>
+                      <th className="px-4 py-2">/ Case</th>
+                      <th className="px-4 py-2">/ Bottle</th>
+                      <th className="px-4 py-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedCalculations.map((c) => (
+                      <tr key={c.id} className="border-b border-stone-100">
+                        <td className="px-4 py-2">{c.wineName}</td>
+                        <td className="px-4 py-2">{c.vintage}</td>
+                        <td className="px-4 py-2">{c.wineType}</td>
+                        <td className="px-4 py-2">{c.totalCases}</td>
+                        <td className="px-4 py-2">{fmt(c.totalCost)}</td>
+                        <td className="px-4 py-2">{fmt(c.costPerCase)}</td>
+                        <td className="px-4 py-2 font-medium text-ink-900">{fmt(c.costPerBottle)}</td>
+                        <td className="px-4 py-2 text-right">
+                          <button
+                            onClick={() => confirmAction("Delete this calculation? This can't be undone.", () => onDeleteThoEntry("cogsCalculations", c.id))}
+                            className="text-stone-400 hover:text-red-700"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : subTab === "grapePricing" ? (
+        <SimpleDataPanel
+          title="Grape Pricing"
+          fields={grapePricingFields}
+          rows={sortedGrapePricing}
+          onAdd={(entry) => onAddThoEntry("grapePricing", entry)}
+          onUpdate={(id, changes) => onUpdateThoEntry("grapePricing", id, changes)}
+          onDelete={(id) => onDeleteThoEntry("grapePricing", id)}
+          confirmAction={confirmAction}
+        />
+      ) : subTab === "packaging" ? (
+        <SimpleDataPanel
+          title="Packaging Components"
+          fields={packagingFields}
+          rows={sortedPackaging}
+          onAdd={(entry) => onAddThoEntry("packagingComponents", entry)}
+          onUpdate={(id, changes) => onUpdateThoEntry("packagingComponents", id, changes)}
+          onDelete={(id) => onDeleteThoEntry("packagingComponents", id)}
+          confirmAction={confirmAction}
+        />
+      ) : (
+        <SimpleDataPanel
+          title="Yearly Shared Costs"
+          fields={yearlyFields}
+          rows={sortedYearly}
+          onAdd={(entry) => onAddThoEntry("yearlySharedCosts", entry)}
+          onUpdate={(id, changes) => onUpdateThoEntry("yearlySharedCosts", id, changes)}
+          onDelete={(id) => onDeleteThoEntry("yearlySharedCosts", id)}
+          confirmAction={confirmAction}
+        />
       )}
     </div>
   );
@@ -8611,6 +9185,34 @@ function WineryDataTrackerInner() {
       }
 
       try {
+        const res = await storage.get("grapePricing", true);
+        results.grapePricing = res ? JSON.parse(res.value) : [];
+      } catch {
+        results.grapePricing = [];
+      }
+
+      try {
+        const res = await storage.get("packagingComponents", true);
+        results.packagingComponents = res ? JSON.parse(res.value) : [];
+      } catch {
+        results.packagingComponents = [];
+      }
+
+      try {
+        const res = await storage.get("yearlySharedCosts", true);
+        results.yearlySharedCosts = res ? JSON.parse(res.value) : [];
+      } catch {
+        results.yearlySharedCosts = [];
+      }
+
+      try {
+        const res = await storage.get("cogsCalculations", true);
+        results.cogsCalculations = res ? JSON.parse(res.value) : [];
+      } catch {
+        results.cogsCalculations = [];
+      }
+
+      try {
         const res = await storage.get("ttb_filing_frequency", true);
         if (res) setTtbFilingFrequency(res.value);
       } catch {
@@ -10917,6 +11519,14 @@ function WineryDataTrackerInner() {
             onDeleteThoEntry={deleteThoEntry}
             confirmAction={confirmAction}
             ttbFilingFrequency={ttbFilingFrequency}
+          />
+        ) : activeKey === "costOfGoods" ? (
+          <CostOfGoodsTab
+            data={data}
+            onAddThoEntry={addThoEntry}
+            onUpdateThoEntry={updateThoEntry}
+            onDeleteThoEntry={deleteThoEntry}
+            confirmAction={confirmAction}
           />
         ) : activeKey === "calendar" ? (
           <MasterCalendar data={data} />
