@@ -190,6 +190,7 @@ const SIMPLE_SECTIONS = [
       { name: "netTons", label: "Net Tons", type: "number", optional: true },
       { name: "netLbs", label: "Net Lbs", type: "number", optional: true },
       { name: "weighMaster", label: "Weigh Master", type: "select", options: CREW_MEMBERS },
+      { name: "gddAtHarvest", label: "GDD at Harvest", type: "number", optional: true },
       { name: "notes", label: "Notes", type: "textarea" },
     ],
   },
@@ -2583,7 +2584,7 @@ function RipeningChart({ block, entries }) {
 // a preview before actually adding anything. ----------
 // ---------- Harvest Tonnage batch entry: shared block/variety/date/clone/weigh master once,
 // then as many bin weights as needed — matches weighing multiple bins from the same pick. ----------
-function HarvestBatchEntryForm({ fields, onSubmit, saving, vineyardBlocks, onAddBlock, clones, onAddClone, defaultTareWeight, onUpdateDefaultTareWeight }) {
+function HarvestBatchEntryForm({ fields, onSubmit, saving, vineyardBlocks, onAddBlock, clones, onAddClone, defaultTareWeight, onUpdateDefaultTareWeight, currentGDD }) {
   const headerFieldNames = ["date", "block", "variety", "clone", "weighMaster", "notes"];
   const headerFields = fields.filter((f) => headerFieldNames.includes(f.name));
 
@@ -2594,6 +2595,15 @@ function HarvestBatchEntryForm({ fields, onSubmit, saving, vineyardBlocks, onAdd
     });
     return initial;
   });
+  // Keeping this as its own checkbox state (rather than just checking header.gddAtHarvest) means
+  // unchecking the box cleanly clears the value instead of leaving a stale number behind if the
+  // live GDD figure changes between checking the box and hitting submit.
+  const [logGDD, setLogGDD] = useState(false);
+  const toggleLogGDD = () => {
+    const next = !logGDD;
+    setLogGDD(next);
+    setHeader((p) => ({ ...p, gddAtHarvest: next ? (currentGDD?.total ?? "") : "" }));
+  };
   const emptyBin = () => ({ id: genId(), tons: "", lbs: "", tareWeight: defaultTareWeight || "", netTons: "", netLbs: "" });
   const [bins, setBins] = useState([emptyBin()]);
   const [error, setError] = useState("");
@@ -2645,6 +2655,10 @@ function HarvestBatchEntryForm({ fields, onSubmit, saving, vineyardBlocks, onAdd
     setError("");
     onSubmit(header, filledBins);
     setBins([emptyBin()]);
+    // Reset explicitly rather than letting it carry over — otherwise a checked box from this
+    // batch could silently attach a stale GDD number to the next, unrelated batch.
+    setLogGDD(false);
+    setHeader((p) => ({ ...p, gddAtHarvest: "" }));
   };
 
   return (
@@ -2667,6 +2681,13 @@ function HarvestBatchEntryForm({ fields, onSubmit, saving, vineyardBlocks, onAdd
           />
         ))}
       </div>
+
+      <label className="font-body flex items-center gap-2 text-sm text-stone-700 mb-4 pb-4 border-b border-stone-100">
+        <input type="checkbox" checked={logGDD} onChange={toggleLogGDD} disabled={currentGDD == null} className="rounded border-stone-300" />
+        {currentGDD != null
+          ? `Log current season GDD (${currentGDD.total.toLocaleString()}) with this entry`
+          : "Log current season GDD with this entry (unavailable — weather hasn't loaded yet)"}
+      </label>
 
       <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
         <p className="font-body text-xs font-semibold text-stone-600">Bin Weights</p>
@@ -6763,130 +6784,8 @@ function BarrelsTab({ data, onAddBarrel, onBulkAdd, onFillBarrel, onEmptyBarrel,
   );
 }
 
-function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, editWorkOrderForm, editWorkOrderChange, startEditWorkOrder, saveEditWorkOrder, cancelEditWorkOrder, duplicateWorkOrder, saveAsTemplate, lotNames, onRegisterLotName, onLogWeather, sprayPrograms, onAddSprayProgram, vineyardTaskTypes, wineryTaskTypes, onAddVineyardTaskType, onAddWineryTaskType }) {
-  const [weather, setWeather] = useState(null);
-  const [gdd, setGdd] = useState(null);
-  const [weatherError, setWeatherError] = useState("");
-  const [stationObs, setStationObs] = useState(null);
-  const [stationObsError, setStationObsError] = useState("");
+function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, editWorkOrderForm, editWorkOrderChange, startEditWorkOrder, saveEditWorkOrder, cancelEditWorkOrder, duplicateWorkOrder, saveAsTemplate, lotNames, onRegisterLotName, onLogWeather, sprayPrograms, onAddSprayProgram, vineyardTaskTypes, wineryTaskTypes, onAddVineyardTaskType, onAddWineryTaskType, weather, gdd, weatherError, stationObs, stationObsError, weatherLoading, onRetryWeather }) {
   const [gddCompareVariety, setGddCompareVariety] = useState("");
-  const [weatherLoading, setWeatherLoading] = useState(true);
-  const [retryCount, setRetryCount] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setWeatherLoading(true);
-      setWeatherError("");
-      try {
-        const { lat, lon, tz } = HOME_COORDS;
-        const forecastUrl =
-          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-          `&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,shortwave_radiation` +
-          `&hourly=soil_moisture_0_to_1cm,soil_moisture_9_to_27cm` +
-          `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,sunrise,sunset` +
-          `&past_days=7&forecast_days=6&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=${encodeURIComponent(tz)}`;
-        const res = await fetch(forecastUrl);
-        if (!res.ok) {
-          let reason = `HTTP ${res.status}`;
-          try {
-            const errJson = await res.json();
-            if (errJson?.reason) reason = errJson.reason;
-          } catch {
-            // response wasn't JSON — stick with the HTTP status
-          }
-          throw new Error(reason);
-        }
-        const json = await res.json();
-        if (cancelled) return;
-        setWeather(json);
-
-        // Real ground-station reading from the nearest NWS/METAR station (KMMV), separate from
-        // the Open-Meteo forecast call above — this is what actually answers "what is it doing
-        // right now at the airport" rather than a modeled estimate for a lat/lon. Failure here
-        // doesn't block the rest of the dashboard; current conditions just fall back to the
-        // Open-Meteo modeled values already being fetched.
-        try {
-          const obsRes = await fetch(`https://api.weather.gov/stations/${HOME_STATION_ID}/observations/latest`);
-          if (obsRes.ok) {
-            const obsJson = await obsRes.json();
-            if (!cancelled) {
-              setStationObs(obsJson?.properties || null);
-              setStationObsError("");
-            }
-          } else if (!cancelled) {
-            setStationObsError(`Station data unavailable (HTTP ${obsRes.status}) — showing modeled estimate instead.`);
-          }
-        } catch {
-          if (!cancelled) setStationObsError("Station data unavailable — showing modeled estimate instead.");
-        }
-
-        // Growing Degree Days (base 50°F), summed from April 1 through today.
-        // The live forecast call above only reaches ~7 days into the past (Open-Meteo caps
-        // past_days well short of a full growing season), so on its own it silently under-counts
-        // by months once the season's underway. The dedicated Archive API accepts an arbitrary
-        // start_date/end_date and covers the rest of the season — it just runs a few days behind
-        // real-time, so we combine it with the recent-days data already fetched above to close
-        // that gap and get a complete, accurate, genuinely-updates-every-day total.
-        const year = new Date().getFullYear();
-        const seasonStart = `${year}-04-01`;
-        const todayStr = todayInTimezone(tz);
-        const byDate = {};
-        const recentTimes = json.daily?.time || [];
-        const recentMaxes = json.daily?.temperature_2m_max || [];
-        const recentMins = json.daily?.temperature_2m_min || [];
-        recentTimes.forEach((d, i) => {
-          if (d >= seasonStart && d <= todayStr && recentMaxes[i] != null && recentMins[i] != null) {
-            byDate[d] = { max: recentMaxes[i], min: recentMins[i] };
-          }
-        });
-
-        try {
-          const archiveEndDate = recentTimes.length > 0 ? recentTimes[0] : todayStr; // day before the live call's earliest day
-          if (seasonStart < archiveEndDate) {
-            const archiveUrl =
-              `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}` +
-              `&start_date=${seasonStart}&end_date=${archiveEndDate}` +
-              `&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=${encodeURIComponent(tz)}`;
-            const archiveRes = await fetch(archiveUrl);
-            if (archiveRes.ok) {
-              const archiveJson = await archiveRes.json();
-              const aTimes = archiveJson.daily?.time || [];
-              const aMaxes = archiveJson.daily?.temperature_2m_max || [];
-              const aMins = archiveJson.daily?.temperature_2m_min || [];
-              aTimes.forEach((d, i) => {
-                if (!byDate[d] && aMaxes[i] != null && aMins[i] != null) {
-                  byDate[d] = { max: aMaxes[i], min: aMins[i] };
-                }
-              });
-            }
-          }
-        } catch {
-          // Archive call failed — GDD will just be based on the recent-days data above instead
-          // of silently showing nothing.
-        }
-
-        let total = 0;
-        let daysCounted = 0;
-        Object.values(byDate).forEach(({ max, min }) => {
-          const avg = (max + min) / 2;
-          total += Math.max(0, avg - 50);
-          daysCounted += 1;
-        });
-        setGdd({ total: Math.round(total), daysCounted, seasonStart });
-      } catch (err) {
-        if (!cancelled) {
-          const detail = err?.message || err?.name || "Unknown error";
-          setWeatherError(`Couldn't load weather right now (${detail}).`);
-        }
-      } finally {
-        if (!cancelled) setWeatherLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [retryCount]);
 
   const today = todayISO();
   const todaysOrders = data.workorders.filter((o) => o.date === today && o.status !== "Complete");
@@ -6982,7 +6881,7 @@ function HomeTab({ data, toggleWorkOrder, deleteWorkOrder, editingWorkOrderId, e
           <div className="py-4 text-center">
             <p className="font-body text-sm text-stone-500 mb-2">{weatherError}</p>
             <button
-              onClick={() => setRetryCount((n) => n + 1)}
+              onClick={onRetryWeather}
               className="font-body text-sm font-medium text-ink-800 hover:text-ink-900 underline"
             >
               Try again
@@ -8390,6 +8289,132 @@ function WineryDataTrackerInner() {
   const [defaultTareWeight, setDefaultTareWeight] = useState("");
   const [alloroStory, setAlloroStory] = useState("");
   const [wineryName, setWineryName] = useState("");
+  // Lifted from HomeTab so the current-season GDD figure can also be pulled into Harvest Tonnage
+  // entries (the "log current GDD with this entry" checkbox) — both places now read the exact
+  // same live number instead of computing it twice.
+  const [weather, setWeather] = useState(null);
+  const [gdd, setGdd] = useState(null);
+  const [weatherError, setWeatherError] = useState("");
+  const [stationObs, setStationObs] = useState(null);
+  const [stationObsError, setStationObsError] = useState("");
+  const [weatherLoading, setWeatherLoading] = useState(true);
+  const [weatherRetryCount, setWeatherRetryCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setWeatherLoading(true);
+      setWeatherError("");
+      try {
+        const { lat, lon, tz } = HOME_COORDS;
+        const forecastUrl =
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+          `&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,shortwave_radiation` +
+          `&hourly=soil_moisture_0_to_1cm,soil_moisture_9_to_27cm` +
+          `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,sunrise,sunset` +
+          `&past_days=7&forecast_days=6&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=${encodeURIComponent(tz)}`;
+        const res = await fetch(forecastUrl);
+        if (!res.ok) {
+          let reason = `HTTP ${res.status}`;
+          try {
+            const errJson = await res.json();
+            if (errJson?.reason) reason = errJson.reason;
+          } catch {
+            // response wasn't JSON — stick with the HTTP status
+          }
+          throw new Error(reason);
+        }
+        const json = await res.json();
+        if (cancelled) return;
+        setWeather(json);
+
+        // Real ground-station reading from the nearest NWS/METAR station (KMMV), separate from
+        // the Open-Meteo forecast call above — this is what actually answers "what is it doing
+        // right now at the airport" rather than a modeled estimate for a lat/lon. Failure here
+        // doesn't block the rest of the dashboard; current conditions just fall back to the
+        // Open-Meteo modeled values already being fetched.
+        try {
+          const obsRes = await fetch(`https://api.weather.gov/stations/${HOME_STATION_ID}/observations/latest`);
+          if (obsRes.ok) {
+            const obsJson = await obsRes.json();
+            if (!cancelled) {
+              setStationObs(obsJson?.properties || null);
+              setStationObsError("");
+            }
+          } else if (!cancelled) {
+            setStationObsError(`Station data unavailable (HTTP ${obsRes.status}) — showing modeled estimate instead.`);
+          }
+        } catch {
+          if (!cancelled) setStationObsError("Station data unavailable — showing modeled estimate instead.");
+        }
+
+        // Growing Degree Days (base 50°F), summed from April 1 through today.
+        // The live forecast call above only reaches ~7 days into the past (Open-Meteo caps
+        // past_days well short of a full growing season), so on its own it silently under-counts
+        // by months once the season's underway. The dedicated Archive API accepts an arbitrary
+        // start_date/end_date and covers the rest of the season — it just runs a few days behind
+        // real-time, so we combine it with the recent-days data already fetched above to close
+        // that gap and get a complete, accurate, genuinely-updates-every-day total.
+        const year = new Date().getFullYear();
+        const seasonStart = `${year}-04-01`;
+        const todayStr = todayInTimezone(tz);
+        const byDate = {};
+        const recentTimes = json.daily?.time || [];
+        const recentMaxes = json.daily?.temperature_2m_max || [];
+        const recentMins = json.daily?.temperature_2m_min || [];
+        recentTimes.forEach((d, i) => {
+          if (d >= seasonStart && d <= todayStr && recentMaxes[i] != null && recentMins[i] != null) {
+            byDate[d] = { max: recentMaxes[i], min: recentMins[i] };
+          }
+        });
+
+        try {
+          const archiveEndDate = recentTimes.length > 0 ? recentTimes[0] : todayStr; // day before the live call's earliest day
+          if (seasonStart < archiveEndDate) {
+            const archiveUrl =
+              `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}` +
+              `&start_date=${seasonStart}&end_date=${archiveEndDate}` +
+              `&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=${encodeURIComponent(tz)}`;
+            const archiveRes = await fetch(archiveUrl);
+            if (archiveRes.ok) {
+              const archiveJson = await archiveRes.json();
+              const aTimes = archiveJson.daily?.time || [];
+              const aMaxes = archiveJson.daily?.temperature_2m_max || [];
+              const aMins = archiveJson.daily?.temperature_2m_min || [];
+              aTimes.forEach((d, i) => {
+                if (!byDate[d] && aMaxes[i] != null && aMins[i] != null) {
+                  byDate[d] = { max: aMaxes[i], min: aMins[i] };
+                }
+              });
+            }
+          }
+        } catch {
+          // Archive call failed — GDD will just be based on the recent-days data above instead
+          // of silently showing nothing.
+        }
+
+        let total = 0;
+        let daysCounted = 0;
+        Object.values(byDate).forEach(({ max, min }) => {
+          const avg = (max + min) / 2;
+          total += Math.max(0, avg - 50);
+          daysCounted += 1;
+        });
+        setGdd({ total: Math.round(total), daysCounted, seasonStart });
+      } catch (err) {
+        if (!cancelled) {
+          const detail = err?.message || err?.name || "Unknown error";
+          setWeatherError(`Couldn't load weather right now (${detail}).`);
+        }
+      } finally {
+        if (!cancelled) setWeatherLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [weatherRetryCount]);
+
   const [ttbFilingFrequency, setTtbFilingFrequency] = useState("Annual");
   const [vineyardMapImage, setVineyardMapImage] = useState("");
   const [vesselTypes, setVesselTypes] = useState(VESSEL_TYPES);
@@ -10295,6 +10320,13 @@ function WineryDataTrackerInner() {
             wineryTaskTypes={wineryTaskTypes}
             onAddVineyardTaskType={addVineyardTaskType}
             onAddWineryTaskType={addWineryTaskType}
+            weather={weather}
+            gdd={gdd}
+            weatherError={weatherError}
+            stationObs={stationObs}
+            stationObsError={stationObsError}
+            weatherLoading={weatherLoading}
+            onRetryWeather={() => setWeatherRetryCount((n) => n + 1)}
           />
         ) : activeKey === "workorders" ? (
           <>
@@ -10953,6 +10985,7 @@ function WineryDataTrackerInner() {
                 onAddClone={addClone}
                 defaultTareWeight={defaultTareWeight}
                 onUpdateDefaultTareWeight={updateDefaultTareWeight}
+                currentGDD={gdd}
               />
             ) : (
               <form onSubmit={handleSubmit} className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5 mb-6">
