@@ -27,6 +27,7 @@ import {
   Pencil,
   Check,
   X,
+  User,
   Home,
   Sun,
   CloudRain,
@@ -511,8 +512,11 @@ const SIMPLE_SECTIONS = [
     sheetName: "Yearly Shared Costs",
     fields: [
       { name: "year", label: "Year", type: "text" },
-      { name: "mathesonSpend", label: "Total Matheson Spend ($, gas & dry ice)", type: "number" },
+      { name: "mathesonSpend", label: "Total Gas & Dry Ice Spend ($)", type: "number" },
       { name: "newOakSpend", label: "Total New Oak Barrel Spend ($)", type: "number", optional: true },
+      { name: "stillBottlingRatePerCase", label: "Still Wine Bottling Rate ($/case)", type: "number", optional: true },
+      { name: "sparklingBottlingRatePerCase", label: "Sparkling Wine Bottling Rate ($/case, disgorgement + bottling)", type: "number", optional: true },
+      { name: "crossflowRatePerGallon", label: "Filtering Rate ($/gallon)", type: "number", optional: true },
       { name: "notes", label: "Notes", type: "textarea", optional: true },
     ],
   },
@@ -1353,21 +1357,22 @@ const CATEGORY_META = {
 // Flattens every section's dated activity into a single { isoDate: [events] } map
 function buildCalendarEvents(data) {
   const map = {};
-  const add = (date, section, title, detail) => {
+  const add = (date, section, title, detail, extra = {}) => {
     if (!date) return;
     if (!map[date]) map[date] = [];
-    map[date].push({ section, title, detail });
+    map[date].push({ section, title, detail, person: null, sourceKey: null, sourceId: null, raw: null, ...extra });
   };
 
   data.workorders.forEach((o) => {
     const typeLabel = o.taskType ? (o.taskType === "Additions" && o.additionType ? `${o.taskType} (${o.additionType})` : o.taskType) : "";
     const title = `${o.orderNumber ? formatOrderNumber(o.orderNumber) + " — " : ""}${o.task || "Untitled task"}`;
+    const common = { sourceKey: "workorders", sourceId: o.id, raw: o, person: o.assignedTo || null };
     if (o.status === "Complete" && o.dateCompleted) {
       // Closed work orders live on the date they were completed, not the original due date
-      add(o.dateCompleted, "Work Orders (Closed)", title, `Completed${typeLabel ? " · " + typeLabel : ""}${o.assignedTo ? " · " + o.assignedTo : ""}`);
+      add(o.dateCompleted, "Work Orders (Closed)", title, `Completed${typeLabel ? " · " + typeLabel : ""}${o.assignedTo ? " · " + o.assignedTo : ""}`, common);
     } else if (o.date) {
       // Open work orders show on the calendar on the date they were assigned
-      add(o.date, "Work Orders (Open)", title, `Assigned${typeLabel ? " · " + typeLabel : ""}${o.assignedTo ? " · " + o.assignedTo : ""}${o.priority ? " · " + o.priority : ""}`);
+      add(o.date, "Work Orders (Open)", title, `Assigned${typeLabel ? " · " + typeLabel : ""}${o.assignedTo ? " · " + o.assignedTo : ""}${o.priority ? " · " + o.priority : ""}`, common);
     }
   });
 
@@ -1381,7 +1386,8 @@ function buildCalendarEvents(data) {
       row.date,
       "Harvest",
       [row.variety, row.clone ? `Clone ${row.clone}` : "", row.block].filter(Boolean).join(" — ") || "Harvest entry",
-      `${weightLabel}${row.weighMaster ? " · " + row.weighMaster : ""}`
+      `${weightLabel}${row.weighMaster ? " · " + row.weighMaster : ""}`,
+      { sourceKey: "harvest", sourceId: row.id, raw: row, person: row.weighMaster || null }
     );
   });
 
@@ -1390,39 +1396,48 @@ function buildCalendarEvents(data) {
       row.date,
       "Fruit Analysis",
       row.block || "Fruit sample",
-      `${row.brix ? row.brix + "° Brix" : ""}${row.ph ? " · pH " + row.ph : ""}${row.ta ? " · TA " + row.ta : ""}`
+      `${row.brix ? row.brix + "° Brix" : ""}${row.ph ? " · pH " + row.ph : ""}${row.ta ? " · TA " + row.ta : ""}`,
+      { sourceKey: "fruitAnalysis", sourceId: row.id, raw: row }
     );
   });
 
   data.ferment.forEach((lot) => {
-    if (lot.startDate) add(lot.startDate, "Fermentation", `${lot.tankId || "Tank"} started`, lot.variety || "");
+    const lotCommon = { sourceKey: "ferment", sourceId: lot.id, raw: lot };
+    if (lot.startDate) add(lot.startDate, "Fermentation", `${lot.tankId || "Tank"} started`, lot.variety || "", lotCommon);
     lot.readings.forEach((r) => {
       const workLabel = Array.isArray(r.workDone) && r.workDone.length > 0 ? r.workDone.join(", ") : "Reading logged";
-      add(r.date, "Fermentation", `${lot.tankId || "Tank"} — ${workLabel}`, `${r.brix ? r.brix + "° Brix" : ""}${r.temp ? " · " + r.temp + "°F" : ""}`);
+      add(r.date, "Fermentation", `${lot.tankId || "Tank"} — ${workLabel}`, `${r.brix ? r.brix + "° Brix" : ""}${r.temp ? " · " + r.temp + "°F" : ""}`, {
+        sourceKey: "ferment", sourceId: lot.id, raw: { ...r, tankId: lot.tankId, variety: lot.variety },
+      });
     });
-    if (lot.dateCompleted) add(lot.dateCompleted, "Fermentation Complete", `${lot.tankId || "Tank"} — fermentation complete`, lot.variety || "");
-    if (lot.mlCompleteDate) add(lot.mlCompleteDate, "Malolactic", `${lot.tankId || "Tank"} — ML complete`, lot.mlNotes || "");
+    if (lot.dateCompleted) add(lot.dateCompleted, "Fermentation Complete", `${lot.tankId || "Tank"} — fermentation complete`, lot.variety || "", lotCommon);
+    if (lot.mlCompleteDate) add(lot.mlCompleteDate, "Malolactic", `${lot.tankId || "Tank"} — ML complete`, lot.mlNotes || "", lotCommon);
   });
 
   (data.barrels || []).forEach((b) => {
+    const barrelCommon = { sourceKey: "barrels", sourceId: b.id, raw: b };
     (b.fills || []).forEach((f) => {
-      if (f.fillDate) add(f.fillDate, "Barrel Filled", `${b.barrelNumber} filled`, summarizeFillComponents(f, data.ferment));
-      if (f.emptyDate) add(f.emptyDate, "Barrel Emptied", `${b.barrelNumber} emptied`, "");
+      if (f.fillDate) add(f.fillDate, "Barrel Filled", `${b.barrelNumber} filled`, summarizeFillComponents(f, data.ferment), barrelCommon);
+      if (f.emptyDate) add(f.emptyDate, "Barrel Emptied", `${b.barrelNumber} emptied`, "", barrelCommon);
     });
     (b.labChecks || []).forEach((c) => {
-      add(c.date, "Lab Check", `${b.barrelNumber} — lab check`, `${c.freeSO2 ? "Free SO2 " + c.freeSO2 : ""}${c.totalSO2 ? " · Total SO2 " + c.totalSO2 : ""}${c.va ? " · VA " + c.va : ""}`);
+      add(c.date, "Lab Check", `${b.barrelNumber} — lab check`, `${c.freeSO2 ? "Free SO2 " + c.freeSO2 : ""}${c.totalSO2 ? " · Total SO2 " + c.totalSO2 : ""}${c.va ? " · VA " + c.va : ""}`, {
+        sourceKey: "barrels", sourceId: b.id, raw: { ...c, barrelNumber: b.barrelNumber },
+      });
     });
-    if (b.retiredDate) add(b.retiredDate, "Barrel Retired", `${b.barrelNumber} retired`, b.retiredReason || "");
-    if (b.soldDate) add(b.soldDate, "Barrel Sold", `${b.barrelNumber} sold`, b.soldTo ? `To ${b.soldTo}` : "");
+    if (b.retiredDate) add(b.retiredDate, "Barrel Retired", `${b.barrelNumber} retired`, b.retiredReason || "", barrelCommon);
+    if (b.soldDate) add(b.soldDate, "Barrel Sold", `${b.barrelNumber} sold`, b.soldTo ? `To ${b.soldTo}` : "", barrelCommon);
   });
 
   (data.bottling || []).forEach((row) => {
-    add(row.date, "Bottling", row.wineName || "Bottling run", `${row.cases ? row.cases + " cases" : ""}${row.bottleSize ? " · " + row.bottleSize : ""}${row.vintage ? " · " + row.vintage : ""}`);
+    add(row.date, "Bottling", row.wineName || "Bottling run", `${row.cases ? row.cases + " cases" : ""}${row.bottleSize ? " · " + row.bottleSize : ""}${row.vintage ? " · " + row.vintage : ""}`, {
+      sourceKey: "bottling", sourceId: row.id, raw: row,
+    });
   });
 
   (data.tastings || []).forEach((t) => {
     const barrel = (data.barrels || []).find((b) => b.id === t.barrelId);
-    add(t.date, "Tastings", `${barrel?.barrelNumber || "Barrel"} tasted`, t.notes || "");
+    add(t.date, "Tastings", `${barrel?.barrelNumber || "Barrel"} tasted`, t.notes || "", { sourceKey: "tastings", sourceId: t.id, raw: t });
   });
 
   (data.weatherLogs || []).forEach((w) => {
@@ -1432,17 +1447,19 @@ function buildCalendarEvents(data) {
       w.date,
       "Weather",
       `${high} / ${low}${w.conditionLabel ? " — " + w.conditionLabel : ""}`,
-      `${w.humidity != null ? "Humidity " + w.humidity + "%" : ""}${w.windMph != null ? " · Wind " + Math.round(w.windMph) + " mph" : ""}${w.gddTotal != null ? " · GDD " + w.gddTotal : ""}`
+      `${w.humidity != null ? "Humidity " + w.humidity + "%" : ""}${w.windMph != null ? " · Wind " + Math.round(w.windMph) + " mph" : ""}${w.gddTotal != null ? " · GDD " + w.gddTotal : ""}`,
+      { sourceKey: "weatherLogs", sourceId: w.date, raw: w }
     );
   });
 
   (data.vineHealth || []).forEach((v) => {
+    const vhCommon = { sourceKey: "vineHealth", sourceId: v.id, raw: v };
     if (v.observationType === "Phenology Stage" && v.phenologyStage) {
-      add(v.date, "Phenology", `${v.phenologyStage}${v.block ? " — " + v.block : ""}`, v.notes || "");
+      add(v.date, "Phenology", `${v.phenologyStage}${v.block ? " — " + v.block : ""}`, v.notes || "", vhCommon);
     } else if (v.observationType === "Pest Pressure") {
-      add(v.date, "Pest Alert", `${v.pestType || "Pest"}${v.block ? " — " + v.block : ""}${v.severity ? " (" + v.severity + ")" : ""}`, v.notes || "");
+      add(v.date, "Pest Alert", `${v.pestType || "Pest"}${v.block ? " — " + v.block : ""}${v.severity ? " (" + v.severity + ")" : ""}`, v.notes || "", vhCommon);
     } else if (v.observationType === "Disease Alert") {
-      add(v.date, "Disease Alert", `${v.diseaseType || "Disease"}${v.block ? " — " + v.block : ""}${v.severity ? " (" + v.severity + ")" : ""}`, v.notes || "");
+      add(v.date, "Disease Alert", `${v.diseaseType || "Disease"}${v.block ? " — " + v.block : ""}${v.severity ? " (" + v.severity + ")" : ""}`, v.notes || "", vhCommon);
     }
   });
 
@@ -2154,16 +2171,167 @@ function CompletedCalendar({ orders }) {
 }
 
 // ---------- Master Calendar: every section's activity, in one place, by date ----------
+// Shows the actual underlying record behind a calendar event, not just the pre-formatted
+// summary text — reuses each section's real field labels (from SIMPLE_SECTIONS) when the event
+// came from one, so a harvest entry shows "Block / Vineyard" etc. rather than raw field names.
+function EventDetailModal({ event, onClose, onViewPerson }) {
+  if (!event) return null;
+  const meta = CATEGORY_META[event.section] || {};
+  const section = SIMPLE_SECTIONS.find((s) => s.key === event.sourceKey);
+  const raw = event.raw || {};
+  const skip = new Set(["id", "notes"]);
+  const entries = section
+    ? section.fields
+        .filter((f) => !skip.has(f.name) && raw[f.name] !== undefined && raw[f.name] !== "" && raw[f.name] != null && f.type !== "document" && f.type !== "photo")
+        .map((f) => [f.label, Array.isArray(raw[f.name]) ? raw[f.name].join(", ") : String(raw[f.name])])
+    : Object.entries(raw).filter(([k, v]) => !skip.has(k) && v !== "" && v != null && typeof v !== "object");
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
+      <div className="fixed inset-x-4 top-16 bottom-16 sm:inset-x-0 sm:top-20 sm:bottom-auto sm:mx-auto sm:max-w-md bg-white rounded-lg shadow-xl z-50 flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 shrink-0">
+          <span className={`font-body text-xs font-semibold px-2 py-0.5 rounded ${meta.pill || "bg-stone-100 text-stone-600"}`}>{meta.word || event.section}</span>
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-700"><X size={18} /></button>
+        </div>
+        <div className="p-4 overflow-y-auto">
+          <p className="font-brand text-lg text-ink-950 mb-1">{event.title}</p>
+          {event.detail && <p className="font-body text-sm text-stone-500 mb-3">{event.detail}</p>}
+          {entries.length > 0 && (
+            <dl className="space-y-2 border-t border-stone-100 pt-3">
+              {entries.map(([label, value]) => (
+                <div key={label} className="flex justify-between gap-3 text-sm">
+                  <dt className="font-body text-stone-500">{label}</dt>
+                  <dd className="font-body text-stone-800 text-right">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          {event.person && (
+            <button
+              onClick={() => onViewPerson(event.person)}
+              className="mt-4 font-body text-sm text-ink-700 underline flex items-center gap-1.5"
+            >
+              <User size={14} /> View all activity for {event.person} →
+            </button>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// Everything a given person has been assigned or completed, across Work Orders — the calendar's
+// "click a name" feature. Scoped to Work Orders specifically, since that's the one place a
+// person is reliably and unambiguously recorded across the app.
+function PersonActivityModal({ person, workorders, onClose }) {
+  if (!person) return null;
+  const assigned = workorders.filter((o) => o.assignedTo === person);
+  const open = assigned.filter((o) => o.status !== "Complete").sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  const completed = assigned.filter((o) => o.status === "Complete").sort((a, b) => (b.dateCompleted || "").localeCompare(a.dateCompleted || ""));
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
+      <div className="fixed inset-4 sm:inset-x-0 sm:top-10 sm:bottom-10 sm:mx-auto sm:max-w-lg bg-white rounded-lg shadow-xl z-50 flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 shrink-0">
+          <p className="font-brand text-lg text-ink-950 flex items-center gap-2"><User size={18} className="text-stone-400" /> {person}</p>
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-700"><X size={18} /></button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 space-y-5">
+          <div>
+            <p className="font-body text-xs font-semibold text-stone-500 mb-2">Open ({open.length})</p>
+            {open.length === 0 ? (
+              <p className="font-body text-sm text-stone-400">Nothing currently assigned.</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {open.map((o) => (
+                  <li key={o.id} className="font-body text-sm bg-indigo-50 text-indigo-800 rounded-md px-3 py-2 flex justify-between gap-2">
+                    <span>{o.task || "Untitled task"}</span>
+                    <span className="text-xs opacity-70 whitespace-nowrap">{o.date}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div>
+            <p className="font-body text-xs font-semibold text-stone-500 mb-2">Completed ({completed.length})</p>
+            {completed.length === 0 ? (
+              <p className="font-body text-sm text-stone-400">Nothing completed yet.</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {completed.map((o) => (
+                  <li key={o.id} className="font-body text-sm bg-ink-50 text-ink-800 rounded-md px-3 py-2 flex justify-between gap-2">
+                    <span>{o.task || "Untitled task"}</span>
+                    <span className="text-xs opacity-70 whitespace-nowrap">{o.dateCompleted}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+const shiftISO = (iso, days) => {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+const shiftMonthISO = (iso, months) => {
+  const d = new Date(iso + "T00:00:00");
+  // Anchor to day 1 before shifting the month — otherwise navigating from, say, Jan 31 forward
+  // one month overflows (Feb has no 31st) and lands in early March instead of February at all.
+  d.setDate(1);
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().slice(0, 10);
+};
+const weekStartISO = (iso) => {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() - d.getDay());
+  return d.toISOString().slice(0, 10);
+};
+
+// A single event row, used by Week and Day views (and the Month view's selected-day panel) —
+// one shared renderer so a click behaves identically everywhere it appears.
+function CalendarEventRow({ event, onOpen }) {
+  const meta = CATEGORY_META[event.section] || {};
+  return (
+    <button onClick={() => onOpen(event)} className="w-full text-left font-body text-sm bg-stone-50 hover:bg-stone-100 rounded-md px-3 py-2 transition-colors">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${meta.pill || "bg-stone-100 text-stone-600"}`}>{meta.word || event.section}</span>
+        <span className="text-stone-800">{event.title}</span>
+      </div>
+      {event.detail && <p className="text-xs text-stone-500 mt-1">{event.detail}</p>}
+    </button>
+  );
+}
+
 function MasterCalendar({ data }) {
-  const [cursor, setCursor] = useState(() => {
-    const now = new Date();
-    return { year: now.getFullYear(), month: now.getMonth() };
-  });
+  const [viewMode, setViewMode] = useState("month");
+  const [cursorISO, setCursorISO] = useState(todayISO());
   const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedPerson, setSelectedPerson] = useState(null);
 
   const eventsByDate = useMemo(() => buildCalendarEvents(data), [data]);
 
-  const { year, month } = cursor;
+  const openEvent = (e) => setSelectedEvent(e);
+  const openPerson = (p) => { setSelectedEvent(null); setSelectedPerson(p); };
+
+  const navigate = (delta) => {
+    setSelectedDate(null);
+    setCursorISO((prev) =>
+      viewMode === "month" ? shiftMonthISO(prev, delta) : viewMode === "week" ? shiftISO(prev, delta * 7) : shiftISO(prev, delta)
+    );
+  };
+
+  const cursorDateObj = new Date(cursorISO + "T00:00:00");
+  const year = cursorDateObj.getFullYear();
+  const month = cursorDateObj.getMonth();
+
   const firstWeekday = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const cells = [];
@@ -2171,110 +2339,176 @@ function MasterCalendar({ data }) {
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
 
-  const monthLabel = new Date(year, month, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  const weekDays = useMemo(() => {
+    const start = weekStartISO(cursorISO);
+    return Array.from({ length: 7 }, (_, i) => shiftISO(start, i));
+  }, [cursorISO]);
 
-  const changeMonth = (delta) => {
-    setSelectedDate(null);
-    setCursor((prev) => {
-      let m = prev.month + delta;
-      let y = prev.year;
-      if (m < 0) { m = 11; y -= 1; }
-      if (m > 11) { m = 0; y += 1; }
-      return { year: y, month: m };
-    });
-  };
+  const label =
+    viewMode === "month"
+      ? new Date(year, month, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" })
+      : viewMode === "week"
+      ? `${new Date(weekDays[0] + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${new Date(weekDays[6] + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
+      : cursorDateObj.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
 
   const selectedEvents = selectedDate ? eventsByDate[selectedDate] || [] : [];
+  const dayEvents = eventsByDate[cursorISO] || [];
+
+  const VIEW_MODES = [
+    { key: "day", label: "Day" },
+    { key: "week", label: "Week" },
+    { key: "month", label: "Month" },
+  ];
 
   return (
     <div className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <h2 className="font-brand text-lg text-ink-950">Activity Calendar</h2>
+        <div className="flex items-center gap-1 bg-stone-100 rounded-md p-0.5">
+          {VIEW_MODES.map((v) => (
+            <button
+              key={v.key}
+              onClick={() => { setViewMode(v.key); setSelectedDate(null); }}
+              className={`font-body text-xs font-medium px-2.5 py-1 rounded ${viewMode === v.key ? "bg-white text-ink-900 shadow-sm" : "text-stone-500"}`}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => changeMonth(-1)} className="text-stone-400 hover:text-ink-800">
+          <button onClick={() => navigate(-1)} className="text-stone-400 hover:text-ink-800">
             <ChevronLeft size={18} />
           </button>
-          <span className="font-body text-sm text-stone-600 w-32 text-center">{monthLabel}</span>
-          <button onClick={() => changeMonth(1)} className="text-stone-400 hover:text-ink-800">
+          <span className="font-body text-sm text-stone-600 min-w-[8rem] text-center">{label}</span>
+          <button onClick={() => navigate(1)} className="text-stone-400 hover:text-ink-800">
             <ChevronRight size={18} />
           </button>
         </div>
       </div>
 
       <p className="font-body text-xs text-stone-500 mb-4">
-        Every task, entry, and reading across every tab, shown on the day it was assigned, logged, or completed.
+        Every task, entry, and reading across every tab, shown on the day it was assigned, logged, or completed. Tap anything to see the full details.
       </p>
 
-      <div className="grid grid-cols-7 gap-1.5 text-center mb-1.5">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d, i) => (
-          <div key={i} className="font-body text-xs font-medium text-stone-400 py-1">{d}</div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7 gap-1.5">
-        {cells.map((day, idx) => {
-          if (day === null) return <div key={idx} />;
-          const iso = isoFor(year, month, day);
-          const events = eventsByDate[iso] || [];
-          const sections = [...new Set(events.map((e) => e.section))];
-          const isSelected = selectedDate === iso;
-          const isToday = iso === todayISO();
-          const shown = sections.slice(0, 2);
-          const extra = sections.length - shown.length;
-          return (
-            <button
-              key={idx}
-              onClick={() => events.length > 0 && setSelectedDate(isSelected ? null : iso)}
-              className={`font-body min-h-[64px] rounded-md p-1 flex flex-col items-start gap-0.5 border transition-colors ${
-                isSelected
-                  ? "border-ink-800 bg-ink-50"
-                  : events.length > 0
-                  ? "border-stone-200 hover:border-ink-300 cursor-pointer bg-white"
-                  : "border-transparent"
-              }`}
-            >
-              <span className={`text-xs px-1 rounded-full ${isToday ? "bg-ink-900 text-white font-semibold" : "text-stone-500"}`}>
-                {day}
-              </span>
-              {shown.length > 0 && (
-                <div className="flex flex-col gap-0.5 w-full">
-                  {shown.map((s) => (
-                    <span
-                      key={s}
-                      className={`font-body text-[10px] leading-tight px-1 py-0.5 rounded truncate w-full text-left ${CATEGORY_META[s]?.pill || "bg-stone-100 text-stone-600"}`}
-                    >
-                      {CATEGORY_META[s]?.word || s}
-                    </span>
-                  ))}
-                  {extra > 0 && (
-                    <span className="font-body text-[10px] text-stone-400 px-1">+{extra} more</span>
+      {viewMode === "month" && (
+        <>
+          <div className="grid grid-cols-7 gap-1.5 text-center mb-1.5">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d, i) => (
+              <div key={i} className="font-body text-xs font-medium text-stone-400 py-1">{d}</div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1.5">
+            {cells.map((day, idx) => {
+              if (day === null) return <div key={idx} />;
+              const iso = isoFor(year, month, day);
+              const events = eventsByDate[iso] || [];
+              const sections = [...new Set(events.map((e) => e.section))];
+              const isSelected = selectedDate === iso;
+              const isToday = iso === todayISO();
+              const shown = sections.slice(0, 2);
+              const extra = sections.length - shown.length;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => events.length > 0 && setSelectedDate(isSelected ? null : iso)}
+                  className={`font-body min-h-[64px] rounded-md p-1 flex flex-col items-start gap-0.5 border transition-colors ${
+                    isSelected
+                      ? "border-ink-800 bg-ink-50"
+                      : events.length > 0
+                      ? "border-stone-200 hover:border-ink-300 cursor-pointer bg-white"
+                      : "border-transparent"
+                  }`}
+                >
+                  <span className={`text-xs px-1 rounded-full ${isToday ? "bg-ink-900 text-white font-semibold" : "text-stone-500"}`}>
+                    {day}
+                  </span>
+                  {shown.length > 0 && (
+                    <div className="flex flex-col gap-0.5 w-full">
+                      {shown.map((s) => (
+                        <span
+                          key={s}
+                          className={`font-body text-[10px] leading-tight px-1 py-0.5 rounded truncate w-full text-left ${CATEGORY_META[s]?.pill || "bg-stone-100 text-stone-600"}`}
+                        >
+                          {CATEGORY_META[s]?.word || s}
+                        </span>
+                      ))}
+                      {extra > 0 && (
+                        <span className="font-body text-[10px] text-stone-400 px-1">+{extra} more</span>
+                      )}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {selectedDate && (
+            <div className="mt-4 border-t border-stone-100 pt-3">
+              <p className="font-body text-xs font-semibold text-stone-600 mb-2">
+                {selectedEvents.length} item{selectedEvents.length === 1 ? "" : "s"} on {selectedDate}
+              </p>
+              <ul className="space-y-2">
+                {selectedEvents.map((e, i) => (
+                  <li key={i}><CalendarEventRow event={e} onOpen={openEvent} /></li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      )}
+
+      {viewMode === "week" && (
+        <div className="grid grid-cols-1 sm:grid-cols-7 gap-2">
+          {weekDays.map((iso) => {
+            const events = eventsByDate[iso] || [];
+            const isToday = iso === todayISO();
+            const d = new Date(iso + "T00:00:00");
+            return (
+              <div key={iso} className={`rounded-md border p-2 ${isToday ? "border-ink-800 bg-ink-50" : "border-stone-200"}`}>
+                <p className="font-body text-xs font-medium text-stone-500 mb-1.5">
+                  {d.toLocaleDateString(undefined, { weekday: "short" })}{" "}
+                  <span className={isToday ? "text-ink-900 font-semibold" : "text-stone-700"}>{d.getDate()}</span>
+                </p>
+                <div className="space-y-1">
+                  {events.length === 0 ? (
+                    <p className="font-body text-xs text-stone-300">—</p>
+                  ) : (
+                    events.map((e, i) => (
+                      <button
+                        key={i}
+                        onClick={() => openEvent(e)}
+                        className={`w-full text-left font-body text-[11px] leading-tight px-1.5 py-1 rounded truncate ${CATEGORY_META[e.section]?.pill || "bg-stone-100 text-stone-600"}`}
+                      >
+                        {e.title}
+                      </button>
+                    ))
                   )}
                 </div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {selectedDate && (
-        <div className="mt-4 border-t border-stone-100 pt-3">
-          <p className="font-body text-xs font-semibold text-stone-600 mb-2">
-            {selectedEvents.length} item{selectedEvents.length === 1 ? "" : "s"} on {selectedDate}
-          </p>
-          <ul className="space-y-2">
-            {selectedEvents.map((e, i) => (
-              <li key={i} className="font-body text-sm bg-stone-50 rounded-md px-3 py-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${CATEGORY_META[e.section]?.pill || "bg-stone-100 text-stone-600"}`}>
-                    {CATEGORY_META[e.section]?.word || e.section}
-                  </span>
-                  <span className="text-stone-800">{e.title}</span>
-                </div>
-                {e.detail && <p className="text-xs text-stone-500 mt-1">{e.detail}</p>}
-              </li>
-            ))}
-          </ul>
+              </div>
+            );
+          })}
         </div>
       )}
+
+      {viewMode === "day" && (
+        <div>
+          <p className="font-body text-xs font-semibold text-stone-600 mb-2">
+            {dayEvents.length} item{dayEvents.length === 1 ? "" : "s"}
+          </p>
+          {dayEvents.length === 0 ? (
+            <p className="font-body text-sm text-stone-400 bg-stone-50 rounded-md px-3 py-6 text-center">Nothing logged this day.</p>
+          ) : (
+            <ul className="space-y-2">
+              {dayEvents.map((e, i) => (
+                <li key={i}><CalendarEventRow event={e} onOpen={openEvent} /></li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      <EventDetailModal event={selectedEvent} onClose={() => setSelectedEvent(null)} onViewPerson={openPerson} />
+      <PersonActivityModal person={selectedPerson} workorders={data.workorders} onClose={() => setSelectedPerson(null)} />
     </div>
   );
 }
@@ -2703,20 +2937,40 @@ function CogsCalculatorForm({ grapePricing, packagingComponents, bottlingRecords
     }
   };
 
+  const [ratesAutoFilled, setRatesAutoFilled] = useState(false);
+  // Pulls the bottling and filtering rates from the selected year's Yearly Shared Costs record
+  // instead of making you type them in fresh for every wine — re-runs whenever the year or wine
+  // type changes, so switching from Still to Sparkling correctly swaps in the Sparkling rate
+  // rather than leaving the Still one behind.
+  useEffect(() => {
+    if (!allocationYear) return;
+    const yearRecord = yearlySharedCosts.find((y) => String(y.year) === String(allocationYear));
+    if (!yearRecord) return;
+    if (wineType === "Still" && yearRecord.stillBottlingRatePerCase) {
+      setBottlingRatePerCase(String(yearRecord.stillBottlingRatePerCase));
+    } else if (wineType === "Sparkling" && yearRecord.sparklingBottlingRatePerCase) {
+      setRadiantRatePerCase(String(yearRecord.sparklingBottlingRatePerCase));
+    }
+    if (yearRecord.crossflowRatePerGallon) {
+      setCrossflowRatePerGallon(String(yearRecord.crossflowRatePerGallon));
+    }
+    setRatesAutoFilled(true);
+  }, [allocationYear, wineType, yearlySharedCosts]);
+
   const bottleOptions = packagingComponents.filter((p) => p.componentType === "Bottle");
   const corkOptions = packagingComponents.filter((p) => p.componentType === "Cork");
   const waxOptions = packagingComponents.filter((p) => p.componentType === "Wax");
   const labelOptions = packagingComponents.filter((p) => p.componentType === "Label");
   const mussuleOptions = packagingComponents.filter((p) => p.componentType === "Mussule");
 
-  const mathesonAllocation = allocationYear ? computeYearlyPerCaseAllocation(yearlySharedCosts, bottlingRecords, allocationYear, "mathesonSpend") : 0;
+  const gasIceAllocation = allocationYear ? computeYearlyPerCaseAllocation(yearlySharedCosts, bottlingRecords, allocationYear, "mathesonSpend") : 0;
   const newOakAllocation = allocationYear ? computeYearlyPerCaseAllocation(yearlySharedCosts, bottlingRecords, allocationYear, "newOakSpend") : 0;
 
   const preview = computeCogsBreakdown({
     grapeLines, totalCases, wineType, packagingComponents,
     bottleComponentId, corkComponentId, waxComponentId, labelComponentId, mussuleComponentId,
     bottlingRatePerCase, radiantRatePerCase, gallonsFiltered, crossflowRatePerGallon,
-    mathesonPerCaseAllocation: mathesonAllocation, newOakPerCaseAllocation: newOakAllocation,
+    mathesonPerCaseAllocation: gasIceAllocation, newOakPerCaseAllocation: newOakAllocation,
   });
 
   const matchingPrice = winePricing.find(
@@ -2827,7 +3081,7 @@ function CogsCalculatorForm({ grapePricing, packagingComponents, bottlingRecords
           {casesAutoFilled && <p className="font-body text-xs text-stone-400 mt-1">Pulled from Bottling records — edit if this needs adjusting.</p>}
         </div>
         <div>
-          <label className="font-body block text-xs font-medium text-stone-600 mb-1">Year (for Matheson / new oak allocation)</label>
+          <label className="font-body block text-xs font-medium text-stone-600 mb-1">Year (for gas/dry ice + new oak allocation)</label>
           <select value={allocationYear} onChange={(e) => setAllocationYear(e.target.value)}
             className="font-body w-full max-w-[160px] border border-stone-300 rounded-md px-2.5 py-1.5 text-sm">
             <option value="">None</option>
@@ -2879,14 +3133,14 @@ function CogsCalculatorForm({ grapePricing, packagingComponents, bottlingRecords
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-stone-100">
         {wineType === "Still" ? (
           <div>
-            <label className="font-body block text-xs font-medium text-stone-600 mb-1">Casteel Bottling Rate ($/case)</label>
-            <input type="number" value={bottlingRatePerCase} onChange={(e) => setBottlingRatePerCase(e.target.value)}
+            <label className="font-body block text-xs font-medium text-stone-600 mb-1">Bottling Rate ($/case)</label>
+            <input type="number" value={bottlingRatePerCase} onChange={(e) => { setBottlingRatePerCase(e.target.value); setRatesAutoFilled(false); }}
               className="font-body border border-stone-300 rounded-md px-2.5 py-1.5 text-sm w-full max-w-[140px]" />
           </div>
         ) : (
           <div>
-            <label className="font-body block text-xs font-medium text-stone-600 mb-1">Radiant Sparkling Rate ($/case, disgorgement + bottling)</label>
-            <input type="number" value={radiantRatePerCase} onChange={(e) => setRadiantRatePerCase(e.target.value)}
+            <label className="font-body block text-xs font-medium text-stone-600 mb-1">Bottling Rate ($/case, disgorgement + bottling)</label>
+            <input type="number" value={radiantRatePerCase} onChange={(e) => { setRadiantRatePerCase(e.target.value); setRatesAutoFilled(false); }}
               className="font-body border border-stone-300 rounded-md px-2.5 py-1.5 text-sm w-full max-w-[140px]" />
           </div>
         )}
@@ -2897,11 +3151,14 @@ function CogsCalculatorForm({ grapePricing, packagingComponents, bottlingRecords
               className="font-body border border-stone-300 rounded-md px-2.5 py-1.5 text-sm w-full max-w-[120px]" />
           </div>
           <div>
-            <label className="font-body block text-xs font-medium text-stone-600 mb-1">Willamette Crossflow ($/gal)</label>
-            <input type="number" value={crossflowRatePerGallon} onChange={(e) => setCrossflowRatePerGallon(e.target.value)}
+            <label className="font-body block text-xs font-medium text-stone-600 mb-1">Filtering Rate ($/gal)</label>
+            <input type="number" value={crossflowRatePerGallon} onChange={(e) => { setCrossflowRatePerGallon(e.target.value); setRatesAutoFilled(false); }}
               className="font-body border border-stone-300 rounded-md px-2.5 py-1.5 text-sm w-full max-w-[120px]" />
           </div>
         </div>
+        {ratesAutoFilled && (
+          <p className="font-body text-xs text-stone-400 sm:col-span-2">Pulled from Yearly Shared Costs for {allocationYear} — edit above if this specific wine needs a different rate.</p>
+        )}
       </div>
 
       <div>
@@ -4352,7 +4609,7 @@ function ttbFilingFrequencyHint(frequency) {
 // so the actual math can be tested directly with real numbers before anything touches a screen.
 // ----------
 
-// A shared yearly cost (Matheson gas/dry-ice, new oak barrels) divided across actual cases
+// A shared yearly cost (gas/dry-ice, new oak barrels) divided across actual cases
 // bottled that year — computed live from real Bottling records every time, never stored, so it
 // can't go stale as more bottling records get added throughout the year.
 function computeYearlyPerCaseAllocation(yearlySharedCosts, bottlingRecords, year, spendField) {
